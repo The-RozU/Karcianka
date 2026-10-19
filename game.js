@@ -778,7 +778,7 @@ function updateUI() {
     refreshButtons(); applyDuelView();
 }
 
-// ======================= GENERATOR NIEREGULARNEJ MAPY BEZ NAKŁADANIA KÓŁ =======================
+// ======================= GENERATOR NIEREGULARNEJ MAPY BEZ KOLIZJI =======================
 function connectNodes(nodes, idA, idB) {
     const a = nodes.find(n => n.id === idA);
     const b = nodes.find(n => n.id === idB);
@@ -788,10 +788,10 @@ function connectNodes(nodes, idA, idB) {
 }
 
 function resolveMapCollisions(nodes) {
-    const MIN_DIST = 15.5;
-    const ASPECT = 2.1;
+    const MIN_DIST = 16.5;
+    const ASPECT = 2.0;
 
-    for (let iter = 0; iter < 40; iter++) {
+    for (let iter = 0; iter < 50; iter++) {
         let moved = false;
         for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < nodes.length; j++) {
@@ -812,12 +812,12 @@ function resolveMapCollisions(nodes) {
                     const lockB = (b.type === 'start' || b.type === 'boss');
 
                     if (!lockA) {
-                        a.x = Math.max(10, Math.min(88, a.x + ux * overlap));
-                        a.y = Math.max(15, Math.min(85, a.y + uy * overlap * ASPECT));
+                        a.x = Math.max(12, Math.min(86, a.x + ux * overlap));
+                        a.y = Math.max(16, Math.min(84, a.y + uy * overlap * ASPECT));
                     }
                     if (!lockB) {
-                        b.x = Math.max(10, Math.min(88, b.x - ux * overlap));
-                        b.y = Math.max(15, Math.min(85, b.y - uy * overlap * ASPECT));
+                        b.x = Math.max(12, Math.min(86, b.x - ux * overlap));
+                        b.y = Math.max(16, Math.min(84, b.y - uy * overlap * ASPECT));
                     }
                 }
             }
@@ -839,8 +839,8 @@ function generateActMap(actNumber = 1) {
     const nodes = [];
     let nextId = 0;
 
-    // 1. Główny szlak w środkowym pasie (Y: 36% - 64%)
-    const spineCols = [8, 24, 41, 58, 75, 91];
+    // 1. Główny szlak w środkowym pasie
+    const spineCols = [8, 24, 41, 58, 75, 92];
     let prevY = 50;
     const spineIds = [];
 
@@ -850,8 +850,8 @@ function generateActMap(actNumber = 1) {
         
         let y = 50;
         if (!isStart && !isBoss) {
-            const shift = (Math.random() < 0.5 ? -1 : 1) * (8 + Math.floor(Math.random() * 9));
-            y = Math.max(36, Math.min(64, prevY + shift));
+            const shift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.floor(Math.random() * 8));
+            y = Math.max(38, Math.min(62, prevY + shift));
         }
         prevY = y;
 
@@ -878,49 +878,47 @@ function generateActMap(actNumber = 1) {
     }
 
     // 2. Boczne ślepe odnogi: [Strażnik] -> [Skrzynia / Zapasy HP]
-    let lastBranchUp = Math.random() < 0.5;
+    // Tworzymy odnogę na górze przy kolumnie 1 oraz odnogę na dole przy kolumnie 2 lub 3
+    const branches = [
+        { spineIdx: 1, goUp: true },
+        { spineIdx: 2, goUp: false }
+    ];
 
-    [1, 2, 3].forEach(idx => {
-        if (idx === 2 || Math.random() < 0.7) {
-            const parent = nodes[spineIds[idx]];
-            const goUp = !lastBranchUp;
-            lastBranchUp = goUp;
+    branches.forEach(br => {
+        const parent = nodes[spineIds[br.spineIdx]];
+        const guardY = br.goUp ? 19 : 81;
+        const guardX = parent.x + 3;
 
-            const guardY = goUp ? 20 : 80;
-            const guardX = parent.x + 2;
+        const isEliteGuard = (!br.goUp || Math.random() < 0.45);
+        const gEnemy = isEliteGuard ? eEnemies() : rEnemies();
+        const guardId = nextId++;
 
-            const isEliteGuard = (idx >= 2 && Math.random() < 0.55);
-            const gEnemy = isEliteGuard ? eEnemies() : rEnemies();
-            const guardId = nextId++;
+        nodes.push({
+            id: guardId, x: guardX, y: guardY,
+            type: isEliteGuard ? 'elite' : 'fight',
+            icon: isEliteGuard ? '💀' : '⚔️',
+            title: gEnemy.name,
+            hp: isEliteGuard ? eliteHp : zbirHp,
+            xp: isEliteGuard ? 110 : 55,
+            enemy: gEnemy, targets: [], cleared: false
+        });
+        connectNodes(nodes, parent.id, guardId);
 
-            nodes.push({
-                id: guardId, x: guardX, y: guardY,
-                type: isEliteGuard ? 'elite' : 'fight',
-                icon: isEliteGuard ? '💀' : '⚔️',
-                title: gEnemy.name,
-                hp: isEliteGuard ? eliteHp : zbirHp,
-                xp: isEliteGuard ? 110 : 55,
-                enemy: gEnemy, targets: [], cleared: false
-            });
-            connectNodes(nodes, parent.id, guardId);
+        const rewardId = nextId++;
+        const rewardX = guardX + 14;
+        const rewardY = br.goUp ? 18 : 82;
+        const isHealSpring = Math.random() < 0.45;
 
-            const rewardId = nextId++;
-            const rewardX = guardX + 11;
-            const rewardY = goUp ? 17 : 83;
-            const isHealSpring = Math.random() < 0.4;
-
-            nodes.push({
-                id: rewardId, x: rewardX, y: rewardY,
-                type: isHealSpring ? 'heal' : 'chest',
-                icon: isHealSpring ? '🧪' : '📦',
-                title: isHealSpring ? 'Zapasy Medyczne' : 'Ukryta Skrzynia',
-                hp: 0, xp: 0, enemy: null, targets: [], cleared: false
-            });
-            connectNodes(nodes, guardId, rewardId);
-        }
+        nodes.push({
+            id: rewardId, x: rewardX, y: rewardY,
+            type: isHealSpring ? 'heal' : 'chest',
+            icon: isHealSpring ? '🧪' : '📦',
+            title: isHealSpring ? 'Zapasy Medyczne' : 'Ukryta Skrzynia',
+            hp: 0, xp: 0, enemy: null, targets: [], cleared: false
+        });
+        connectNodes(nodes, guardId, rewardId);
     });
 
-    // 3. Odsunięcie zbyt bliskich kółek
     resolveMapCollisions(nodes);
 
     return { boss, nodes, bossHp };
@@ -970,7 +968,7 @@ function startNextDuelAct() {
     updateUI();
 }
 
-function renderDiceyMap(peekOnly) {
+function renderDiceyMap(lockMovement) {
     const board = document.getElementById('mapBoard');
     const svg = document.getElementById('svgLayer');
     if (!board || !svg) return;
@@ -978,46 +976,57 @@ function renderDiceyMap(peekOnly) {
     document.querySelectorAll('.node-plate').forEach(e => e.remove());
     svg.innerHTML = '';
 
-    const w = board.clientWidth || 680;
-    const h = board.clientHeight || 290;
+    // Stała przestrzeń 1000x450 zdefiniowana w viewBox SVG gwarantuje rysowanie kresek zawsze
+    const SVG_W = 1000;
+    const SVG_H = 450;
 
     const drawnPairs = new Set();
     const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
     if (!cur) return;
 
+    // 1. Rysowanie linii połączeń między strefami
     mapRun.nodes.forEach(node => {
-        const x1 = (node.x / 100) * w; const y1 = (node.y / 100) * h;
+        const x1 = (node.x / 100) * SVG_W;
+        const y1 = (node.y / 100) * SVG_H;
+
         node.targets.forEach(tid => {
             const pairKey = [Math.min(node.id, tid), Math.max(node.id, tid)].join('-');
             if (!drawnPairs.has(pairKey)) {
                 drawnPairs.add(pairKey);
                 const target = mapRun.nodes.find(n => n.id === tid);
                 if (!target) return;
-                const x2 = (target.x / 100) * w; const y2 = (target.y / 100) * h;
+                const x2 = (target.x / 100) * SVG_W;
+                const y2 = (target.y / 100) * SVG_H;
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+                line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2); line.setAttribute('y2', y2);
 
-                const isAdjacent = (!peekOnly) && (
+                const isAdjacent = !lockMovement && (
                     (node.id === mapRun.currentNodeId && cur.targets.includes(tid)) || 
                     (tid === mapRun.currentNodeId && cur.targets.includes(node.id))
                 );
 
-                if (isAdjacent) { line.classList.add('active-path'); } 
-                else if (mapRun.visitedNodes.has(node.id) && mapRun.visitedNodes.has(tid)) { line.classList.add('walked-path'); }
+                if (isAdjacent) {
+                    line.classList.add('active-path');
+                } else if (mapRun.visitedNodes.has(node.id) && mapRun.visitedNodes.has(tid)) {
+                    line.classList.add('walked-path');
+                }
                 svg.appendChild(line);
             }
         });
     });
 
+    // 2. Rysowanie okrągłych stref
     mapRun.nodes.forEach(node => {
         const div = document.createElement('div');
         div.className = 'node-plate';
-        div.style.left = `${node.x}%`; div.style.top = `${node.y}%`;
+        div.style.left = `${node.x}%`;
+        div.style.top = `${node.y}%`;
         div.title = node.title;
 
         const isCurrent = (node.id === mapRun.currentNodeId);
-        const isAdjacent = (!peekOnly) && cur.targets.includes(node.id);
+        const isAdjacent = !lockMovement && cur.targets.includes(node.id);
 
         if (isCurrent) {
             div.classList.add('player-here');
@@ -1035,14 +1044,19 @@ function renderDiceyMap(peekOnly) {
     });
 }
 
-function openMapModal(peekOnly = false) {
+function openMapModal(fromTopButton = false) {
     if (!mapRun.active || !mapRun.nodes || mapRun.nodes.length === 0) {
         const generated = generateActMap(1);
+        mapRun.active = true;
         mapRun.boss = generated.boss;
         mapRun.nodes = generated.nodes;
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
     }
+
+    // Blokujemy ruch na mapie TYLKO wtedy, gdy trwa nierozstrzygnięta walka przy stole
+    const combatInProgress = !gameOver && duel.active && duel.enemyHp > 0;
+    const lockMovement = fromTopButton && combatInProgress;
 
     document.getElementById('mapTitle').innerText = `Szlak Calionu · Piętro ${mapRun.act}`;
     document.getElementById('mapPlayerHp').innerText = `${mapRun.playerHp}/${mapRun.playerMaxHp}`;
@@ -1054,19 +1068,14 @@ function openMapModal(peekOnly = false) {
     const bossHpNow = DUEL.BOSS_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
     document.getElementById('mapBossBanner').innerHTML = `<strong>👑 Boss Piętra ${mapRun.act}: ${b.name} (${bossHpNow} HP)</strong><span>Umiejętność (<i>${b.traitName}</i>): ${b.desc}</span>`;
 
-    document.getElementById('mapClosePeekBtn').style.display = peekOnly ? 'block' : 'none';
-    document.getElementById('mapHintText').innerText = peekOnly
-        ? 'Podgląd mapy w trakcie starcia.'
-        : 'Pokonaj strażników na bocznych odnogach, aby zgarnąć skrzynie/mikstury, a potem cofnij się na szlak!';
+    document.getElementById('mapClosePeekBtn').style.display = combatInProgress ? 'block' : 'none';
+    document.getElementById('mapHintText').innerText = lockMovement
+        ? 'Trwa walka — pokonaj wroga przy stole, aby ruszyć dalej!'
+        : 'Kliknij podświetlone na złoto kółko połączone przerywaną linią, aby tam przejść.';
 
     toggleModal('mapModal', true);
-    setTimeout(() => renderDiceyMap(peekOnly), 25);
+    renderDiceyMap(lockMovement);
 }
-
-window.addEventListener('resize', () => {
-    const modal = document.getElementById('mapModal');
-    if (modal && modal.style.display === 'flex') renderDiceyMap(false);
-});
 
 function selectMapNode(nodeId) {
     const node = mapRun.nodes.find(n => n.id === nodeId);
