@@ -1,4 +1,3 @@
-// Pełny ekran (przydatne na telefonie w poziomie)
 function toggleFullScreen() {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -96,16 +95,15 @@ let shieldCards = [];
 let mapRun = {
     active: false,
     act: 1,
-    floor: 0,
-    lastCol: null,
     playerHp: DUEL.START_HP,
     playerMaxHp: DUEL.START_HP,
     level: 1,
     xp: 0,
     xpNext: 100,
-    boss: CALION_BOSSES[0],
-    floors: [],
-    currentNode: null
+    boss: null,
+    nodes: [],
+    currentNodeId: 0,
+    visitedNodes: new Set()
 };
 
 function newDuelState() {
@@ -324,11 +322,7 @@ function evaluateShieldCards(cards, includePlayerRelics = true) {
     if (sc.rule.name === 'Trójka') {
         const base = (sc.rule.baseChips + sc.sum) * sc.rule.mult;
         const total = base + karwaszBonus;
-        return {
-            total,
-            name: 'Trójka w Tarczy',
-            formula: `(${sc.rule.baseChips} + ${sc.sum}) x ${sc.rule.mult}${karwaszText} = +${total} 🛡`
-        };
+        return { total, name: 'Trójka w Tarczy', formula: `(${sc.rule.baseChips} + ${sc.sum}) x ${sc.rule.mult}${karwaszText} = +${total} 🛡` };
     }
     if (sc.rule.name === 'Para') {
         const pairShield = (sc.rule.baseChips + sc.sum) * sc.rule.mult;
@@ -336,21 +330,13 @@ function evaluateShieldCards(cards, includePlayerRelics = true) {
         const extraSum = extraCards.reduce((t, c) => t + c.val, 0) * DUEL.SHIELD_MULT;
         const total = pairShield + extraSum + karwaszBonus;
         const extraText = extraSum > 0 ? ` + ${extraSum} (dod. karta)` : '';
-        return {
-            total,
-            name: 'Para w Tarczy',
-            formula: `(${sc.rule.baseChips} + ${sc.sum}) x ${sc.rule.mult}${extraText}${karwaszText} = +${total} 🛡`
-        };
+        return { total, name: 'Para w Tarczy', formula: `(${sc.rule.baseChips} + ${sc.sum}) x ${sc.rule.mult}${extraText}${karwaszText} = +${total} 🛡` };
     }
 
     const rawSum = cards.reduce((t, c) => t + c.val, 0);
     const base = rawSum * DUEL.SHIELD_MULT;
     const total = base + karwaszBonus;
-    return {
-        total,
-        name: 'Tarcza (Wysokie Karty)',
-        formula: `${rawSum} x ${DUEL.SHIELD_MULT}${karwaszText} = +${total} 🛡`
-    };
+    return { total, name: 'Tarcza (Wysokie Karty)', formula: `${rawSum} x ${DUEL.SHIELD_MULT}${karwaszText} = +${total} 🛡` };
 }
 
 function computeAttackDamage(rule, sum, opts = {}) {
@@ -365,29 +351,21 @@ function computeAttackDamage(rule, sum, opts = {}) {
     let damage = dice === 1 ? 0 : (rule.baseChips + sum) * finalMultiplier + potionBonus;
 
     if (opts.applyEnemyTrait && currentEnemyTrait) {
-        if (currentEnemyTrait.id === 'weaken_10') {
-            damage = Math.floor(damage * 0.90);
-        } else if (currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven') {
-            damage = Math.floor(damage * 0.85);
-        }
+        if (currentEnemyTrait.id === 'weaken_10') { damage = Math.floor(damage * 0.90); }
+        else if (currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven') { damage = Math.floor(damage * 0.85); }
     }
     return { damage, finalMultiplier, potionBonus };
 }
 
 function evaluateHand() {
     let active = hand.filter(c => selectedCards.includes(c.id));
-
     let attackRule = null;
     if (active.length === 0) {
         currentDamage = 0;
     } else {
         const { rule, sum } = scoreCards(active);
         attackRule = rule;
-        const calc = computeAttackDamage(rule, sum, {
-            potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0,
-            dice: pendingDiceRoll,
-            applyEnemyTrait: true
-        });
+        const calc = computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true });
         currentDamage = calc.damage;
 
         if (duel.phase === 'attack') {
@@ -403,9 +381,7 @@ function evaluateHand() {
             const potionText = calc.potionBonus > 0 ? ` + <span class="color-buff">${calc.potionBonus}</span>` : '';
             const diceText = pendingDiceRoll > 1 ? ` <span class="color-buff">(+${(pendingDiceRoll * 0.5).toFixed(1)} za 🎲 ${pendingDiceRoll})</span>` : '';
             const hasReduction = currentEnemyTrait && (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven');
-            const traitModText = hasReduction
-                ? ` <span style="color:#f39c12">(${currentEnemyTrait.id === 'weaken_10' ? '-10%' : '-15%'} ${currentEnemyTrait.traitName})</span>`
-                : '';
+            const traitModText = hasReduction ? ` <span style="color:#f39c12">(${currentEnemyTrait.id === 'weaken_10' ? '-10%' : '-15%'} ${currentEnemyTrait.traitName})</span>` : '';
             document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${traitModText} = ${currentDamage} DMG`;
             return;
         }
@@ -414,13 +390,9 @@ function evaluateHand() {
     if (duel.phase === 'shield') {
         const shieldHand = hand.filter(c => shieldCards.includes(c.id));
         const shEval = evaluateShieldCards(shieldHand, true);
-        document.getElementById('evalName').innerText = shieldHand.length > 0
-            ? `${shEval.name} (${shieldHand.length}/3)`
-            : `Wybierz tarczę (0/3)`;
+        document.getElementById('evalName').innerText = shieldHand.length > 0 ? `${shEval.name} (${shieldHand.length}/3)` : `Wybierz tarczę (0/3)`;
         const effectiveDmg = duel.corvenBlockArmed ? 0 : Math.floor(currentDamage * fatigueMult());
-        const atkSummary = active.length > 0
-            ? `⚔ ${attackRule.name} (${effectiveDmg} DMG)`
-            : `⚔ Pominięty (0 DMG)`;
+        const atkSummary = active.length > 0 ? `⚔ ${attackRule.name} (${effectiveDmg} DMG)` : `⚔ Pominięty (0 DMG)`;
         document.getElementById('evalDmg').innerHTML = `${atkSummary} · <span class="color-chips">🛡 ${shEval.formula}</span>`;
         return;
     }
@@ -447,12 +419,9 @@ function playMotion(element, frames, duration, fallbackClass, removeClasses = []
 function animateScreenShake(table, strong = false) {
     const distance = strong ? 15 : 11;
     playMotion(table, [
-        { transform: 'translate(0,0)' },
-        { transform: `translate(${-distance}px,3px)`, offset: 0.18 },
-        { transform: `translate(${distance}px,-3px)`, offset: 0.36 },
-        { transform: `translate(${-distance + 2}px,-2px)`, offset: 0.54 },
-        { transform: `translate(${distance - 2}px,2px)`, offset: 0.72 },
-        { transform: 'translate(0,0)' }
+        { transform: 'translate(0,0)' }, { transform: `translate(${-distance}px,3px)`, offset: 0.18 },
+        { transform: `translate(${distance}px,-3px)`, offset: 0.36 }, { transform: `translate(${-distance + 2}px,-2px)`, offset: 0.54 },
+        { transform: `translate(${distance - 2}px,2px)`, offset: 0.72 }, { transform: 'translate(0,0)' }
     ], 560, 'screen-shake', ['color-flash-red', 'color-flash-black']);
 }
 
@@ -473,9 +442,7 @@ function animateColorFlash(table, color) {
     const flash = document.createElement('div');
     flash.setAttribute('aria-hidden', 'true');
     Object.assign(flash.style, { position: 'absolute', top: '0', right: '0', bottom: '0', left: '0', zIndex: '60', pointerEvents: 'none' });
-    flash.style.background = color === 'red'
-        ? 'radial-gradient(ellipse,rgba(255,35,35,.48),rgba(130,0,0,.22) 55%,transparent 78%)'
-        : 'radial-gradient(ellipse,rgba(230,235,245,.30),rgba(8,12,20,.58) 58%,rgba(0,0,0,.18))';
+    flash.style.background = color === 'red' ? 'radial-gradient(ellipse,rgba(255,35,35,.48),rgba(130,0,0,.22) 55%,transparent 78%)' : 'radial-gradient(ellipse,rgba(230,235,245,.30),rgba(8,12,20,.58) 58%,rgba(0,0,0,.18))';
     if (color === 'black') flash.style.boxShadow = 'inset 0 0 45px rgba(230,235,245,.3)';
     table.appendChild(flash);
     if (typeof flash.animate === 'function') {
@@ -483,8 +450,7 @@ function animateColorFlash(table, color) {
         const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 360 : 680, easing: 'ease-out' });
         animation.onfinish = () => flash.remove();
     } else {
-        flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black');
-        setTimeout(() => flash.remove(), 700);
+        flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black'); setTimeout(() => flash.remove(), 700);
     }
 }
 
@@ -502,23 +468,13 @@ function refreshButtons() {
     const btnSurrender = document.getElementById('btnSurrender');
 
     if (duel.phase === 'attack') {
-        btnPlay.innerText = '⚔ Atak';
-        btnPlay.classList.remove('shield-phase');
-        btnPlay.disabled = gameOver || handResolutionPending;
-
-        btnDiscard.innerText = 'Odrzuć';
-        btnDiscard.disabled = gameOver || handResolutionPending || selectedCards.length === 0 || selectedCards.length > 5 || discardsLeft <= 0;
+        btnPlay.innerText = '⚔ Atak'; btnPlay.classList.remove('shield-phase'); btnPlay.disabled = gameOver || handResolutionPending;
+        btnDiscard.innerText = 'Odrzuć'; btnDiscard.disabled = gameOver || handResolutionPending || selectedCards.length === 0 || selectedCards.length > 5 || discardsLeft <= 0;
     } else {
-        btnPlay.innerText = '🛡 Tarcza';
-        btnPlay.classList.add('shield-phase');
-        btnPlay.disabled = gameOver || handResolutionPending;
-
-        btnDiscard.innerText = '↩ Cofnij atak';
-        btnDiscard.disabled = gameOver || handResolutionPending;
+        btnPlay.innerText = '🛡 Tarcza'; btnPlay.classList.add('shield-phase'); btnPlay.disabled = gameOver || handResolutionPending;
+        btnDiscard.innerText = '↩ Cofnij atak'; btnDiscard.disabled = gameOver || handResolutionPending;
     }
-
-    btnSurrender.innerText = '🏳️ Porzuć';
-    btnSurrender.disabled = gameOver || handResolutionPending;
+    btnSurrender.innerText = '🏳️ Porzuć'; btnSurrender.disabled = gameOver || handResolutionPending;
 }
 
 function animateStraightCards(cards, onComplete) {
@@ -528,35 +484,18 @@ function animateStraightCards(cards, onComplete) {
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = reduceMotion ? 340 : 420;
     const stagger = reduceMotion ? 180 : 230;
-    let finished = 0;
-    let completed = false;
-    const finishCard = () => {
-        finished++;
-        if (!completed && finished === cardElements.length) {
-            completed = true;
-            onComplete();
-        }
-    };
+    let finished = 0; let completed = false;
+    const finishCard = () => { finished++; if (!completed && finished === cardElements.length) { completed = true; onComplete(); } };
 
     cardElements.forEach((card, index) => {
-        card.classList.remove('dealing');
-        card.style.zIndex = String(20 + index);
-        card.style.willChange = 'transform, opacity';
-        const startTransform = getComputedStyle(card).transform;
-        const delay = index * stagger;
+        card.classList.remove('dealing'); card.style.zIndex = String(20 + index); card.style.willChange = 'transform, opacity';
+        const startTransform = getComputedStyle(card).transform; const delay = index * stagger;
         if (typeof card.animate === 'function') {
-            const animation = card.animate([
-                { opacity: 1, transform: startTransform },
-                { opacity: .12, transform: 'translateY(-95px) scale(.96)' }
-            ], { duration, delay, easing: 'cubic-bezier(.2,.7,.25,1)', fill: 'forwards' });
-            animation.onfinish = finishCard;
-            animation.oncancel = finishCard;
+            const animation = card.animate([ { opacity: 1, transform: startTransform }, { opacity: .12, transform: 'translateY(-95px) scale(.96)' } ], { duration, delay, easing: 'cubic-bezier(.2,.7,.25,1)', fill: 'forwards' });
+            animation.onfinish = finishCard; animation.oncancel = finishCard;
         } else {
             card.style.transition = `transform ${duration}ms cubic-bezier(.2,.7,.25,1) ${delay}ms, opacity ${duration}ms ease ${delay}ms`;
-            requestAnimationFrame(() => {
-                card.style.transform = 'translateY(-95px) scale(.96)';
-                card.style.opacity = '.12';
-            });
+            requestAnimationFrame(() => { card.style.transform = 'translateY(-95px) scale(.96)'; card.style.opacity = '.12'; });
             setTimeout(finishCard, delay + duration + 80);
         }
     });
@@ -567,46 +506,26 @@ function runHandAnimation(handName, playedCards) {
     const enemyStatus = document.querySelector('.hp-enemy');
     if (handName === 'Poker') {
         animateScreenShake(table, true);
-        const banner = document.createElement('div');
-        banner.className = 'hand-announcement';
-        banner.textContent = 'POKER!';
-        table.appendChild(banner);
+        const banner = document.createElement('div'); banner.className = 'hand-announcement'; banner.textContent = 'POKER!'; table.appendChild(banner);
         if (typeof banner.animate === 'function') {
             const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const animation = banner.animate([
-                { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' },
-                { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 },
-                { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 },
-                { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' }
-            ], { duration: reduceMotion ? 600 : 1150, easing: 'cubic-bezier(.16,.8,.3,1)' });
+            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 600 : 1150, easing: 'cubic-bezier(.16,.8,.3,1)' });
             animation.onfinish = () => banner.remove();
-        } else {
-            setTimeout(() => banner.remove(), 1200);
-        }
-    } else if (handName === 'Kareta') {
-        animateEnemyHits(enemyStatus, 4);
-    } else if (handName === 'Full') {
-        animateScreenShake(table);
-    } else if (handName === 'Kolor') {
-        animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black');
-    } else if (handName === 'Trójka') {
-        animateEnemyHits(enemyStatus, 3);
-    }
+        } else { setTimeout(() => banner.remove(), 1200); }
+    } else if (handName === 'Kareta') { animateEnemyHits(enemyStatus, 4); } 
+    else if (handName === 'Full') { animateScreenShake(table); } 
+    else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); } 
+    else if (handName === 'Trójka') { animateEnemyHits(enemyStatus, 3); }
 }
 
-// Przycisk „Atak / Tarcza” (id: btnPlay) zawsze obsługuje pojedynek PvE
 function playHand() { duelPlay(); }
 
 function discardCards() {
     if (gameOver || handResolutionPending || !duel.active) return;
     if (duel.phase === 'shield') {
-        playHaptic('tap');
-        duel.phase = 'attack';
-        shieldCards = [];
+        playHaptic('tap'); duel.phase = 'attack'; shieldCards = [];
         document.getElementById('log').innerText = 'Cofnięto do wyboru ataku. Możesz zmienić karty lub je odrzucić.';
-        evaluateHand();
-        updateUI();
-        return;
+        evaluateHand(); updateUI(); return;
     }
 
     if (selectedCards.length === 0 || selectedCards.length > 5 || discardsLeft <= 0) return;
@@ -615,8 +534,7 @@ function discardCards() {
     runStats.discards += moved.length;
     hand = hand.filter(card => !selectedCards.includes(card.id));
     discardPile.push(...moved);
-    selectedCards = []; shieldCards = [];
-    discardsLeft--;
+    selectedCards = []; shieldCards = []; discardsLeft--;
     document.getElementById('log').innerText = `Odrzucono karty. Zostało wymian: ${discardsLeft}.`;
     drawReplacements();
 }
@@ -627,11 +545,9 @@ function drawReplacements() {
     if (need > 0) hand = hand.concat(drawCards(need));
     animateNextRender = true;
     hand.sort((a, b) => rankOrder.get(a.rank) - rankOrder.get(b.rank));
-    updateLockedCard();
-    evaluateHand(); updateUI();
+    updateLockedCard(); evaluateHand(); updateUI();
 }
 
-// Przycisk „Porzuć” przy stole — tylko opuszczenie wyprawy
 function surrender() {
     if (gameOver || handResolutionPending) return;
     abandonMapRun();
@@ -642,15 +558,13 @@ function formatDuration(milliseconds) {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return hours > 0
-        ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-        : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    return hours > 0 ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}` : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function openMapShopNode() {
     shopReturnsToMenu = false;
     renderShop();
-    document.getElementById('shopProceedBtn').innerText = 'Wróć na Mapę Szlaku';
+    document.getElementById('shopProceedBtn').innerText = 'Wróć na Mapę';
     document.getElementById('shopProceedBtn').onclick = closeShopToMap;
     document.getElementById('shopLeaveDuelBtn').style.display = 'none';
     toggleModal('shopModal', true);
@@ -658,7 +572,6 @@ function openMapShopNode() {
 
 function closeShopToMap() {
     toggleModal('shopModal', false);
-    advanceMapFloor();
     openMapModal(false);
 }
 
@@ -667,15 +580,8 @@ function leaveDuelFromShop() {
     leaveDuel();
 }
 
-function inventoryIcon(item) {
-    return item.id === 'dice'
-        ? `<span>🎲</span><small class="inv-count">${item.charges ?? 3}</small>`
-        : item.icon;
-}
-
-function makeInventoryItem(item) {
-    return item.id === 'dice' ? { ...item, charges: 3 } : { ...item };
-}
+function inventoryIcon(item) { return item.id === 'dice' ? `<span>🎲</span><small class="inv-count">${item.charges ?? 3}</small>` : item.icon; }
+function makeInventoryItem(item) { return item.id === 'dice' ? { ...item, charges: 3 } : { ...item }; }
 
 function renderRelicsHTML() {
     const badges = [];
@@ -687,19 +593,12 @@ function renderRelicsHTML() {
 function renderShop() {
     document.getElementById('shopCoins').innerText = coins;
     const hpSpan = document.getElementById('shopHpDisplay');
-    if (mapRun.active) {
-        hpSpan.innerText = `❤️ ${mapRun.playerHp}/${mapRun.playerMaxHp} HP`;
-    } else {
-        hpSpan.innerText = '';
-    }
+    if (mapRun.active) { hpSpan.innerText = `❤️ ${mapRun.playerHp}/${mapRun.playerMaxHp} HP`; } else { hpSpan.innerText = ''; }
 
     const shopInv = document.getElementById('shopInventorySlots'); shopInv.innerHTML = '';
     for (let i = 0; i < MAX_INV; i++) {
-        if (i < inventory.length) {
-            shopInv.innerHTML += `<div class="inv-slot" onclick="useItemFromShop(${i})" title="${inventory[i].name} (Kliknij, by użyć)">${inventoryIcon(inventory[i])}</div>`;
-        } else {
-            shopInv.innerHTML += `<div class="inv-slot"></div>`;
-        }
+        if (i < inventory.length) { shopInv.innerHTML += `<div class="inv-slot" onclick="useItemFromShop(${i})" title="${inventory[i].name} (Kliknij, by użyć)">${inventoryIcon(inventory[i])}</div>`; } 
+        else { shopInv.innerHTML += `<div class="inv-slot"></div>`; }
     }
     document.getElementById('shopRelicsSlots').innerHTML = renderRelicsHTML() || '<span style="font-size:11px;color:#777">Brak reliktów</span>';
 
@@ -710,10 +609,7 @@ function renderShop() {
         container.innerHTML += `
             <div class="shop-item ${item.isRelic ? 'relic' : ''}">
                 <div style="font-size:22px;">${item.icon}</div>
-                <div class="shop-info">
-                    <span class="shop-name">${item.name}</span>
-                    <span class="shop-desc">${item.desc}</span>
-                </div>
+                <div class="shop-info"><span class="shop-name">${item.name}</span><span class="shop-desc">${item.desc}</span></div>
                 <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${alreadyOwnedRelic ? 'Kupiono' : `${item.price} 🪙`}</button>
             </div>
         `;
@@ -724,10 +620,7 @@ function useItemFromShop(idx) {
     const item = inventory[idx];
     if (!item) return;
     if (item.id === 'heal_pot' && mapRun.active) {
-        if (mapRun.playerHp >= mapRun.playerMaxHp) {
-            alert('Masz już pełne punkty życia!');
-            return;
-        }
+        if (mapRun.playerHp >= mapRun.playerMaxHp) { alert('Masz już pełne punkty życia!'); return; }
         inventory.splice(idx, 1);
         const before = mapRun.playerHp;
         mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL);
@@ -741,15 +634,12 @@ function buyItem(idx) {
     let item = SHOP_ITEMS[idx]; if (!item || coins < item.price) return;
     if (item.isRelic) {
         if (relics[item.id]) return;
-        coins -= item.price;
-        relics[item.id] = true;
-        renderShop(); updateUI();
-        return;
+        coins -= item.price; relics[item.id] = true;
+        renderShop(); updateUI(); return;
     }
     const diceStack = item.id === 'dice' ? inventory.find(invItem => invItem.id === 'dice') : null;
     if (diceStack) {
-        coins -= item.price;
-        diceStack.charges = (diceStack.charges ?? 3) + 3;
+        coins -= item.price; diceStack.charges = (diceStack.charges ?? 3) + 3;
         renderShop(); updateUI();
     } else if (inventory.length < MAX_INV) {
         coins -= item.price; inventory.push(makeInventoryItem(item));
@@ -765,9 +655,7 @@ function renderReplaceModal() {
         container.innerHTML += `
             <div class="shop-item danger">
                 <div style="position:relative;font-size:22px; margin-right:8px;">${inventoryIcon(invItem)}</div>
-                <div class="shop-info">
-                    <span class="shop-name">${invItem.name}</span><span class="shop-desc">${invItem.desc}${invItem.id === 'dice' ? ` Pozostałe użycia: ${invItem.charges}.` : ''}</span>
-                </div>
+                <div class="shop-info"><span class="shop-name">${invItem.name}</span><span class="shop-desc">${invItem.desc}${invItem.id === 'dice' ? ` Pozostałe użycia: ${invItem.charges}.` : ''}</span></div>
                 <button class="btn-buy danger" onclick="confirmReplace(${idx})">Wyrzuć</button>
             </div>
         `;
@@ -786,22 +674,10 @@ function confirmReplace(invIdx) {
 function useItem(idx) {
     if (gameOver || handResolutionPending || idx >= inventory.length) return;
     let item = inventory[idx];
-    if ((item.id === 'shield_pot' || item.id === 'heal_pot') && !duel.active) {
-        document.getElementById('log').innerText = `${item.name} działa wyłącznie w trakcie wyprawy!`;
-        return;
-    }
-    if (item.id === 'heal_pot' && duel.active && duel.playerHp >= duel.playerMaxHp) {
-        document.getElementById('log').innerText = 'Masz już pełne HP — nie potrzebujesz leczenia.';
-        return;
-    }
-    if (duel.active && item.id === 'time' && isFatigued()) {
-        document.getElementById('log').innerText = 'Zmęczenie już trwa — Złoty Zegar nic by nie dał.';
-        return;
-    }
-    if (item.id === 'dice' && pendingDiceRoll > 0) {
-        document.getElementById('log').innerText = 'Kość jest już przygotowana — najpierw zagraj atak.';
-        return;
-    }
+    if ((item.id === 'shield_pot' || item.id === 'heal_pot') && !duel.active) { document.getElementById('log').innerText = `${item.name} działa wyłącznie w trakcie wyprawy!`; return; }
+    if (item.id === 'heal_pot' && duel.active && duel.playerHp >= duel.playerMaxHp) { document.getElementById('log').innerText = 'Masz już pełne HP — nie potrzebujesz leczenia.'; return; }
+    if (duel.active && item.id === 'time' && isFatigued()) { document.getElementById('log').innerText = 'Zmęczenie już trwa — Złoty Zegar nic by nie dał.'; return; }
+    if (item.id === 'dice' && pendingDiceRoll > 0) { document.getElementById('log').innerText = 'Kość jest już przygotowana — najpierw zagraj atak.'; return; }
     confirmItemIdx = idx;
 
     let detailsHtml = `
@@ -813,11 +689,8 @@ function useItem(idx) {
     document.getElementById('confirmItemDetails').innerHTML = detailsHtml;
 
     let warningText = "Czy chcesz użyć tego przedmiotu teraz?";
-    if (item.id.startsWith('pow') && activeBuff.turns > 0) {
-        warningText = `Masz już aktywny efekt (+${activeBuff.dmg} DMG na ${activeBuff.turns} ataki). Zostanie nadpisany! Czy na pewno?`;
-    }
+    if (item.id.startsWith('pow') && activeBuff.turns > 0) { warningText = `Masz już aktywny efekt (+${activeBuff.dmg} DMG na ${activeBuff.turns} ataki). Zostanie nadpisany! Czy na pewno?`; }
     document.getElementById('confirmItemWarning').innerText = warningText;
-
     toggleModal('itemConfirmModal', true);
 }
 
@@ -835,26 +708,17 @@ function executeItem(idx) {
 
     if (item.id === 'discard') { discardsLeft++; showFloatingText('+1 Odrzut', '#3498db', '65%', '35%', '20px'); }
     else if (item.id === 'heal_pot') {
-        const before = duel.playerHp;
-        duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + DUEL.HEAL_POTION_VAL);
+        const before = duel.playerHp; duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + DUEL.HEAL_POTION_VAL);
         if (mapRun.active) mapRun.playerHp = duel.playerHp;
-        const healed = duel.playerHp - before;
-        showFloatingText(`+${healed} ❤️`, '#2ecc71', '15%', '22%', '22px');
+        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '15%', '22%', '22px');
     }
-    else if (item.id === 'shield_pot') {
-        duel.playerShield += 25;
-        showFloatingText('+25 🛡', '#5dade2', '15%', '35%', '22px');
-    }
-    else if (item.id === 'time') {
-        duel.fatigueRound++;
-        showFloatingText('Zmęczenie +1 runda', '#f1c40f', '25%', '22%', '16px');
-    }
+    else if (item.id === 'shield_pot') { duel.playerShield += 25; showFloatingText('+25 🛡', '#5dade2', '15%', '35%', '22px'); }
+    else if (item.id === 'time') { duel.fatigueRound++; showFloatingText('Zmęczenie +1 runda', '#f1c40f', '25%', '22%', '16px'); }
     else if (item.id === 'pow1') { activeBuff = { dmg: 10, turns: 3 }; showFloatingText('+10 Bazy', '#e74c3c', '65%', '35%', '20px'); }
     else if (item.id === 'pow2') { activeBuff = { dmg: 15, turns: 3 }; showFloatingText('+15 Bazy', '#e74c3c', '65%', '35%', '20px'); }
     else if (item.id === 'pow3') { activeBuff = { dmg: 20, turns: 3 }; showFloatingText('+20 Bazy', '#e74c3c', '65%', '35%', '20px'); }
     else if (item.id === 'dice') {
-        pendingDiceRoll = Math.floor(Math.random() * 6) + 1;
-        item.charges = Math.max(0, (item.charges ?? 3) - 1);
+        pendingDiceRoll = Math.floor(Math.random() * 6) + 1; item.charges = Math.max(0, (item.charges ?? 3) - 1);
         if (item.charges === 0) inventory.splice(idx, 1);
         showFloatingText(`🎲 ${pendingDiceRoll}`, pendingDiceRoll === 1 ? '#e74c3c' : '#f1c40f', '65%', '35%', '24px');
     }
@@ -872,8 +736,7 @@ function updateUI() {
         const isLocked = card.id === lockedCardId;
         const cDiv = document.createElement('div');
         cDiv.className = `card ${card.color === 'red' ? 'red' : ''} ${isLocked ? 'locked' : ''} ${isSpentAttack ? 'spent' : (isSelected ? 'selected' : '')} ${isShielded ? 'shielded' : ''} ${animateNextRender ? 'dealing' : ''}`;
-        cDiv.dataset.cardId = card.id;
-        cDiv.style.setProperty('--card-index', index);
+        cDiv.dataset.cardId = card.id; cDiv.style.setProperty('--card-index', index);
         cDiv.onclick = () => toggleCard(card.id);
         cDiv.innerHTML = `<div class="card-top"><span>${card.rank}</span><span>${card.suit}</span></div><div class="card-bottom"><span>${card.rank}</span><span>${card.suit}</span></div>`;
         handDiv.appendChild(cDiv);
@@ -892,15 +755,12 @@ function updateUI() {
 
     const traitBar = document.getElementById('ui-enemy-trait');
     if (currentEnemyTrait && duel.active) {
-        traitBar.style.display = 'block';
-        let extraBadges = '';
+        traitBar.style.display = 'block'; let extraBadges = '';
         if (duel.corvenBlockArmed) extraBadges += ` · <b style="color:#5dade2">[🛡️ Blok 100% Aktywny!]</b>`;
         if (duel.kaelEnraged) extraBadges += ` · <b style="color:#e74c3c">[🔥 SZAŁ +10% DMG]</b>`;
         if (duel.handLimit < 8) extraBadges += ` · <b style="color:#e74c3c">[🩸 Limit 7 kart]</b>`;
         traitBar.innerHTML = `⚔ <b>${currentEnemyTrait.name}</b> — <i>${currentEnemyTrait.traitName}</i>: ${currentEnemyTrait.desc}${extraBadges}`;
-    } else {
-        traitBar.style.display = 'none';
-    }
+    } else { traitBar.style.display = 'none'; }
 
     let buffText = activeBuff.turns > 0 ? `(💪 +${activeBuff.dmg} na ${activeBuff.turns} ataki)` : '';
     document.getElementById('ui-buff').innerText = buffText;
@@ -912,11 +772,10 @@ function updateUI() {
     }
     document.getElementById('ui-relics').innerHTML = renderRelicsHTML();
 
-    refreshButtons();
-    applyDuelView();
+    refreshButtons(); applyDuelView();
 }
 
-// ======================= MAPA WYPRAWY PvE I SYSTEM POZIOMÓW =======================
+// ======================= MAPA WYPRAWY DICEY DUNGEONS =======================
 function generateActMap(actNumber = 1) {
     const boss = pickRandomCalionBoss();
     const bonusHp = (actNumber - 1) * DUEL.ACT_HP_STEP;
@@ -924,84 +783,59 @@ function generateActMap(actNumber = 1) {
     const eliteHp = DUEL.ELITE_BASE_HP + bonusHp;
     const bossHp = DUEL.BOSS_BASE_HP + bonusHp;
 
-    const r1 = REGULAR_ENEMIES[0], r2 = REGULAR_ENEMIES[1], r3 = REGULAR_ENEMIES[2];
-    const elite1 = pickRandomEnemyTrait();
+    const rEnemies = () => REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
+    const eEnemies = () => pickRandomEnemyTrait();
 
-    const floors = [
-        [
-            { type: 'fight', icon: '⚔️', title: r1.name, sub: `${zbirHp} HP · +50 EXP`, hp: zbirHp, xp: 50, enemy: r1, visited: false },
-            { type: 'fight', icon: '⚔️', title: r2.name, sub: `${zbirHp} HP · +50 EXP`, hp: zbirHp, xp: 50, enemy: r2, visited: false }
-        ],
-        [
-            { type: 'fight', icon: '⚔️', title: r3.name, sub: `${zbirHp} HP · +50 EXP`, hp: zbirHp, xp: 50, enemy: r3, visited: false },
-            { type: 'chest', icon: '📦', title: 'Ukryta Skrzynia', sub: '15–25 🪙 + Mikstura HP', visited: false }
-        ],
-        [
-            { type: 'elite', icon: '💀', title: elite1.name, sub: `${eliteHp} HP · +100 EXP`, hp: eliteHp, xp: 100, enemy: elite1, visited: false },
-            { type: 'fight', icon: '⚔️', title: r1.name, sub: `${zbirHp} HP · +50 EXP`, hp: zbirHp, xp: 50, enemy: r1, visited: false }
-        ],
-        [
-            { type: 'shop', icon: '🪙', title: 'Karczemny Kram', sub: 'Zakupy i leczenie', visited: false },
-            { type: 'chest', icon: '📦', title: 'Skrytka', sub: '15–25 🪙 + Mikstura HP', visited: false }
-        ],
-        [
-            { type: 'boss', icon: '👑', title: boss.name, sub: `${bossHp} HP · +250 EXP`, hp: bossHp, xp: 250, enemy: boss, visited: false }
-        ]
+    let nodes = [
+        { id: 0, x: 8,  y: 50, type: 'start', icon: '🏕️', title: 'Wejście', hp: 0, targets: [1, 2], cleared: true },
+        { id: 1, x: 26, y: 26, type: 'empty', icon: '🪵', title: 'Korytarz', hp: 0, targets: [0, 3, 4], cleared: false },
+        { id: 2, x: 26, y: 74, type: 'fight', icon: '⚔️', title: 'Wróg', hp: zbirHp, xp: 50, enemy: rEnemies(), targets: [0, 4], cleared: false },
+        { id: 3, x: 44, y: 16, type: 'chest', icon: '📦', title: 'Skrzynia', hp: 0, targets: [1], cleared: false }, // Ślepy zaułek
+        { id: 4, x: 44, y: 50, type: 'fight', icon: '⚔️', title: 'Wróg', hp: zbirHp, xp: 50, enemy: rEnemies(), targets: [1, 2, 5, 6], cleared: false },
+        { id: 5, x: 62, y: 28, type: 'elite', icon: '💀', title: 'Elita', hp: eliteHp, xp: 120, enemy: eEnemies(), targets: [4, 7], cleared: false },
+        { id: 6, x: 62, y: 72, type: 'shop',  icon: '🪙', title: 'Kram', hp: 0, targets: [4, 7], cleared: false },
+        { id: 7, x: 78, y: 50, type: 'empty', icon: '🪵', title: 'Przedbramie', hp: 0, targets: [5, 6, 8], cleared: false },
+        { id: 8, x: 92, y: 50, type: 'boss',  icon: '👑', title: boss.name, hp: bossHp, xp: 250, enemy: boss, targets: [7], cleared: false }
     ];
-    return { boss, floors, bossHp };
+
+    // Niewielka losowość między runami
+    if (Math.random() < 0.5) {
+        nodes[3].type = 'elite'; nodes[3].icon = '💀'; nodes[3].enemy = eEnemies(); nodes[3].hp = eliteHp;
+    }
+    if (Math.random() < 0.5) {
+        nodes[2].type = 'empty'; nodes[2].icon = '🪵';
+        nodes[1].type = 'fight'; nodes[1].icon = '⚔️'; nodes[1].enemy = rEnemies(); nodes[1].hp = zbirHp;
+    }
+
+    return { boss, nodes, bossHp };
 }
 
 function gainXp(amount) {
-    let leveledUp = 0;
-    mapRun.xp += amount;
+    let leveledUp = 0; mapRun.xp += amount;
     while (mapRun.xp >= mapRun.xpNext) {
-        mapRun.xp -= mapRun.xpNext;
-        mapRun.level++;
-        leveledUp++;
-        mapRun.xpNext = mapRun.level * 100;
-        mapRun.playerMaxHp += DUEL.LEVEL_UP_HP;
-        mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.LEVEL_UP_HP);
+        mapRun.xp -= mapRun.xpNext; mapRun.level++; leveledUp++; mapRun.xpNext = mapRun.level * 100;
+        mapRun.playerMaxHp += DUEL.LEVEL_UP_HP; mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.LEVEL_UP_HP);
     }
-    duel.playerMaxHp = mapRun.playerMaxHp;
-    duel.playerHp = mapRun.playerHp;
+    duel.playerMaxHp = mapRun.playerMaxHp; duel.playerHp = mapRun.playerHp;
     return leveledUp;
 }
 
 function startDuelRun() {
-    runStartedAt = Date.now();
-    runFinishedAt = 0;
+    runStartedAt = Date.now(); runFinishedAt = 0;
     runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0 };
     const generated = generateActMap(1);
     mapRun = {
-        active: true,
-        act: 1,
-        floor: 0,
-        lastCol: null,
-        playerHp: DUEL.START_HP,
-        playerMaxHp: DUEL.START_HP,
-        level: 1,
-        xp: 0,
-        xpNext: 100,
-        boss: generated.boss,
-        floors: generated.floors,
-        currentNode: null
+        active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
+        level: 1, xp: 0, xpNext: 100, boss: generated.boss, nodes: generated.nodes,
+        currentNodeId: 0, visitedNodes: new Set([0])
     };
-    duel = newDuelState();
-    duel.active = true;
-    duel.playerHp = mapRun.playerHp;
-    duel.playerMaxHp = mapRun.playerMaxHp;
-    currentEnemyTrait = null;
-    activeBuff = { dmg: 0, turns: 0 };
-    pendingDiceRoll = 0;
-    currentFightBonus = 0;
-    gameOver = true;
-    setHandResolutionPending(false);
-
-    toggleModal('mainMenu', false);
-    toggleModal('duelResultModal', false);
-    toggleModal('lobbySectionModal', false);
-    document.getElementById('lobbyNotice').style.display = 'none';
-    document.getElementById('enemyHand').innerHTML = '';
+    duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
+    currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
+    gameOver = true; setHandResolutionPending(false);
+    
+    toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('lobbySectionModal', false);
+    document.getElementById('lobbyNotice').style.display = 'none'; document.getElementById('enemyHand').innerHTML = '';
+    
     initGame();
     openMapModal(false);
 }
@@ -1009,14 +843,76 @@ function startDuelRun() {
 function startNextDuelAct() {
     toggleModal('duelResultModal', false);
     mapRun.act++;
-    mapRun.floor = 0;
-    mapRun.lastCol = null;
     const generated = generateActMap(mapRun.act);
     mapRun.boss = generated.boss;
-    mapRun.floors = generated.floors;
-    mapRun.currentNode = null;
+    mapRun.nodes = generated.nodes;
+    mapRun.currentNodeId = 0;
+    mapRun.visitedNodes = new Set([0]);
     openMapModal(false);
     updateUI();
+}
+
+function renderDiceyMap(peekOnly) {
+    const board = document.getElementById('mapBoard');
+    const svg = document.getElementById('svgLayer');
+    
+    document.querySelectorAll('.node-plate').forEach(e => e.remove());
+    svg.innerHTML = '';
+
+    const w = board.clientWidth;
+    const h = board.clientHeight;
+
+    const drawnPairs = new Set();
+    const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
+
+    // Rysowanie Linii
+    mapRun.nodes.forEach(node => {
+        const x1 = (node.x / 100) * w; const y1 = (node.y / 100) * h;
+        node.targets.forEach(tid => {
+            const pairKey = [Math.min(node.id, tid), Math.max(node.id, tid)].join('-');
+            if (!drawnPairs.has(pairKey)) {
+                drawnPairs.add(pairKey);
+                const target = mapRun.nodes.find(n => n.id === tid);
+                const x2 = (target.x / 100) * w; const y2 = (target.y / 100) * h;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+
+                const isAdjacent = (!peekOnly) && (
+                    (node.id === mapRun.currentNodeId && cur.targets.includes(tid)) || 
+                    (tid === mapRun.currentNodeId && cur.targets.includes(node.id))
+                );
+
+                if (isAdjacent) { line.classList.add('active-path'); } 
+                else if (mapRun.visitedNodes.has(node.id) && mapRun.visitedNodes.has(tid)) { line.classList.add('walked-path'); }
+                svg.appendChild(line);
+            }
+        });
+    });
+
+    // Rysowanie Węzłów
+    mapRun.nodes.forEach(node => {
+        const div = document.createElement('div');
+        div.className = `node-plate`;
+        div.style.left = `${node.x}%`; div.style.top = `${node.y}%`;
+
+        const isCurrent = (node.id === mapRun.currentNodeId);
+        const isAdjacent = (!peekOnly) && (cur.targets.includes(node.id) || node.targets.includes(cur.id));
+
+        if (isCurrent) {
+            div.classList.add('player-here');
+            div.innerHTML = '🧙';
+        } else {
+            if (mapRun.visitedNodes.has(node.id) || node.cleared) div.classList.add('cleared');
+            div.innerHTML = node.icon;
+
+            if (isAdjacent) {
+                div.classList.add('available');
+                div.onclick = () => selectMapNode(node.id);
+            }
+        }
+        board.appendChild(div);
+    });
 }
 
 function openMapModal(peekOnly = false) {
@@ -1026,223 +922,123 @@ function openMapModal(peekOnly = false) {
     document.getElementById('mapPlayerXp').innerText = `${mapRun.xp}/${mapRun.xpNext} EXP`;
     document.getElementById('mapPlayerCoins').innerText = coins;
 
-    const b = mapRun.boss;
-    const bossHpNow = DUEL.BOSS_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
-    document.getElementById('mapBossBanner').innerHTML =
-        `<strong>👑 Boss Piętra ${mapRun.act}: ${b.name} (${bossHpNow} HP)</strong>` +
-        `<span>Umiejętność (<i>${b.traitName}</i>): ${b.desc}</span>`;
+    const b = mapRun.boss; const bossHpNow = DUEL.BOSS_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
+    document.getElementById('mapBossBanner').innerHTML = `<strong>👑 Boss Piętra ${mapRun.act}: ${b.name} (${bossHpNow} HP)</strong><span>Umiejętność (<i>${b.traitName}</i>): ${b.desc}</span>`;
 
     document.getElementById('mapClosePeekBtn').style.display = peekOnly ? 'block' : 'none';
-    document.getElementById('mapHintText').innerText = peekOnly
-        ? 'Podgląd mapy w trakcie starcia.'
-        : `Etap ${mapRun.floor + 1}/5: Wybierz podświetlony punkt (od lewej do prawej).`;
-
-    const ladder = document.getElementById('mapLadder');
-    ladder.innerHTML = '';
-
-    for (let f = 0; f < mapRun.floors.length; f++) {
-        const col = document.createElement('div');
-        col.className = `map-floor ${f === mapRun.floor && !peekOnly ? 'current-floor' : ''}`;
-        col.innerHTML = `<div class="map-floor-num">Etap ${f + 1}</div>`;
-
-        const nodesWrap = document.createElement('div');
-        nodesWrap.className = 'map-nodes';
-
-        mapRun.floors[f].forEach((node, colIdx) => {
-            const btn = document.createElement('button');
-            const isAvailable = !peekOnly && f === mapRun.floor;
-            btn.className = `map-node ${node.visited ? 'visited' : ''} ${isAvailable ? 'available' : ''} ${f < mapRun.floor && !node.visited ? 'locked-path' : ''}`;
-            btn.disabled = !isAvailable;
-            btn.innerHTML = `<span>${node.icon} ${node.title}</span><small>${node.sub}</small>`;
-            if (isAvailable) {
-                btn.onclick = () => selectMapNode(f, colIdx);
-            }
-            nodesWrap.appendChild(btn);
-        });
-
-        col.appendChild(nodesWrap);
-        ladder.appendChild(col);
-    }
+    document.getElementById('mapHintText').innerText = peekOnly ? 'Podgląd mapy w trakcie starcia.' : 'Wybierz podświetloną drogę. Możesz się cofać.';
 
     toggleModal('mapModal', true);
+    // Timeout pozwala przeglądarce policzyć width/height po zmianie display
+    setTimeout(() => renderDiceyMap(peekOnly), 10); 
 }
 
-function selectMapNode(floorIdx, colIdx) {
-    const node = mapRun.floors[floorIdx][colIdx];
-    if (!node) return;
-    node.visited = true;
-    mapRun.lastCol = colIdx;
-    mapRun.currentNode = node;
+// Nasłuch na resize dla płynnego przeliczania linii SVG
+window.addEventListener('resize', () => { if(document.getElementById('mapModal').style.display === 'flex') renderDiceyMap(false); });
+
+function selectMapNode(nodeId) {
+    const node = mapRun.nodes.find(n => n.id === nodeId);
+    mapRun.currentNodeId = nodeId;
+    mapRun.visitedNodes.add(nodeId);
     toggleModal('mapModal', false);
 
     if (node.type === 'chest') {
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openChestNode();
     } else if (node.type === 'shop') {
         openMapShopNode();
-    } else {
-        startDuelFromMapNode(node);
+    } else if (node.type === 'start' || node.type === 'empty') {
+        openMapModal(false);
+    } else if (node.type === 'fight' || node.type === 'elite' || node.type === 'boss') {
+        if (!node.cleared) {
+            startDuelFromMapNode(node);
+        } else {
+            openMapModal(false);
+        }
     }
 }
 
 function openChestNode() {
     const foundCoins = 15 + Math.floor(Math.random() * 11);
-    coins += foundCoins;
-    runStats.coinsEarned += foundCoins;
+    coins += foundCoins; runStats.coinsEarned += foundCoins;
 
-    let extraRewardHtml = '';
-    const healItem = SHOP_ITEMS.find(i => i.id === 'heal_pot');
+    let extraRewardHtml = ''; const healItem = SHOP_ITEMS.find(i => i.id === 'heal_pot');
     if (inventory.length < MAX_INV && healItem) {
         inventory.push(makeInventoryItem(healItem));
         extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 Mikstura Leczenia (+100 HP w plecaku)</strong></div>`;
     } else {
-        const before = mapRun.playerHp;
-        mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL);
-        duel.playerHp = mapRun.playerHp;
+        const before = mapRun.playerHp; mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL); duel.playerHp = mapRun.playerHp;
         extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${mapRun.playerHp - before} ❤️ HP</strong></div>`;
     }
-
-    document.getElementById('chestLootSummary').innerHTML =
-        `<div><span>Znaleziony brąz:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` +
-        extraRewardHtml +
-        `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
-
-    updateUI();
-    toggleModal('chestModal', true);
+    document.getElementById('chestLootSummary').innerHTML = `<div><span>Znaleziony brąz:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
+    updateUI(); toggleModal('chestModal', true);
 }
 
-function closeChestToMap() {
-    toggleModal('chestModal', false);
-    advanceMapFloor();
-    openMapModal(false);
-}
-
-function advanceMapFloor() {
-    if (mapRun.floor < mapRun.floors.length - 1) {
-        mapRun.floor++;
-    }
-}
+function closeChestToMap() { toggleModal('chestModal', false); openMapModal(false); }
 
 function abandonMapRun() {
-    if (confirm('Czy na pewno chcesz porzucić wyprawę i wrócić do lobby?')) {
-        toggleModal('mapModal', false);
-        leaveDuel();
-    }
+    if (confirm('Czy na pewno chcesz porzucić wyprawę i wrócić do lobby?')) { toggleModal('mapModal', false); leaveDuel(); }
 }
-
-// ======================= POJEDYNEK PvE =======================
-const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-function motionScale() {
-    return (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0.5 : 1;
-}
-function duelCap() {
-    let baseCap = Math.round(duel.enemyMaxHp * DUEL.CAP_PCT);
-    if (duel.kaelEnraged) baseCap = Math.round(baseCap * 1.10);
-    return baseCap;
-}
-function isFatigued() { return duel.round >= duel.fatigueRound; }
-function fatigueMult() { return isFatigued() ? DUEL.FATIGUE_MULT : 1; }
 
 function startDuelFromMapNode(node) {
-    const token = duel.token + 1;
-    const prevStreak = duel.streak;
-    duel = newDuelState();
-    duel.token = token;
-    duel.active = true;
-    duel.phase = 'attack';
-    duel.streak = prevStreak;
-
-    duel.playerHp = mapRun.playerHp;
-    duel.playerMaxHp = mapRun.playerMaxHp;
-
-    duel.enemyMaxHp = node.hp;
-    duel.enemyHp = node.hp;
+    const token = duel.token + 1; const prevStreak = duel.streak;
+    duel = newDuelState(); duel.token = token; duel.active = true; duel.phase = 'attack'; duel.streak = prevStreak;
+    duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
+    duel.enemyMaxHp = node.hp; duel.enemyHp = node.hp;
     currentEnemyTrait = node.enemy;
-
     duel.enemyShield = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
 
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('fatigueModal', false);
     toggleModal('shopModal', false); toggleModal('lobbySectionModal', false);
     gameOver = false;
     discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - 2) : MAX_DISCARDS;
-    activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0;
-    currentFightBonus = 0;
-    selectedCards = []; shieldCards = [];
-    setHandResolutionPending(false);
+    activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
+    selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     document.getElementById('enemyHand').innerHTML = '';
     document.getElementById('ui-enemy-label').innerText = node.type === 'boss' ? '👑 BOSS HP:' : (node.type === 'elite' ? '💀 ELITA HP:' : 'Wróg HP:');
-    document.getElementById('log').innerText = `Piętro ${mapRun.act} (Etap ${mapRun.floor + 1}/5): ${currentEnemyTrait.name} (${duel.enemyMaxHp} HP). Wybierz karty na Atak!`;
+    document.getElementById('log').innerText = `Odkryto salę: ${currentEnemyTrait.name} (${duel.enemyMaxHp} HP). Wybierz karty na Atak!`;
     initGame();
 }
 
 function leaveDuel() {
     duel.token++; duel.active = false; mapRun.active = false; duel.phase = 'attack';
-    currentEnemyTrait = null; lockedCardId = null;
-    gameOver = true;
-    runFinishedAt = Date.now();
-    selectedCards = []; shieldCards = [];
-    setHandResolutionPending(false);
+    currentEnemyTrait = null; lockedCardId = null; gameOver = true; runFinishedAt = Date.now();
+    selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     toggleModal('duelResultModal', false); toggleModal('fatigueModal', false); toggleModal('mapModal', false);
     toggleModal('chestModal', false); toggleModal('shopModal', false);
-    document.getElementById('enemyHand').innerHTML = '';
-    toggleModal('mainMenu', true);
-    updateUI();
+    document.getElementById('enemyHand').innerHTML = ''; toggleModal('mainMenu', true); updateUI();
 }
 
-function continueToMapAfterDuel() {
-    toggleModal('duelResultModal', false);
-    advanceMapFloor();
-    openMapModal(false);
-}
+function continueToMapAfterDuel() { toggleModal('duelResultModal', false); openMapModal(false); }
 
 function duelEnd(win) {
-    gameOver = true;
-    setHandResolutionPending(false);
-    playHaptic(win ? 'poker' : 'defeat');
-    const st = duel.stats;
-    const node = mapRun.currentNode;
+    gameOver = true; setHandResolutionPending(false); playHaptic(win ? 'poker' : 'defeat');
+    const st = duel.stats; const node = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
     const isBossNode = node && node.type === 'boss';
-
-    let reward = 0;
-    let xpGained = 0;
-    let levelsGained = 0;
-    let healedHp = 0;
+    let reward = 0; let xpGained = 0; let levelsGained = 0; let healedHp = 0;
 
     if (win) {
         duel.streak++;
-        const baseReward = isBossNode
-            ? (45 + Math.floor(Math.random() * 11))
-            : (node && node.type === 'elite'
-                ? (22 + Math.floor(Math.random() * 7))
-                : (12 + Math.floor(Math.random() * 5)));
-        reward = baseReward + currentFightBonus;
-        coins += reward;
-        runStats.enemiesDefeated++;
-        if (isBossNode) runStats.bossesDefeated++;
-        runStats.coinsEarned += reward;
+        const baseReward = isBossNode ? (45 + Math.floor(Math.random() * 11)) : (node && node.type === 'elite' ? (22 + Math.floor(Math.random() * 7)) : (12 + Math.floor(Math.random() * 5)));
+        reward = baseReward + currentFightBonus; coins += reward;
+        runStats.enemiesDefeated++; if (isBossNode) runStats.bossesDefeated++; runStats.coinsEarned += reward;
 
-        mapRun.playerHp = duel.playerHp;
-        const hpBeforeHeal = mapRun.playerHp;
+        mapRun.playerHp = duel.playerHp; const hpBeforeHeal = mapRun.playerHp;
         mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.POST_FIGHT_HEAL);
-        healedHp = mapRun.playerHp - hpBeforeHeal;
-        duel.playerHp = mapRun.playerHp;
+        healedHp = mapRun.playerHp - hpBeforeHeal; duel.playerHp = mapRun.playerHp;
 
-        xpGained = node ? (node.xp || 50) : 50;
-        levelsGained = gainXp(xpGained);
+        xpGained = node ? (node.xp || 50) : 50; levelsGained = gainXp(xpGained);
+
+        // Oznaczenie wyczyszczenia węzła
+        if(node) { node.cleared = true; node.icon = '🪵'; }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
-    } else {
-        runFinishedAt = Date.now();
-    }
+    } else { runFinishedAt = Date.now(); }
 
-    document.getElementById('duelResultTitle').innerText = win
-        ? (isBossNode ? `👑 Boss Piętra ${mapRun.act} Pokonany!` : 'Zwycięstwo na Szlaku!')
-        : 'Poległeś na Szlaku...';
+    document.getElementById('duelResultTitle').innerText = win ? (isBossNode ? `👑 Boss Piętra ${mapRun.act} Pokonany!` : 'Zwycięstwo na Szlaku!') : 'Poległeś na Szlaku...';
     document.getElementById('duelResultTitle').style.color = win ? '#2ecc71' : '#e74c3c';
 
-    let levelUpLine = levelsGained > 0
-        ? `<div><span>🎉 Awans na Poziom ${mapRun.level}!</span><strong style="color:#f1c40f">+${levelsGained * DUEL.LEVEL_UP_HP} Max HP i leczenie!</strong></div>`
-        : '';
-
+    let levelUpLine = levelsGained > 0 ? `<div><span>🎉 Awans na Poziom ${mapRun.level}!</span><strong style="color:#f1c40f">+${levelsGained * DUEL.LEVEL_UP_HP} Max HP i leczenie!</strong></div>` : '';
     document.getElementById('duelResultText').innerHTML =
         `<div><span>Przeciwnik:</span><strong style="color:#f39c12">${currentEnemyTrait ? currentEnemyTrait.name : 'Wróg'}</strong></div>` +
         `<div><span>Rundy walki:</span><strong style="color:#fff">${duel.round}</strong></div>` +
@@ -1250,218 +1046,133 @@ function duelEnd(win) {
         `<div><span>Zablokowane tarczą:</span><strong style="color:var(--chips)">${st.blocked} 🛡</strong></div>` +
         (win ? `<div><span>Regeneracja po walce (+150):</span><strong style="color:#2ecc71">+${healedHp} ❤️ (Masz ${mapRun.playerHp}/${mapRun.playerMaxHp} HP)</strong></div>` : '') +
         (win ? `<div><span>Zdobyte doświadczenie:</span><strong style="color:#f1c40f">+${xpGained} EXP (Poz. ${mapRun.level}: ${mapRun.xp}/${mapRun.xpNext})</strong></div>` : '') +
-        levelUpLine +
-        `<div><span>Nagroda (układy +${currentFightBonus}):</span><strong style="color:#f1c40f">${win ? `+${reward} 🪙` : '0 🪙'}</strong></div>`;
+        levelUpLine + `<div><span>Nagroda (układy +${currentFightBonus}):</span><strong style="color:#f1c40f">${win ? `+${reward} 🪙` : '0 🪙'}</strong></div>`;
 
     document.getElementById('duelMapContinueBtn').style.display = (win && !isBossNode) ? 'block' : 'none';
     document.getElementById('duelNextActBtn').style.display = (win && isBossNode) ? 'block' : 'none';
     document.getElementById('duelRetryBtn').style.display = !win ? 'block' : 'none';
 
-    updateUI();
-    const token = duel.token;
+    updateUI(); const token = duel.token;
     setTimeout(() => { if (duel.token === token && duel.active) toggleModal('duelResultModal', true); }, 700);
 }
 
 function duelPlay() {
     if (gameOver || handResolutionPending || !duel.active) return;
-
     if (duel.phase === 'attack') {
-        playHaptic('tap');
-        duel.phase = 'shield';
-        shieldCards = [];
-        document.getElementById('log').innerText = selectedCards.length > 0
-            ? 'Etap 2/2: Wybierz do 3 kart na Tarczę (Para i Trójka dają mnożnik!).'
-            : 'Pominąłeś atak. Etap 2/2: Wybierz do 3 kart na Tarczę.';
-        evaluateHand();
-        updateUI();
-        return;
+        playHaptic('tap'); duel.phase = 'shield'; shieldCards = [];
+        document.getElementById('log').innerText = selectedCards.length > 0 ? 'Etap 2/2: Wybierz do 3 kart na Tarczę (Para i Trójka dają mnożnik!).' : 'Pominąłeś atak. Etap 2/2: Wybierz do 3 kart na Tarczę.';
+        evaluateHand(); updateUI(); return;
     }
 
     const attackCards = hand.filter(c => selectedCards.includes(c.id));
     const shieldHand = hand.filter(c => shieldCards.includes(c.id));
 
-    let damage = 0;
-    let handName = null;
+    let damage = 0; let handName = null;
     if (attackCards.length) {
-        const { rule, sum } = scoreCards(attackCards);
-        handName = rule.name;
+        const { rule, sum } = scoreCards(attackCards); handName = rule.name;
         const luckyProc = relics.lucky_coin && Math.random() < 0.10;
         if (luckyProc) showFloatingText('🪙 Szczęście x2!', '#f1c40f', '65%', '35%', '20px');
-        damage = Math.floor(computeAttackDamage(rule, sum, {
-            potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0,
-            dice: pendingDiceRoll,
-            applyEnemyTrait: true,
-            luckyProc
-        }).damage);
+        damage = Math.floor(computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, luckyProc }).damage);
     }
 
     const go = () => resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand);
-    if (handName === 'Strit') {
-        setHandResolutionPending(true);
-        animateStraightCards(attackCards, () => { setHandResolutionPending(false); go(); });
-        return;
-    }
+    if (handName === 'Strit') { setHandResolutionPending(true); animateStraightCards(attackCards, () => { setHandResolutionPending(false); go(); }); return; }
     go();
 }
 
 function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
-    if (gameOver || !duel.active) return;
-    const fm = fatigueMult();
+    if (gameOver || !duel.active) return; const fm = fatigueMult();
 
     if (attackCards.length) {
-        playHaptic(handName === 'Poker' ? 'poker' : 'hit');
-        runHandAnimation(handName, attackCards);
-        currentFightBonus += HAND_WIN_BONUS[handName] || 0;
-
+        playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards); currentFightBonus += HAND_WIN_BONUS[handName] || 0;
         let incoming = Math.floor(damage * fm);
 
-        if (duel.corvenBlockArmed) {
-            incoming = 0;
-            duel.corvenBlockArmed = false;
-            showFloatingText('🛡️ ZABLOKOWANO 100%!', '#5dade2', '30%', '28%', '20px');
-        }
+        if (duel.corvenBlockArmed) { incoming = 0; duel.corvenBlockArmed = false; showFloatingText('🛡️ ZABLOKOWANO 100%', '#5dade2', '30%', '28%', '20px'); }
 
-        const absorbed = Math.min(duel.enemyShield, incoming);
-        const dealt = incoming - absorbed;
-        duel.enemyShield = 0;
-        duel.enemyHp = Math.max(0, duel.enemyHp - dealt);
+        const absorbed = Math.min(duel.enemyShield, incoming); const dealt = incoming - absorbed;
+        duel.enemyShield = 0; duel.enemyHp = Math.max(0, duel.enemyHp - dealt);
         duel.stats.dealt += dealt;
         if (incoming > duel.stats.bestDmg) { duel.stats.bestDmg = incoming; duel.stats.bestName = handName; }
         if (incoming > runStats.bestHandDmg) { runStats.bestHandDmg = incoming; runStats.bestHandName = handName; }
         runStats.totalDamage += dealt;
 
         if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '30%', '34%', '18px');
-        showFloatingText(`-${dealt}`, '#e74c3c', '30%', '22%', '26px');
-        pendingDiceRoll = 0;
+        showFloatingText(`-${dealt}`, '#e74c3c', '30%', '22%', '26px'); pendingDiceRoll = 0;
         if (activeBuff.turns > 0) { activeBuff.turns--; if (activeBuff.turns === 0) activeBuff.dmg = 0; }
 
         if (currentEnemyTrait && duel.enemyHp > 0) {
-            if (currentEnemyTrait.id === 'boss_kael' && !duel.kaelEnraged && (duel.enemyMaxHp - duel.enemyHp) > 150) {
-                duel.kaelEnraged = true;
-                showFloatingText('🔥 SZAŁ KAELA (+10%)!', '#e67e22', '30%', '30%', '19px');
-            }
-            if (currentEnemyTrait.id === 'boss_corven' && !duel.corvenBlockTriggered && duel.enemyHp <= duel.enemyMaxHp * 0.5) {
-                duel.corvenBlockTriggered = true;
-                duel.corvenBlockArmed = true;
-                showFloatingText('🛡️ TARCZA CORVENA!', '#5dade2', '30%', '30%', '19px');
-            }
-            if (currentEnemyTrait.id === 'boss_riwi' && duel.handLimit === 8) {
-                duel.handLimit = 7;
-                showFloatingText('🩸 OBCIĘCIE PALCA (7 kart)!', '#e74c3c', '65%', '30%', '19px');
-            }
+            if (currentEnemyTrait.id === 'boss_kael' && !duel.kaelEnraged && (duel.enemyMaxHp - duel.enemyHp) > 150) { duel.kaelEnraged = true; showFloatingText('🔥 SZAŁ KAELA!', '#e67e22', '30%', '30%', '19px'); }
+            if (currentEnemyTrait.id === 'boss_corven' && !duel.corvenBlockTriggered && duel.enemyHp <= duel.enemyMaxHp * 0.5) { duel.corvenBlockTriggered = true; duel.corvenBlockArmed = true; showFloatingText('🛡️ TARCZA CORVENA!', '#5dade2', '30%', '30%', '19px'); }
+            if (currentEnemyTrait.id === 'boss_riwi' && duel.handLimit === 8) { duel.handLimit = 7; showFloatingText('🩸 OBCIĘCIE PALCA!', '#e74c3c', '65%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_farron' && (handName === 'Wysoka Karta' || handName === 'Para')) {
-                duel.playerHp = Math.max(0, duel.playerHp - 15);
-                mapRun.playerHp = duel.playerHp;
-                duel.stats.taken += 15;
-                showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px');
+                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px');
             }
         }
-    } else {
-        duel.enemyShield = 0;
-    }
+    } else { duel.enemyShield = 0; }
 
-    const shEval = evaluateShieldCards(shieldHand, true);
-    duel.playerShield += shEval.total;
+    const shEval = evaluateShieldCards(shieldHand, true); duel.playerShield += shEval.total;
     if (shEval.total > 0) showFloatingText(`+${shEval.total} 🛡`, '#5dade2', '15%', '34%', '20px');
 
-    const usedIds = attackCards.concat(shieldHand).map(c => c.id);
-    const used = hand.filter(c => usedIds.includes(c.id));
-    hand = hand.filter(c => !usedIds.includes(c.id));
-    discardPile.push(...used);
-    selectedCards = []; shieldCards = [];
-    duel.phase = 'attack';
-
-    evaluateHand();
+    const usedIds = attackCards.concat(shieldHand).map(c => c.id); const used = hand.filter(c => usedIds.includes(c.id));
+    hand = hand.filter(c => !usedIds.includes(c.id)); discardPile.push(...used);
+    selectedCards = []; shieldCards = []; duel.phase = 'attack'; evaluateHand();
 
     if (duel.enemyHp === 0) { updateUI(); duelEnd(true); return; }
     if (duel.playerHp === 0) { updateUI(); duelEnd(false); return; }
 
-    setHandResolutionPending(true);
-    updateUI();
+    setHandResolutionPending(true); updateUI();
     duelEnemyTurn(duel.token).catch(err => { console.error(err); setHandResolutionPending(false); });
 }
 
 function planEnemyTurn(cards) {
-    const n = cards.length;
-    let best = null;
+    const n = cards.length; let best = null;
     for (let mask = 1; mask < (1 << n); mask++) {
-        const subset = [];
-        for (let i = 0; i < n; i++) if (mask & (1 << i)) subset.push(cards[i]);
+        const subset = []; for (let i = 0; i < n; i++) if (mask & (1 << i)) subset.push(cards[i]);
         if (subset.length > 5) continue;
-        const sc = scoreCards(subset);
-        let damage = Math.floor(computeAttackDamage(sc.rule, sc.sum).damage);
+        const sc = scoreCards(subset); let damage = Math.floor(computeAttackDamage(sc.rule, sc.sum).damage);
         if (duel.kaelEnraged) damage = Math.floor(damage * 1.10);
         const usedVal = subset.reduce((t, c) => t + c.val, 0);
-        if (!best || damage > best.damage || (damage === best.damage && usedVal < best.usedVal)) {
-            best = { attack: subset, rule: sc.rule, damage, usedVal };
-        }
+        if (!best || damage > best.damage || (damage === best.damage && usedVal < best.usedVal)) { best = { attack: subset, rule: sc.rule, damage, usedVal }; }
     }
     const remaining = cards.filter(c => !best.attack.includes(c));
     const maxShieldCount = Math.max(0, Math.min(DUEL.SHIELD_MAX_CARDS, DUEL.PLAY_LIMIT - best.attack.length));
-
-    let bestShield = { cards: [], value: 0, name: 'Brak' };
-    const m = remaining.length;
+    let bestShield = { cards: [], value: 0, name: 'Brak' }; const m = remaining.length;
     for (let mask = 0; mask < (1 << m); mask++) {
-        const sub = [];
-        for (let i = 0; i < m; i++) if (mask & (1 << i)) sub.push(remaining[i]);
+        const sub = []; for (let i = 0; i < m; i++) if (mask & (1 << i)) sub.push(remaining[i]);
         if (sub.length > maxShieldCount) continue;
-        const ev = evaluateShieldCards(sub, false);
-        if (ev.total > bestShield.value) {
-            bestShield = { cards: sub, value: ev.total, name: ev.name };
-        }
+        const ev = evaluateShieldCards(sub, false); if (ev.total > bestShield.value) { bestShield = { cards: sub, value: ev.total, name: ev.name }; }
     }
-
-    return {
-        attack: best.attack,
-        rule: best.rule,
-        damage: best.damage,
-        shield: bestShield.cards,
-        shieldValue: bestShield.value,
-        shieldName: bestShield.name
-    };
+    return { attack: best.attack, rule: best.rule, damage: best.damage, shield: bestShield.cards, shieldValue: bestShield.value, shieldName: bestShield.name };
 }
 
 function renderEnemyHand(cards) {
-    const box = document.getElementById('enemyHand');
-    box.innerHTML = '';
-    cards.forEach((c, i) => {
-        const el = document.createElement('div');
-        el.className = 'e-card back dealing';
-        el.dataset.cardId = c.id;
-        el.style.setProperty('--card-index', i);
-        box.appendChild(el);
-    });
+    const box = document.getElementById('enemyHand'); box.innerHTML = '';
+    cards.forEach((c, i) => { const el = document.createElement('div'); el.className = 'e-card back dealing'; el.dataset.cardId = c.id; el.style.setProperty('--card-index', i); box.appendChild(el); });
 }
 
 function revealEnemyCard(card, role) {
-    const el = Array.from(document.querySelectorAll('#enemyHand .e-card')).find(e => e.dataset.cardId === card.id);
-    if (!el) return;
-    el.className = `e-card open ${card.color === 'red' ? 'red' : ''} ${role} flip`;
-    el.innerHTML = `<span>${card.rank}</span><span>${card.suit}</span>`;
+    const el = Array.from(document.querySelectorAll('#enemyHand .e-card')).find(e => e.dataset.cardId === card.id); if (!el) return;
+    el.className = `e-card open ${card.color === 'red' ? 'red' : ''} ${role} flip`; el.innerHTML = `<span>${card.rank}</span><span>${card.suit}</span>`;
 }
 
 function setEnemyNote(text) { document.getElementById('duelEnemyNote').innerText = text; }
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+function motionScale() { return (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0.5 : 1; }
+function duelCap() { let baseCap = Math.round(duel.enemyMaxHp * DUEL.CAP_PCT); if (duel.kaelEnraged) baseCap = Math.round(baseCap * 1.10); return baseCap; }
+function isFatigued() { return duel.round >= duel.fatigueRound; }
+function fatigueMult() { return isFatigued() ? DUEL.FATIGUE_MULT : 1; }
 
 async function executeSingleEnemyStrike(token, isSecondStrike = false) {
-    const alive = () => duel.active && duel.token === token && !gameOver;
-    const k = motionScale();
-
-    duel.enemyCards = shuffle(createDeck()).slice(0, DUEL.ENEMY_HAND);
-    const plan = planEnemyTurn(duel.enemyCards);
+    const alive = () => duel.active && duel.token === token && !gameOver; const k = motionScale();
+    duel.enemyCards = shuffle(createDeck()).slice(0, DUEL.ENEMY_HAND); const plan = planEnemyTurn(duel.enemyCards);
     setEnemyNote(isSecondStrike ? '⚔️ Szał Bojowy Lokara — drugi atak!' : 'Wróg losuje karty…');
-    renderEnemyHand(duel.enemyCards);
-    await wait(800 * k); if (!alive()) return false;
-
+    renderEnemyHand(duel.enemyCards); await wait(800 * k); if (!alive()) return false;
     for (const card of plan.attack) { revealEnemyCard(card, 'attack'); await wait(210 * k); if (!alive()) return false; }
     await wait(320 * k); if (!alive()) return false;
 
-    const fm = fatigueMult();
-    const raw = Math.min(plan.damage, duelCap());
-    const incoming = Math.floor(raw * fm);
-    const absorbed = Math.min(duel.playerShield, incoming);
-    const dealt = incoming - absorbed;
-    duel.playerShield = Math.max(0, duel.playerShield - incoming);
-    duel.playerHp = Math.max(0, duel.playerHp - dealt);
+    const fm = fatigueMult(); const raw = Math.min(plan.damage, duelCap()); const incoming = Math.floor(raw * fm);
+    const absorbed = Math.min(duel.playerShield, incoming); const dealt = incoming - absorbed;
+    duel.playerShield = Math.max(0, duel.playerShield - incoming); duel.playerHp = Math.max(0, duel.playerHp - dealt);
     if (mapRun.active) mapRun.playerHp = duel.playerHp;
     duel.stats.taken += dealt; duel.stats.blocked += absorbed;
 
@@ -1469,138 +1180,81 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '15%', '34%', '18px');
     showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '15%', '22%', '26px');
     if (dealt > 0) { playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
-
-    if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') {
-        duel.poisonStacks++;
-        showFloatingText(`☠️ Trucizna +1 (${duel.poisonStacks * 10}/t.)`, '#2ecc71', '18%', '28%', '17px');
-    }
-
+    if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {
-        const healAmt = Math.floor(dealt * 0.5);
-        if (healAmt > 0) {
-            duel.enemyHp = Math.min(duel.enemyMaxHp, duel.enemyHp + healAmt);
-            showFloatingText(`🩸 Pijawka +${healAmt} HP`, '#2ecc71', '30%', '26%', '19px');
-        }
+        const healAmt = Math.floor(dealt * 0.5); if (healAmt > 0) { duel.enemyHp = Math.min(duel.enemyMaxHp, duel.enemyHp + healAmt); showFloatingText(`🩸 Pijawka +${healAmt} HP`, '#2ecc71', '30%', '26%', '19px'); }
     }
-
-    updateUI();
-    if (duel.playerHp === 0) { duelEnd(false); return false; }
+    updateUI(); if (duel.playerHp === 0) { duelEnd(false); return false; }
     await wait(550 * k); if (!alive()) return false;
 
     for (const card of plan.shield) { revealEnemyCard(card, 'shield'); await wait(180 * k); if (!alive()) return false; }
     const traitGuardBonus = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
     duel.enemyShield = plan.shieldValue + traitGuardBonus;
-    if (duel.enemyShield > 0) {
-        setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG) · ${plan.shieldName} +${duel.enemyShield} 🛡`);
-        showFloatingText(`+${duel.enemyShield} 🛡`, '#5dade2', '30%', '34%', '20px');
-    }
-    updateUI();
-    await wait(700 * k); if (!alive()) return false;
+    if (duel.enemyShield > 0) { setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG) · ${plan.shieldName} +${duel.enemyShield} 🛡`); showFloatingText(`+${duel.enemyShield} 🛡`, '#5dade2', '30%', '34%', '20px'); }
+    updateUI(); await wait(700 * k); if (!alive()) return false;
     return true;
 }
 
 async function duelEnemyTurn(token) {
-    const alive = () => duel.active && duel.token === token && !gameOver;
-    const k = motionScale();
+    const alive = () => duel.active && duel.token === token && !gameOver; const k = motionScale();
     await wait(600 * k); if (!alive()) return;
-
-    const survivedFirst = await executeSingleEnemyStrike(token, false);
-    if (!survivedFirst) return;
+    const survivedFirst = await executeSingleEnemyStrike(token, false); if (!survivedFirst) return;
 
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_lokar' && !duel.lokarFrenzyUsed && duel.enemyHp <= duel.enemyMaxHp * 0.30) {
-        duel.lokarFrenzyUsed = true;
-        showFloatingText('⚔️ SZAŁ BOJOWY LOKARA!', '#e67e22', '30%', '30%', '19px');
+        duel.lokarFrenzyUsed = true; showFloatingText('⚔️ SZAŁ BOJOWY LOKARA!', '#e67e22', '30%', '30%', '19px');
         await wait(500 * k); if (!alive()) return;
-        const survivedSecond = await executeSingleEnemyStrike(token, true);
-        if (!survivedSecond) return;
+        const survivedSecond = await executeSingleEnemyStrike(token, true); if (!survivedSecond) return;
     }
 
     if (duel.poisonStacks > 0 && duel.playerHp > 0) {
-        const poisonDmg = duel.poisonStacks * 10;
-        duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
-        if (mapRun.active) mapRun.playerHp = duel.playerHp;
-        duel.stats.taken += poisonDmg;
-        showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px');
-        updateUI();
-        if (duel.playerHp === 0) { duelEnd(false); return; }
-        await wait(450 * k); if (!alive()) return;
+        const poisonDmg = duel.poisonStacks * 10; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
+        if (mapRun.active) mapRun.playerHp = duel.playerHp; duel.stats.taken += poisonDmg;
+        showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); updateUI();
+        if (duel.playerHp === 0) { duelEnd(false); return; } await wait(450 * k); if (!alive()) return;
     }
 
-    duel.playerShield = 0;
-    duel.round++;
-    duel.phase = 'attack';
-    duel.enemyCards = [];
-    document.getElementById('enemyHand').innerHTML = '';
-    setEnemyNote('Wróg losuje karty na początku swojego ruchu.');
+    duel.playerShield = 0; duel.round++; duel.phase = 'attack'; duel.enemyCards = [];
+    document.getElementById('enemyHand').innerHTML = ''; setEnemyNote('Wróg losuje karty na początku swojego ruchu.');
 
     let bonusDiscardMsg = '';
-    if (duel.round % 5 === 0) {
-        discardsLeft++;
-        showFloatingText('+1 Odrzut (5. runda!)', '#3498db', '65%', '28%', '18px');
-        bonusDiscardMsg = ' · Otrzymujesz +1 darmowy odrzut!';
-    }
+    if (duel.round % 5 === 0) { discardsLeft++; showFloatingText('+1 Odrzut (5. runda!)', '#3498db', '65%', '28%', '18px'); bonusDiscardMsg = ' · Otrzymujesz +1 darmowy odrzut!'; }
 
     document.getElementById('log').innerText = `Runda ${duel.round} — Etap 1/2: Wybierz karty na Atak${bonusDiscardMsg}`;
-    setHandResolutionPending(false);
-    drawReplacements();
-    if (!duel.fatigueShown && duel.round >= duel.fatigueRound) {
-        duel.fatigueShown = true;
-        toggleModal('fatigueModal', true);
-    }
+    setHandResolutionPending(false); drawReplacements();
+    if (!duel.fatigueShown && duel.round >= duel.fatigueRound) { duel.fatigueShown = true; toggleModal('fatigueModal', true); }
 }
 
 function applyDuelView() {
-    const on = duel.active;
-    document.body.classList.toggle('duel-mode', on);
-    document.getElementById('duelPanel').style.display = on ? 'block' : 'none';
-    document.getElementById('ui-turns-label').innerText = 'Twoje HP:';
-    document.getElementById('ui-player-hp').innerText = `${duel.playerHp}/${duel.playerMaxHp}`;
+    const on = duel.active; document.body.classList.toggle('duel-mode', on); document.getElementById('duelPanel').style.display = on ? 'block' : 'none';
+    document.getElementById('ui-turns-label').innerText = 'Twoje HP:'; document.getElementById('ui-player-hp').innerText = `${duel.playerHp}/${duel.playerMaxHp}`;
     document.getElementById('ui-enemy-hp').innerText = `${duel.enemyHp}/${duel.enemyMaxHp}`;
-    if (!on) return;
-    updateDuelPanel();
+    if (!on) return; updateDuelPanel();
 }
 
 function updateDuelPanel() {
-    const fm = fatigueMult();
-    document.getElementById('duelRound').innerText = `Runda ${duel.round} · ${duel.phase === 'attack' ? 'Etap 1/2: Atak ⚔' : 'Etap 2/2: Tarcza 🛡'}`;
+    const fm = fatigueMult(); document.getElementById('duelRound').innerText = `Runda ${duel.round} · ${duel.phase === 'attack' ? 'Etap 1/2: Atak ⚔' : 'Etap 2/2: Tarcza 🛡'}`;
     document.getElementById('duelFatigueTag').style.display = isFatigued() ? 'inline' : 'none';
     const poisonTag = document.getElementById('duelPoisonTag');
-    if (duel.poisonStacks > 0) {
-        poisonTag.style.display = 'inline';
-        poisonTag.innerText = `☠️ Trucizna: ${duel.poisonStacks * 10} DMG/t.`;
-    } else {
-        poisonTag.style.display = 'none';
-    }
-    document.getElementById('duelPlayerShield').innerText = duel.playerShield;
-    document.getElementById('duelEnemyShield').innerText = duel.enemyShield;
+    if (duel.poisonStacks > 0) { poisonTag.style.display = 'inline'; poisonTag.innerText = `☠️ Trucizna: ${duel.poisonStacks * 10} DMG/t.`; } else { poisonTag.style.display = 'none'; }
+    document.getElementById('duelPlayerShield').innerText = duel.playerShield; document.getElementById('duelEnemyShield').innerText = duel.enemyShield;
 
     const hintEl = document.getElementById('duelHint');
-    if (duel.phase === 'attack') {
-        hintEl.innerText = `Krok 1/2 (⚔ Atak): Wybierz 0–5 kart (${selectedCards.length}/5) · Co 5. rundę +1 odrzut`;
-    } else {
-        hintEl.innerText = `Krok 2/2 (🛡 Tarcza): Wybierz 0–3 wolnych kart (${shieldCards.length}/3) · Para i Trójka dają mnożnik!`;
-    }
+    if (duel.phase === 'attack') { hintEl.innerText = `Krok 1/2 (⚔ Atak): Wybierz 0–5 kart (${selectedCards.length}/5) · Co 5. rundę +1 odrzut`; } 
+    else { hintEl.innerText = `Krok 2/2 (🛡 Tarcza): Wybierz 0–3 wolnych kart (${shieldCards.length}/3) · Para i Trójka dają mnożnik!`; }
 
-    const lines = [];
-    const attack = hand.filter(c => selectedCards.includes(c.id));
-    const shield = hand.filter(c => shieldCards.includes(c.id));
+    const lines = []; const attack = hand.filter(c => selectedCards.includes(c.id)); const shield = hand.filter(c => shieldCards.includes(c.id));
     if (attack.length) {
-        const incoming = duel.corvenBlockArmed ? 0 : Math.floor(currentDamage * fm);
-        const absorbed = Math.min(duel.enemyShield, incoming);
+        const incoming = duel.corvenBlockArmed ? 0 : Math.floor(currentDamage * fm); const absorbed = Math.min(duel.enemyShield, incoming);
         const after = Math.max(0, duel.enemyHp - (incoming - absorbed));
-        lines.push(`⚔ Atak ${incoming}${duel.corvenBlockArmed ? ' (Zablokowany tarczą Corvena!)' : ''}${absorbed ? `, tarcza wroga −${absorbed}` : ''} → wróg ${after} HP`);
-    } else if (duel.phase === 'shield') {
-        lines.push(`⚔ Atak pominięty (0 DMG)`);
-    }
-    const shEval = evaluateShieldCards(shield, true);
-    const totalPreviewShield = duel.playerShield + shEval.total;
+        lines.push(`⚔ Atak ${incoming}${duel.corvenBlockArmed ? ' (Zablokowany!)' : ''}${absorbed ? `, tarcza wroga −${absorbed}` : ''} → wróg ${after} HP`);
+    } else if (duel.phase === 'shield') { lines.push(`⚔ Atak pominięty (0 DMG)`); }
+    const shEval = evaluateShieldCards(shield, true); const totalPreviewShield = duel.playerShield + shEval.total;
     if (shEval.total > 0) lines.push(`🛡 ${shEval.name}: +${shEval.total} (łącznie ${totalPreviewShield} 🛡)`);
-    const maxIn = Math.floor(duelCap() * fm);
-    const worst = Math.max(0, maxIn - totalPreviewShield) + (duel.poisonStacks * 10);
+    const maxIn = Math.floor(duelCap() * fm); const worst = Math.max(0, maxIn - totalPreviewShield) + (duel.poisonStacks * 10);
     lines.push(`Wróg uderzy za max ${maxIn}${totalPreviewShield ? ` (po tarczy${duel.poisonStacks ? ' i truciźnie' : ''}: ${worst})` : ''}.`);
-    let html = lines.join('<br>');
-    if (!gameOver && duel.playerHp <= worst) html += '<br><span class="duel-warn">⚠ Możesz paść w tej rundzie!</span>';
+    let html = lines.join('<br>'); if (!gameOver && duel.playerHp <= worst) html += '<br><span class="duel-warn">⚠ Możesz paść w tej rundzie!</span>';
     document.getElementById('duelPreview').innerHTML = html;
 }
 
 initGame();
+</script>
