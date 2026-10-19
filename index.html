@@ -8,7 +8,6 @@
 </head>
 <body>
 
-<!-- Komunikat dla orientacji pionowej na telefonie -->
 <div id="rotate-overlay">
   <div style="font-size: 42px; margin-bottom: 10px;">🔄📱</div>
   <h2 style="color: var(--gold); margin: 0 0 8px;">Obróć telefon poziomo</h2>
@@ -17,7 +16,6 @@
 </div>
 
 <div class="tavern-table">
-  <!-- Górny pasek 16:9 -->
   <div class="top-bar">
     <div class="top-left-btns">
       <button class="btn-top" onclick="toggleModal('scoreModal', true)">ℹ️ Punkty</button>
@@ -29,9 +27,7 @@
     </div>
   </div>
 
-  <!-- Główna siatka stołu 16:9 -->
   <div class="board-grid">
-    <!-- LEWA KOLUMNA: Statusy, EXP, Cecha Wroga, Karty Wroga i Plecak -->
     <div class="left-col">
       <div class="status-bar">
         <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <span id="ui-player-hp">750/750</span> <span id="ui-buff" class="color-buff"></span></span>
@@ -39,7 +35,6 @@
         <span class="hp-enemy"><span id="ui-enemy-label">Wróg HP:</span> <span id="ui-enemy-hp">500</span></span>
       </div>
 
-      <!-- Pasek Poziomu i EXP -->
       <div class="xp-bar-wrap" id="ui-xp-bar">
         <span class="xp-badge" id="ui-level">⭐ Poz. 1</span>
         <div class="xp-track"><div class="xp-fill" id="ui-xp-fill"></div></div>
@@ -48,7 +43,6 @@
 
       <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
 
-      <!-- Panel pojedynku PvE -->
       <div class="duel-panel" id="duelPanel">
         <div class="duel-top">
           <span id="duelRound">Runda 1</span>
@@ -72,7 +66,6 @@
       </div>
     </div>
 
-    <!-- PRAWA KOLUMNA: Punktacja układu, Log, Karty Gracza i Przyciski -->
     <div class="right-col">
       <div class="eval-screen">
         <div class="eval-name" id="evalName">Wybierz karty</div>
@@ -97,7 +90,6 @@
   </div>
 </div>
 
-<!-- Lobby 16:9 -->
 <div class="modal-overlay lobby-overlay" id="mainMenu" style="display:flex">
   <div class="modal-content lobby-card">
     <div class="lobby-left">
@@ -125,7 +117,6 @@
   </div>
 </div>
 
-<!-- Modal Mapy Wyprawy PvE (Poziomy 16:9) -->
 <div class="modal-overlay" id="mapModal">
   <div class="modal-content map-modal-wide">
     <div class="modal-title" id="mapTitle">Szlak Calionu · Piętro 1</div>
@@ -133,10 +124,15 @@
       <span style="color:var(--heal);font-weight:bold">❤️ HP: <span id="mapPlayerHp">750/750</span></span>
       <span style="color:#f1c40f;font-weight:bold">⭐ Poz. <span id="mapPlayerLvl">1</span> (<span id="mapPlayerXp">0/100</span>)</span>
       <span style="color:#f1c40f;font-weight:bold">🪙 <span id="mapPlayerCoins">0</span></span>
-      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Wybierz punkt na podświetlonym etapie (od lewej do prawej).</span>
+      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Wybierz oświetloną drogę. Możesz się cofać.</span>
     </div>
     <div class="map-boss-banner" id="mapBossBanner"></div>
-    <div class="map-ladder" id="mapLadder"></div>
+    
+    <!-- NOWA PLANSZA MAPY -->
+    <div class="map-board" id="mapBoard">
+      <svg id="svgLayer"></svg>
+    </div>
+
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
       <button class="btn-action lobby-shop" onclick="abandonMapRun()">Porzuć wyprawę i wróć do lobby</button>
@@ -144,7 +140,6 @@
   </div>
 </div>
 
-<!-- Modal Skrzyni na szlaku -->
 <div class="modal-overlay" id="chestModal">
   <div class="modal-content">
     <div class="modal-title" style="color:#f1c40f">📦 Skrzynia na Szlaku</div>
@@ -162,7 +157,6 @@
   </div>
 </div>
 
-<!-- Modal Potwierdzenia Użycia Przedmiotu -->
 <div class="modal-overlay" id="itemConfirmModal">
   <div class="modal-content" style="max-width:420px">
     <div class="modal-title" style="color: #f1c40f;">Użyj Przedmiotu</div>
@@ -175,7 +169,6 @@
   </div>
 </div>
 
-<!-- Modal Wyrzucania Przedmiotu ze Sklepu -->
 <div class="modal-overlay" id="replaceModal">
   <div class="modal-content" style="max-width:480px">
     <div class="modal-title" style="color: #e74c3c;">Plecak Pełny</div>
@@ -185,7 +178,6 @@
   </div>
 </div>
 
-<!-- Modal Punktacji z podpowiedziami -->
 <div class="modal-overlay" id="scoreModal">
   <div class="modal-content">
     <div class="modal-title">Tabela Punktacji</div>
@@ -206,7 +198,6 @@
   </div>
 </div>
 
-<!-- Modal Sklepu 16:9 -->
 <div class="modal-overlay" id="shopModal">
   <div class="modal-content map-modal-wide">
     <div class="modal-title">Karczemny Kram</div>
@@ -225,13 +216,12 @@
 
     <div id="shopItemsContainer" class="shop-grid-list"></div>
     <div style="display:flex;gap:10px;">
-      <button class="btn-action" id="shopProceedBtn" onclick="nextFight()">Kolejny Przeciwnik</button>
+      <button class="btn-action" id="shopProceedBtn" onclick="nextFight()">Wróć na Mapę</button>
       <button class="btn-action lobby-shop" id="shopLeaveDuelBtn" style="display:none" onclick="leaveDuelFromShop()">Wróć do lobby</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Porażki / Podsumowanie -->
 <div class="modal-overlay" id="defeatModal">
   <div class="modal-content" style="max-width:500px">
     <div class="modal-title" id="defeatTitle" style="color: #e74c3c;">Porażka...</div>
@@ -258,7 +248,6 @@
   </div>
 </div>
 
-<!-- Zmęczenie (10. runda pojedynku) -->
 <div class="modal-overlay" id="fatigueModal" style="z-index:120">
   <div class="modal-content fatigue-card" style="max-width:440px">
     <div class="fatigue-title">Zmęczenie</div>
@@ -267,13 +256,12 @@
   </div>
 </div>
 
-<!-- Wynik pojedynku na Mapie PvE -->
 <div class="modal-overlay" id="duelResultModal">
   <div class="modal-content" style="max-width:520px">
     <div class="modal-title" id="duelResultTitle">Wynik</div>
     <div class="summary-box" id="duelResultText"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn-action" id="duelMapContinueBtn" style="display:none;flex:1" onclick="continueToMapAfterDuel()">Wróć na Mapę Szlaku</button>
+      <button class="btn-action" id="duelMapContinueBtn" style="display:none;flex:1" onclick="continueToMapAfterDuel()">Wróć na Szlak</button>
       <button class="btn-action" id="duelNextActBtn" style="display:none;flex:1;background:linear-gradient(180deg,#2ecc71,#27ae60)" onclick="startNextDuelAct()">Kolejne Piętro (+125 HP wrogów)!</button>
       <button class="btn-action" id="duelRetryBtn" style="flex:1" onclick="startDuelRun()">Nowa Wyprawa</button>
       <button class="btn-action lobby-shop" style="flex:1" onclick="leaveDuel()">Wróć do lobby</button>
