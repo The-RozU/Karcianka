@@ -1,124 +1,286 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Karcianka Calionu - Wyprawa PvE</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Calion - Szulernia (Wyprawa PvE 16:9)</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="game-container">
-    <!-- EKRAN 1: LOBBY -->
-    <div id="screen-lobby" class="screen active">
-      <div class="lobby-card">
-        <h1 class="game-title">SZULERNIA CALIONU</h1>
-        <p class="game-subtitle">Karczemna Wyprawa Roguelite</p>
-        
-        <div class="lobby-actions">
-          <button class="btn btn-gold btn-large" onclick="startNewExpedition()">⚔ ROZPOCZNIJ WYPRAWĘ</button>
-        </div>
 
-        <div class="lobby-meta-stats">
-          <div class="meta-stat-item">Najwyższe piętro: <span id="meta-best-floor">1</span></div>
-          <div class="meta-stat-item">Pokonani bossowie: <span id="meta-bosses-slain">0</span></div>
-        </div>
-      </div>
+<!-- Komunikat dla orientacji pionowej na telefonie -->
+<div id="rotate-overlay">
+  <div style="font-size: 42px; margin-bottom: 10px;">🔄📱</div>
+  <h2 style="color: var(--gold); margin: 0 0 8px;">Obróć telefon poziomo</h2>
+  <p style="color: #b9ad92; font-size: 13px; max-width: 280px; margin: 0 0 18px; line-height: 1.4;">Gra działa w panoramicznym układzie 16:9 przystosowanym pod PC i poziomy ekran telefonu.</p>
+  <button class="btn-top" style="padding: 10px 18px; font-size: 13px;" onclick="document.getElementById('rotate-overlay').classList.add('dismissed')">Graj mimo to</button>
+</div>
+
+<div class="tavern-table">
+  <!-- Górny pasek 16:9 -->
+  <div class="top-bar">
+    <div class="top-left-btns">
+      <button class="btn-top" onclick="toggleModal('scoreModal', true)">ℹ️ Punkty</button>
+      <button class="btn-top btn-map-peek" onclick="openMapModal(true)">🗺️ Mapa</button>
     </div>
-
-    <!-- EKRAN 2: MAPA SZLAKU -->
-    <div id="screen-map" class="screen">
-      <div class="top-nav">
-        <div class="nav-stat">❤️ <span id="map-hp">750</span>/<span id="map-max-hp">750</span></div>
-        <div class="nav-stat">🪙 <span id="map-gold">0</span></div>
-        <div class="nav-stat">✨ EXP: <span id="map-exp">0</span>/<span id="map-exp-next">100</span> (Lvl <span id="map-lvl">1</span>)</div>
-      </div>
-
-      <div class="map-viewport">
-        <div id="map-canvas-wrap">
-          <svg id="map-svg-lines"></svg>
-          <div id="map-nodes-container"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- EKRAN 3: STÓŁ POJEDYNKU (PvE) -->
-    <div id="screen-combat" class="screen">
-      <div class="combat-top-bar">
-        <div class="combat-actor">
-          <div class="actor-info">
-            <span class="actor-name" id="player-combat-name">Wędrowiec</span>
-            <span class="actor-hp-text"><span id="combat-player-hp">750</span>/<span id="combat-player-max-hp">750</span></span>
-          </div>
-          <div class="bar-frame"><div id="combat-player-bar" class="bar-fill hp-bar" style="width: 100%"></div></div>
-          <div class="shield-badge">🛡 <span id="combat-player-shield">0</span></div>
-        </div>
-
-        <div class="combat-mid-info">
-          <div class="phase-indicator" id="combat-phase-badge">FAZA ATAKU</div>
-          <div class="turn-count">Wymiany: <span id="combat-discards">5</span></div>
-        </div>
-
-        <div class="combat-actor enemy">
-          <div class="actor-info">
-            <span class="actor-name" id="enemy-combat-name">Zbir z Szulerni</span>
-            <span class="actor-hp-text"><span id="combat-enemy-hp">600</span>/<span id="combat-enemy-max-hp">600</span></span>
-          </div>
-          <div class="bar-frame"><div id="combat-enemy-bar" class="bar-fill hp-bar enemy-hp" style="width: 100%"></div></div>
-          <div class="shield-badge">🛡 <span id="combat-enemy-shield">0</span></div>
-        </div>
-      </div>
-
-      <div class="combat-center-zone">
-        <div id="combat-log">Kronika starcia otwarta...</div>
-        <div id="hand-rating-banner">Wybierz karty do ataku</div>
-      </div>
-
-      <div class="cards-deck-zone">
-        <div id="player-hand" class="cards-hand"></div>
-      </div>
-
-      <div class="combat-controls">
-        <button id="btn-action-primary" class="btn btn-gold" onclick="onPrimaryCombatAction()">ZATWIERDŹ ATAK</button>
-        <button id="btn-action-secondary" class="btn btn-red" onclick="onSecondaryCombatAction()">ODRZUĆ KARTY</button>
-        <button class="btn btn-dark" onclick="openScoreCheatSheet()">ℹ UKŁADY</button>
-        <button class="btn btn-dark" onclick="abandonExpedition()">🏳 PODDAJ SIĘ</button>
-      </div>
-    </div>
-
-    <!-- MODAL: KRAM HANDLARZA -->
-    <div id="modal-shop" class="modal-backdrop">
-      <div class="modal-box">
-        <h2>🪙 Kramik Wędrowny</h2>
-        <p>Zaopatrz się na dalszy szlak:</p>
-        <div id="shop-items-grid" class="shop-grid"></div>
-        <button class="btn btn-gold" style="margin-top:15px;" onclick="closeShopAndBackToMap()">RUSZAJ W DALSZĄ DROGĘ</button>
-      </div>
-    </div>
-
-    <!-- MODAL: TABELA UKŁADÓW -->
-    <div id="modal-scores" class="modal-backdrop">
-      <div class="modal-box">
-        <h2>Wycena Figur Szulerni</h2>
-        <div class="scores-table-scroll">
-          <table class="scores-table">
-            <tr><th>Układ</th><th>Punkty</th><th>Opis</th></tr>
-            <tr><td>Poker</td><td>x8 Mult</td><td>5 kart w kolorze po kolei</td></tr>
-            <tr><td>Kareta</td><td>x7 Mult</td><td>4 karty o tej samej wartości</td></tr>
-            <tr><td>Full</td><td>x5 Mult</td><td>Trójka i Para</td></tr>
-            <tr><td>Kolor</td><td>x4 Mult</td><td>5 kart w tym samym kolorze</td></tr>
-            <tr><td>Strit</td><td>x3.5 Mult</td><td>5 kart po kolei</td></tr>
-            <tr><td>Trójka</td><td>x3 Mult</td><td>3 karty o tej samej wartości</td></tr>
-            <tr><td>Dwie Pary</td><td>x2 Mult</td><td>Dwa różne układy po 2 karty</td></tr>
-            <tr><td>Para</td><td>x1.5 Mult</td><td>2 karty o tej samej wartości</td></tr>
-            <tr><td>Wysoka Karta</td><td>x1 Mult</td><td>Najwyższa posiadana karta</td></tr>
-          </table>
-        </div>
-        <button class="btn btn-dark" style="margin-top:12px;" onclick="closeScoreCheatSheet()">ZAMKNIJ</button>
-      </div>
+    <h1 class="header-title">⚓ Pod Złamaną Kotwicą</h1>
+    <div class="top-right-btns">
+      <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
   </div>
 
-  <!-- Skrypt gry ładowany na końcu -->
-  <script src="game.js"></script>
+  <!-- Główna siatka stołu 16:9 -->
+  <div class="board-grid">
+    <!-- LEWA KOLUMNA: Statusy, EXP, Cecha Wroga, Karty Wroga i Plecak -->
+    <div class="left-col">
+      <div class="status-bar">
+        <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <span id="ui-player-hp">750/750</span> <span id="ui-buff" class="color-buff"></span></span>
+        <span>Odrzuty: <span id="ui-discards">5</span></span>
+        <span class="hp-enemy"><span id="ui-enemy-label">Wróg HP:</span> <span id="ui-enemy-hp">500</span></span>
+      </div>
+
+      <!-- Pasek Poziomu i EXP -->
+      <div class="xp-bar-wrap" id="ui-xp-bar">
+        <span class="xp-badge" id="ui-level">⭐ Poz. 1</span>
+        <div class="xp-track"><div class="xp-fill" id="ui-xp-fill"></div></div>
+        <span class="xp-text" id="ui-xp-text">0 / 100 EXP</span>
+      </div>
+
+      <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
+
+      <!-- Panel pojedynku PvE -->
+      <div class="duel-panel" id="duelPanel">
+        <div class="duel-top">
+          <span id="duelRound">Runda 1</span>
+          <span class="duel-poison" id="duelPoisonTag" style="display:none">☠️ Trucizna: 0</span>
+          <span class="duel-fatigue" id="duelFatigueTag" style="display:none">Zmęczenie: +25% DMG</span>
+        </div>
+        <div class="duel-shields"><span>🛡 Ty: <b id="duelPlayerShield">0</b></span><span>🛡 Wróg: <b id="duelEnemyShield">0</b></span></div>
+        <div class="enemy-hand" id="enemyHand" aria-label="Karty wroga"></div>
+        <div class="duel-note" id="duelEnemyNote">Wróg losuje karty na początku swojego ruchu.</div>
+        <div class="duel-preview" id="duelPreview"></div>
+      </div>
+
+      <div class="fight-bonus">Bonus za układy w walce: +<span id="ui-fight-bonus">0</span> 🪙</div>
+
+      <div class="inv-bar">
+        <div class="inv-slots" id="ui-inventory">
+            <div class="inv-slot"></div><div class="inv-slot"></div><div class="inv-slot"></div>
+        </div>
+        <div class="relic-badges" id="ui-relics"></div>
+        <span class="coins-display">🪙 <span id="ui-coins">0</span></span>
+      </div>
+    </div>
+
+    <!-- PRAWA KOLUMNA: Punktacja układu, Log, Karty Gracza i Przyciski -->
+    <div class="right-col">
+      <div class="eval-screen">
+        <div class="eval-name" id="evalName">Wybierz karty</div>
+        <div class="eval-dmg" id="evalDmg">Zadane Obrażenia: 0</div>
+      </div>
+
+      <div class="info-strip">
+        <div id="log">Zaczynamy grę. Przeciwnik czeka!</div>
+        <div class="duel-hint" id="duelHint">Krok 1/2 (⚔ Atak): Wybierz 0–5 kart i kliknij „Atak”</div>
+      </div>
+
+      <div class="play-area">
+        <div class="hand-zone" id="hand"></div>
+        
+        <div class="controls">
+          <button class="btn btn-discard" id="btnDiscard" onclick="discardCards()" disabled>Odrzuć</button>
+          <button class="btn btn-play" id="btnPlay" onclick="playHand()" disabled>Zagraj</button>
+          <button class="btn btn-surrender" id="btnSurrender" onclick="surrender()">🏳️ Poddaj się</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lobby 16:9 -->
+<div class="modal-overlay lobby-overlay" id="mainMenu" style="display:flex">
+  <div class="modal-content lobby-card">
+    <div class="lobby-left">
+      <div class="lobby-kicker">Karczemna gra karciana</div>
+      <div class="lobby-emblem" aria-hidden="true">⚓</div>
+      <h2 class="lobby-title">Pod Złamaną<br>Kotwicą</h2>
+      <div class="lobby-subtitle">Karczma Calionu · Wyprawa PvE (16:9)</div>
+      <div class="lobby-cards" aria-hidden="true"><div class="lobby-card-face">A</div><div class="lobby-card-face">K</div><div class="lobby-card-face">Q</div></div>
+      <p class="hub-intro">Wyrusz na szlak Calionu: walcz z wrogami, otwieraj skrzynie, zdobywaj EXP i pokonaj Bossa piętra.</p>
+      <div class="lobby-wallet">🪙 Monety: <span id="ui-lobby-coins">0</span></div>
+    </div>
+    <div class="lobby-right">
+      <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
+      <button class="btn-action hub-main-action" style="background:linear-gradient(180deg,#2c6b4f,#194230);border-color:#58b889" onclick="startDuelRun()">
+        <span>🗺️ Wyprawa PvE (Mapa)<small>Zbir 500 HP · Elita 750 HP · Boss 900 HP · Skrzynie i EXP</small></span><span>›</span>
+      </button>
+      <div class="hub-grid">
+        <button class="hub-tile" onclick="openShopFromMenu()">🪙 Handlarz</button>
+        <button class="hub-tile" onclick="openLobbySection('quests')">📜 Zadania</button>
+        <button class="hub-tile" onclick="openLobbySection('skills')">✨ Umiejętności</button>
+        <button class="hub-tile" onclick="openLobbySection('achievements')">🏆 Osiągnięcia</button>
+        <button class="hub-tile" style="grid-column:span 2" onclick="openLobbySection('stats')">📊 Statystyki</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Mapy Wyprawy PvE (Poziomy 16:9) -->
+<div class="modal-overlay" id="mapModal">
+  <div class="modal-content map-modal-wide">
+    <div class="modal-title" id="mapTitle">Szlak Calionu · Piętro 1</div>
+    <div class="map-status-header">
+      <span style="color:var(--heal);font-weight:bold">❤️ HP: <span id="mapPlayerHp">750/750</span></span>
+      <span style="color:#f1c40f;font-weight:bold">⭐ Poz. <span id="mapPlayerLvl">1</span> (<span id="mapPlayerXp">0/100</span>)</span>
+      <span style="color:#f1c40f;font-weight:bold">🪙 <span id="mapPlayerCoins">0</span></span>
+      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Wybierz punkt na podświetlonym etapie (od lewej do prawej).</span>
+    </div>
+    <div class="map-boss-banner" id="mapBossBanner"></div>
+    <div class="map-ladder" id="mapLadder"></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
+      <button class="btn-action lobby-shop" onclick="abandonMapRun()">Porzuć wyprawę i wróć do lobby</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Skrzyni na szlaku -->
+<div class="modal-overlay" id="chestModal">
+  <div class="modal-content">
+    <div class="modal-title" style="color:#f1c40f">📦 Skrzynia na Szlaku</div>
+    <div class="modal-text" id="chestModalDesc">W zaułku natrafiasz na okutą skrzynię przemytników.</div>
+    <div class="summary-box" id="chestLootSummary"></div>
+    <button class="btn-action" onclick="closeChestToMap()">Zabierz łup i wróć na Mapę</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="lobbySectionModal">
+  <div class="modal-content">
+    <div class="modal-title" id="lobbySectionTitle">Sekcja</div>
+    <div class="feature-copy" id="lobbySectionContent"></div>
+    <button class="btn-action lobby-shop" style="margin-top:14px" onclick="toggleModal('lobbySectionModal', false)">Wróć do lobby</button>
+  </div>
+</div>
+
+<!-- Modal Potwierdzenia Użycia Przedmiotu -->
+<div class="modal-overlay" id="itemConfirmModal">
+  <div class="modal-content" style="max-width:420px">
+    <div class="modal-title" style="color: #f1c40f;">Użyj Przedmiotu</div>
+    <div id="confirmItemDetails" style="margin-bottom: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;"></div>
+    <div class="modal-text" id="confirmItemWarning" style="font-weight: bold; color: #fff;">Czy na pewno chcesz użyć tego przedmiotu?</div>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn-action" style="background: linear-gradient(180deg, #2ecc71, #27ae60);" onclick="confirmItemUse(true)">Użyj</button>
+        <button class="btn-action" style="background: linear-gradient(180deg, #4a5568, #2d3748);" onclick="confirmItemUse(false)">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Wyrzucania Przedmiotu ze Sklepu -->
+<div class="modal-overlay" id="replaceModal">
+  <div class="modal-content" style="max-width:480px">
+    <div class="modal-title" style="color: #e74c3c;">Plecak Pełny</div>
+    <div class="modal-text">Wybierz przedmiot do wyrzucenia, aby zwolnić miejsce na nowy nabytek.</div>
+    <div id="replaceItemsContainer" style="margin-bottom: 12px; display: grid; gap: 6px;"></div>
+    <button class="btn-action" style="background: linear-gradient(180deg, #4a5568, #2d3748);" onclick="toggleModal('replaceModal', false)">Anuluj Zakup</button>
+  </div>
+</div>
+
+<!-- Modal Punktacji z podpowiedziami -->
+<div class="modal-overlay" id="scoreModal">
+  <div class="modal-content">
+    <div class="modal-title">Tabela Punktacji</div>
+    <div style="max-height: 58dvh; overflow-y: auto; padding-right: 5px;">
+        <table class="score-table">
+          <tr><td>Poker<div class="hand-hint">5 kart z rzędu w tym samym znaczniku (np. 9♠, 8♠, 7♠, 6♠, 5♠)</div></td><td>100</td><td>x 8</td></tr>
+          <tr><td>Kareta<div class="hand-hint">4 karty o tej samej wartości (np. 8, 8, 8, 8)</div></td><td>60</td><td>x 7</td></tr>
+          <tr><td>Full<div class="hand-hint">Trójka i Para (np. K, K, K, 7, 7)</div></td><td>40</td><td>x 4</td></tr>
+          <tr><td>Kolor<div class="hand-hint">5 kart o tym samym znaczniku (np. pięć kierów ♥)</div></td><td>35</td><td>x 4</td></tr>
+          <tr><td>Strit<div class="hand-hint">5 kart z rzędu (np. Q, J, 10, 9, 8)</div></td><td>30</td><td>x 4</td></tr>
+          <tr><td>Trójka (Atak i Tarcza 🛡)<div class="hand-hint">3 karty o tej samej wartości (np. 10, 10, 10)</div></td><td>30</td><td>x 3</td></tr>
+          <tr><td>Dwie Pary<div class="hand-hint">Dwie różne pary (np. J, J, 5, 5)</div></td><td>20</td><td>x 2</td></tr>
+          <tr><td>Para (Atak i Tarcza 🛡)<div class="hand-hint">2 karty o tej samej wartości (np. 9, 9)</div></td><td>10</td><td>x 2</td></tr>
+          <tr><td>Wysoka Karta<div class="hand-hint">Atak: najwyższa karta | Tarcza 🛡: suma wybranych kart x 2</div></td><td>5</td><td>x 1</td></tr>
+        </table>
+    </div>
+    <button class="btn-action" style="margin-top: 12px;" onclick="toggleModal('scoreModal', false)">Zamknij</button>
+  </div>
+</div>
+
+<!-- Modal Sklepu 16:9 -->
+<div class="modal-overlay" id="shopModal">
+  <div class="modal-content map-modal-wide">
+    <div class="modal-title">Karczemny Kram</div>
+    <div class="shop-inventory-box">
+        <div>
+          <span class="shop-inventory-title">Zasoby: </span>
+          <span id="shopCoins" class="coins-display">0</span> 🪙
+          <span id="shopHpDisplay" style="margin-left:10px;color:#2ecc71;font-weight:bold;font-size:12px"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="shop-inventory-title">Plecak (kliknij, by uleczyć):</span>
+          <div class="inv-slots" id="shopInventorySlots"></div>
+          <div class="relic-badges" id="shopRelicsSlots"></div>
+        </div>
+    </div>
+
+    <div id="shopItemsContainer" class="shop-grid-list"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-action" id="shopProceedBtn" onclick="nextFight()">Kolejny Przeciwnik</button>
+      <button class="btn-action lobby-shop" id="shopLeaveDuelBtn" style="display:none" onclick="leaveDuelFromShop()">Wróć do lobby</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Porażki / Podsumowanie -->
+<div class="modal-overlay" id="defeatModal">
+  <div class="modal-content" style="max-width:500px">
+    <div class="modal-title" id="defeatTitle" style="color: #e74c3c;">Porażka...</div>
+    <div class="modal-text" id="defeatDesc" style="margin-bottom: 10px;">Zabrakło Ci sił. Karczmarz wyrzuca Cię za drzwi w strugi deszczu.</div>
+
+    <div class="summary-box">
+        <div style="color: var(--gold); font-weight: bold; margin-bottom: 6px; text-align: center; text-transform: uppercase; font-size: 11px; display:block;">Podsumowanie Wyprawy</div>
+        <div><span>Ostatnia runda:</span><strong id="statRound" style="color: #fff;">1</strong></div>
+        <div><span>Pokonani wrogowie:</span><strong id="statEnemies" style="color: #fff;">0</strong></div>
+        <div><span>Pozostałe życia:</span><strong id="statLives" style="color: #fff;">1</strong></div>
+        <div><span>Rewanże:</span><strong id="statRevenges" style="color: #fff;">0</strong></div>
+        <div><span>Monety utracone:</span><strong id="statCoinsLost" style="color: #f1c40f;">0</strong></div>
+        <div><span>Zadane obrażenia:</span><strong id="statDmg" style="color: var(--mult);">0</strong></div>
+        <div><span>Odrzucone karty:</span><strong id="statDiscards" style="color: var(--chips);">0</strong></div>
+        <div><span>Najlepszy cios:</span><strong id="statBestHand" style="color: var(--gold);">Brak</strong></div>
+        <div><span>Czas gry:</span><strong id="statDuration" style="color: #fff;">00:00</strong></div>
+    </div>
+
+    <div id="revengeNotice" style="display:none;margin-bottom:8px;padding:8px;border:1px solid rgba(231,76,60,.5);border-radius:8px;background:rgba(120,30,25,.2);color:#f2c9bd;font-size:12px;line-height:1.35">Możesz podjąć tylko jeden rewanż w całej wyprawie. Na czas walki rewanżowej odzyskasz 1 życie, ale zadasz o 15% mniej obrażeń.</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-action" id="btnRevenge" style="display:none;background:linear-gradient(180deg,#c0392b,#922b21)" onclick="startRevenge()">Podejmij jedyny rewanż</button>
+      <button class="btn-action lobby-shop" onclick="returnToLobbyAfterDefeat()">Wróć do lobby</button>
+    </div>
+  </div>
+</div>
+
+<!-- Zmęczenie (10. runda pojedynku) -->
+<div class="modal-overlay" id="fatigueModal" style="z-index:120">
+  <div class="modal-content fatigue-card" style="max-width:440px">
+    <div class="fatigue-title">Zmęczenie</div>
+    <div class="fatigue-text">Od tej rundy Ty i wróg otrzymujecie o 25% większe obrażenia. Skończ walkę, zanim opadniesz z sił.</div>
+    <button class="btn-action" onclick="toggleModal('fatigueModal', false)">Walczę dalej</button>
+  </div>
+</div>
+
+<!-- Wynik pojedynku na Mapie PvE -->
+<div class="modal-overlay" id="duelResultModal">
+  <div class="modal-content" style="max-width:520px">
+    <div class="modal-title" id="duelResultTitle">Wynik</div>
+    <div class="summary-box" id="duelResultText"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-action" id="duelMapContinueBtn" style="display:none;flex:1" onclick="continueToMapAfterDuel()">Wróć na Mapę Szlaku</button>
+      <button class="btn-action" id="duelNextActBtn" style="display:none;flex:1;background:linear-gradient(180deg,#2ecc71,#27ae60)" onclick="startNextDuelAct()">Kolejne Piętro (+125 HP wrogów)!</button>
+      <button class="btn-action" id="duelRetryBtn" style="flex:1" onclick="startDuelRun()">Nowa Wyprawa</button>
+      <button class="btn-action lobby-shop" style="flex:1" onclick="leaveDuel()">Wróć do lobby</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
 </body>
 </html>
