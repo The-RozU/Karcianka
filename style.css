@@ -1,0 +1,309 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #12100e;
+  color: #eedcc0;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game-container {
+  width: 100vw;
+  height: 100vh;
+  max-width: 900px;
+  position: relative;
+  background: radial-gradient(circle at center, #2e2118 0%, #150f0b 90%);
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* PRZYCISKI */
+.btn {
+  background: #2b221b;
+  color: #eedcc0;
+  border: 1px solid #7c5e3d;
+  padding: 10px 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn:active { transform: scale(0.95); }
+.btn-gold {
+  background: linear-gradient(180deg, #aa823a, #785317);
+  border-color: #ffd885;
+  color: #fff8e7;
+}
+.btn-red {
+  background: linear-gradient(180deg, #912929, #5e1616);
+  border-color: #e57373;
+}
+.btn-large {
+  font-size: 1.15rem;
+  padding: 16px 28px;
+}
+
+/* LOBBY */
+#screen-lobby {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.lobby-card {
+  padding: 25px;
+  background: rgba(18, 14, 11, 0.85);
+  border: 2px solid #573e27;
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+  width: 90%;
+  max-width: 420px;
+}
+.game-title {
+  color: #e5be79;
+  letter-spacing: 2px;
+  font-size: 1.8rem;
+  margin-bottom: 6px;
+}
+.game-subtitle {
+  color: #9c8a74;
+  margin-bottom: 30px;
+  font-style: italic;
+}
+.lobby-actions { margin-bottom: 25px; }
+.lobby-meta-stats {
+  border-top: 1px solid #412f1f;
+  padding-top: 15px;
+  font-size: 0.9rem;
+  color: #bfa88c;
+}
+
+/* MAPA */
+.top-nav {
+  height: 48px;
+  background: #191410;
+  border-bottom: 1px solid #4a3826;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+.map-viewport {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0V0zm1 1h38v38H1V1z' fill='%23221913' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+#map-canvas-wrap {
+  width: 100%;
+  height: 800px;
+  position: relative;
+}
+#map-svg-lines {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.map-node {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #2b2016;
+  border: 2px solid #6b4d2e;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.map-node.active-target {
+  border-color: #ffd269;
+  box-shadow: 0 0 16px #ffbe3b;
+  animation: pulseNode 1.4s infinite alternate;
+}
+.map-node.visited { opacity: 0.45; filter: grayscale(80%); }
+
+@keyframes pulseNode {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+/* POJEDYNEK PVE */
+.combat-top-bar {
+  display: grid;
+  grid-template-columns: 1fr 110px 1fr;
+  gap: 10px;
+  padding: 10px;
+  background: #191410;
+  border-bottom: 2px solid #3c2918;
+}
+.combat-actor {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.actor-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+.bar-frame {
+  height: 14px;
+  background: #2b1814;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid #4a2d24;
+}
+.bar-fill.hp-bar { height: 100%; background: #32a852; transition: width 0.3s; }
+.bar-fill.enemy-hp { background: #d33232; }
+.shield-badge { font-size: 0.8rem; color: #7cb5ec; }
+
+.combat-mid-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.phase-indicator {
+  background: #e2872d;
+  color: #120e09;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.turn-count { font-size: 0.8rem; margin-top: 4px; }
+
+.combat-center-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+}
+#combat-log {
+  color: #c9b49a;
+  font-size: 0.9rem;
+  text-align: center;
+  min-height: 24px;
+}
+#hand-rating-banner {
+  background: rgba(43, 32, 22, 0.9);
+  border: 1px solid #8e683a;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  color: #ffe6a3;
+  font-weight: bold;
+}
+
+/* RĘKA KART */
+.cards-deck-zone {
+  display: flex;
+  justify-content: center;
+  padding: 10px 5px;
+  min-height: 125px;
+}
+.cards-hand {
+  display: flex;
+  gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+.card {
+  width: 58px;
+  height: 88px;
+  background: #fbf7ee;
+  border-radius: 6px;
+  border: 2px solid #c9bca6;
+  color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+.card.selected-attack {
+  transform: translateY(-16px);
+  border-color: #e67e22;
+  box-shadow: 0 0 10px #e67e22;
+}
+.card.selected-shield {
+  transform: translateY(-16px);
+  border-color: #3498db;
+  box-shadow: 0 0 10px #3498db;
+}
+.card.spent {
+  opacity: 0.35;
+  filter: grayscale(80%);
+  pointer-events: none;
+}
+.card.red { color: #b71c1c; }
+.card-val { font-size: 1rem; font-weight: bold; }
+.card-suit { font-size: 1.2rem; text-align: right; }
+
+.combat-controls {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background: #191410;
+  border-top: 1px solid #3c2918;
+  overflow-x: auto;
+}
+
+/* MODALE */
+.modal-backdrop {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+}
+.modal-box {
+  background: #251b14;
+  border: 2px solid #78532c;
+  padding: 20px;
+  border-radius: 8px;
+  width: 88%;
+  max-width: 440px;
+  text-align: center;
+}
+.scores-table-scroll { max-height: 280px; overflow-y: auto; margin-top: 10px; }
+.scores-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.scores-table th, .scores-table td { padding: 6px; border-bottom: 1px solid #4a3622; text-align: left; }
