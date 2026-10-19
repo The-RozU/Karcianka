@@ -775,7 +775,15 @@ function updateUI() {
     refreshButtons(); applyDuelView();
 }
 
-// ======================= MAPA WYPRAWY DICEY DUNGEONS =======================
+// ======================= GENERATOR NIEREGULARNEJ MAPY Z ODNOGAMI =======================
+function connectNodes(nodes, idA, idB) {
+    const a = nodes.find(n => n.id === idA);
+    const b = nodes.find(n => n.id === idB);
+    if (!a || !b) return;
+    if (!a.targets.includes(idB)) a.targets.push(idB);
+    if (!b.targets.includes(idA)) b.targets.push(idA);
+}
+
 function generateActMap(actNumber = 1) {
     const boss = pickRandomCalionBoss();
     const bonusHp = (actNumber - 1) * DUEL.ACT_HP_STEP;
@@ -786,26 +794,103 @@ function generateActMap(actNumber = 1) {
     const rEnemies = () => REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
     const eEnemies = () => pickRandomEnemyTrait();
 
-    let nodes = [
-        { id: 0, x: 8,  y: 50, type: 'start', icon: '🏕️', title: 'Wejście', hp: 0, targets: [1, 2], cleared: true },
-        { id: 1, x: 26, y: 26, type: 'empty', icon: '🪵', title: 'Korytarz', hp: 0, targets: [0, 3, 4], cleared: false },
-        { id: 2, x: 26, y: 74, type: 'fight', icon: '⚔️', title: 'Wróg', hp: zbirHp, xp: 50, enemy: rEnemies(), targets: [0, 4], cleared: false },
-        { id: 3, x: 44, y: 16, type: 'chest', icon: '📦', title: 'Skrzynia', hp: 0, targets: [1], cleared: false }, // Ślepy zaułek
-        { id: 4, x: 44, y: 50, type: 'fight', icon: '⚔️', title: 'Wróg', hp: zbirHp, xp: 50, enemy: rEnemies(), targets: [1, 2, 5, 6], cleared: false },
-        { id: 5, x: 62, y: 28, type: 'elite', icon: '💀', title: 'Elita', hp: eliteHp, xp: 120, enemy: eEnemies(), targets: [4, 7], cleared: false },
-        { id: 6, x: 62, y: 72, type: 'shop',  icon: '🪙', title: 'Kram', hp: 0, targets: [4, 7], cleared: false },
-        { id: 7, x: 78, y: 50, type: 'empty', icon: '🪵', title: 'Przedbramie', hp: 0, targets: [5, 6, 8], cleared: false },
-        { id: 8, x: 92, y: 50, type: 'boss',  icon: '👑', title: boss.name, hp: bossHp, xp: 250, enemy: boss, targets: [7], cleared: false }
-    ];
+    const nodes = [];
+    let nextId = 0;
 
-    // Niewielka losowość między runami
-    if (Math.random() < 0.5) {
-        nodes[3].type = 'elite'; nodes[3].icon = '💀'; nodes[3].enemy = eEnemies(); nodes[3].hp = eliteHp;
+    // 1. Główny, kręty szlak od lewej (Start) do prawej (Boss)
+    const spineCols = [8, 23, 39, 55, 72, 90];
+    let prevY = 50;
+    const spineIds = [];
+
+    for (let i = 0; i < spineCols.length; i++) {
+        const isStart = (i === 0);
+        const isBoss = (i === spineCols.length - 1);
+        
+        // Nieregularna wysokość punktu na osi Y
+        let y = 50;
+        if (!isStart && !isBoss) {
+            const shift = (Math.random() < 0.5 ? -1 : 1) * (12 + Math.floor(Math.random() * 14));
+            y = Math.max(24, Math.min(76, prevY + shift));
+        }
+        prevY = y;
+
+        let type = 'empty', icon = '🪵', title = 'Pusty korytarz', hp = 0, xp = 0, enemy = null;
+
+        if (isStart) {
+            type = 'start'; icon = '🏕️'; title = 'Wejście';
+        } else if (isBoss) {
+            type = 'boss'; icon = '👑'; title = boss.name; hp = bossHp; xp = 250; enemy = boss;
+        } else if (i === 1 || i === 3) {
+            const e = rEnemies();
+            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
+        } else if (i === 4) {
+            type = 'shop'; icon = '🪙'; title = 'Karczemny Kram';
+        } else {
+            // Kolumna 2: pusty korytarz rozwidleniowy lub walka
+            if (Math.random() < 0.45) {
+                const e = rEnemies();
+                type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
+            }
+        }
+
+        const id = nextId++;
+        nodes.push({ id, x: spineCols[i], y, type, icon, title, hp, xp, enemy, targets: [], cleared: isStart });
+        spineIds.push(id);
+        if (i > 0) connectNodes(nodes, spineIds[i - 1], id);
     }
-    if (Math.random() < 0.5) {
-        nodes[2].type = 'empty'; nodes[2].icon = '🪵';
-        nodes[1].type = 'fight'; nodes[1].icon = '⚔️'; nodes[1].enemy = rEnemies(); nodes[1].hp = zbirHp;
-    }
+
+    // 2. Boczne ślepe odnogi: [Strażnik] ---> [Skrzynia / Mikstura HP] (trzeba pokonać wroga, zabrać łup i cofnąć się)
+    const branchCandidates = [1, 2, 3]; // indeksy na głównej ścieżce
+    branchCandidates.forEach(idx => {
+        // Gwarantujemy min. 2 odnogi w każdym akcie
+        if (idx === 2 || Math.random() < 0.75) {
+            const parent = nodes[spineIds[idx]];
+            const goUp = parent.y > 50; // Jeśli główna ścieżka jest nisko, odnoga idzie w górę (i odwrotnie)
+            
+            const guardY = goUp ? Math.max(15, parent.y - 28) : Math.min(85, parent.y + 28);
+            const guardX = parent.x + (Math.random() < 0.5 ? -3 : 4);
+
+            const isEliteGuard = (idx >= 2 && Math.random() < 0.55);
+            const gEnemy = isEliteGuard ? eEnemies() : rEnemies();
+            const guardId = nextId++;
+
+            nodes.push({
+                id: guardId,
+                x: guardX,
+                y: guardY,
+                type: isEliteGuard ? 'elite' : 'fight',
+                icon: isEliteGuard ? '💀' : '⚔️',
+                title: gEnemy.name,
+                hp: isEliteGuard ? eliteHp : zbirHp,
+                xp: isEliteGuard ? 110 : 55,
+                enemy: gEnemy,
+                targets: [],
+                cleared: false
+            });
+            connectNodes(nodes, parent.id, guardId);
+
+            // Koniec ślepej odnogi za Strażnikiem: Skrzynia lub Źródło HP
+            const rewardId = nextId++;
+            const rewardX = Math.min(84, guardX + 12 + Math.floor(Math.random() * 4));
+            const rewardY = Math.max(14, Math.min(86, guardY + (goUp ? -6 : 6)));
+            const isHealSpring = Math.random() < 0.4;
+
+            nodes.push({
+                id: rewardId,
+                x: rewardX,
+                y: rewardY,
+                type: isHealSpring ? 'heal' : 'chest',
+                icon: isHealSpring ? '🧪' : '📦',
+                title: isHealSpring ? 'Zapasy Medyczne' : 'Ukryta Skrzynia',
+                hp: 0,
+                xp: 0,
+                enemy: null,
+                targets: [],
+                cleared: false
+            });
+            connectNodes(nodes, guardId, rewardId);
+        }
+    });
 
     return { boss, nodes, bossHp };
 }
@@ -855,17 +940,19 @@ function startNextDuelAct() {
 function renderDiceyMap(peekOnly) {
     const board = document.getElementById('mapBoard');
     const svg = document.getElementById('svgLayer');
+    if (!board || !svg) return;
     
     document.querySelectorAll('.node-plate').forEach(e => e.remove());
     svg.innerHTML = '';
 
-    const w = board.clientWidth;
-    const h = board.clientHeight;
+    const w = board.clientWidth || 680;
+    const h = board.clientHeight || 290;
 
     const drawnPairs = new Set();
     const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
+    if (!cur) return;
 
-    // Rysowanie Linii
+    // 1. Rysowanie linii połączeń
     mapRun.nodes.forEach(node => {
         const x1 = (node.x / 100) * w; const y1 = (node.y / 100) * h;
         node.targets.forEach(tid => {
@@ -873,6 +960,7 @@ function renderDiceyMap(peekOnly) {
             if (!drawnPairs.has(pairKey)) {
                 drawnPairs.add(pairKey);
                 const target = mapRun.nodes.find(n => n.id === tid);
+                if (!target) return;
                 const x2 = (target.x / 100) * w; const y2 = (target.y / 100) * h;
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -890,14 +978,15 @@ function renderDiceyMap(peekOnly) {
         });
     });
 
-    // Rysowanie Węzłów
+    // 2. Rysowanie okrągłych pól
     mapRun.nodes.forEach(node => {
         const div = document.createElement('div');
-        div.className = `node-plate`;
+        div.className = 'node-plate';
         div.style.left = `${node.x}%`; div.style.top = `${node.y}%`;
+        div.title = node.title;
 
         const isCurrent = (node.id === mapRun.currentNodeId);
-        const isAdjacent = (!peekOnly) && (cur.targets.includes(node.id) || node.targets.includes(cur.id));
+        const isAdjacent = (!peekOnly) && cur.targets.includes(node.id);
 
         if (isCurrent) {
             div.classList.add('player-here');
@@ -916,28 +1005,40 @@ function renderDiceyMap(peekOnly) {
 }
 
 function openMapModal(peekOnly = false) {
+    if (!mapRun.active || !mapRun.nodes || mapRun.nodes.length === 0) {
+        const generated = generateActMap(1);
+        mapRun.boss = generated.boss;
+        mapRun.nodes = generated.nodes;
+        mapRun.currentNodeId = 0;
+        mapRun.visitedNodes = new Set([0]);
+    }
+
     document.getElementById('mapTitle').innerText = `Szlak Calionu · Piętro ${mapRun.act}`;
     document.getElementById('mapPlayerHp').innerText = `${mapRun.playerHp}/${mapRun.playerMaxHp}`;
     document.getElementById('mapPlayerLvl').innerText = mapRun.level;
     document.getElementById('mapPlayerXp').innerText = `${mapRun.xp}/${mapRun.xpNext} EXP`;
     document.getElementById('mapPlayerCoins').innerText = coins;
 
-    const b = mapRun.boss; const bossHpNow = DUEL.BOSS_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
+    const b = mapRun.boss;
+    const bossHpNow = DUEL.BOSS_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
     document.getElementById('mapBossBanner').innerHTML = `<strong>👑 Boss Piętra ${mapRun.act}: ${b.name} (${bossHpNow} HP)</strong><span>Umiejętność (<i>${b.traitName}</i>): ${b.desc}</span>`;
 
     document.getElementById('mapClosePeekBtn').style.display = peekOnly ? 'block' : 'none';
-    document.getElementById('mapHintText').innerText = peekOnly ? 'Podgląd mapy w trakcie starcia.' : 'Wybierz podświetloną drogę. Możesz się cofać.';
+    document.getElementById('mapHintText').innerText = peekOnly
+        ? 'Podgląd mapy w trakcie starcia.'
+        : 'Pokonaj strażników na bocznych odnogach, aby zgarnąć skrzynie/mikstury, a potem cofnij się na szlak!';
 
     toggleModal('mapModal', true);
-    // Timeout pozwala przeglądarce policzyć width/height po zmianie display
-    setTimeout(() => renderDiceyMap(peekOnly), 10); 
+    setTimeout(() => renderDiceyMap(peekOnly), 25);
 }
 
-// Nasłuch na resize dla płynnego przeliczania linii SVG
-window.addEventListener('resize', () => { if(document.getElementById('mapModal').style.display === 'flex') renderDiceyMap(false); });
+window.addEventListener('resize', () => {
+    if (document.getElementById('mapModal').style.display === 'flex') renderDiceyMap(false);
+});
 
 function selectMapNode(nodeId) {
     const node = mapRun.nodes.find(n => n.id === nodeId);
+    if (!node) return;
     mapRun.currentNodeId = nodeId;
     mapRun.visitedNodes.add(nodeId);
     toggleModal('mapModal', false);
@@ -945,6 +1046,9 @@ function selectMapNode(nodeId) {
     if (node.type === 'chest') {
         node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openChestNode();
+    } else if (node.type === 'heal') {
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        openHealSpringNode();
     } else if (node.type === 'shop') {
         openMapShopNode();
     } else if (node.type === 'start' || node.type === 'empty') {
@@ -958,11 +1062,26 @@ function selectMapNode(nodeId) {
     }
 }
 
+function openHealSpringNode() {
+    const before = mapRun.playerHp;
+    mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + 150);
+    duel.playerHp = mapRun.playerHp;
+    const healed = mapRun.playerHp - before;
+
+    document.getElementById('chestModalDesc').innerText = 'Na końcu ślepego zaułka odnajdujesz ukryte zapasy medyków Calionu!';
+    document.getElementById('chestLootSummary').innerHTML =
+        `<div><span>Odzyskane zdrowie:</span><strong style="color:#2ecc71">+${healed} ❤️ HP</strong></div>` +
+        `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
+    updateUI();
+    toggleModal('chestModal', true);
+}
+
 function openChestNode() {
-    const foundCoins = 15 + Math.floor(Math.random() * 11);
+    const foundCoins = 18 + Math.floor(Math.random() * 15);
     coins += foundCoins; runStats.coinsEarned += foundCoins;
 
-    let extraRewardHtml = ''; const healItem = SHOP_ITEMS.find(i => i.id === 'heal_pot');
+    let extraRewardHtml = '';
+    const healItem = SHOP_ITEMS.find(i => i.id === 'heal_pot');
     if (inventory.length < MAX_INV && healItem) {
         inventory.push(makeInventoryItem(healItem));
         extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 Mikstura Leczenia (+100 HP w plecaku)</strong></div>`;
@@ -970,6 +1089,7 @@ function openChestNode() {
         const before = mapRun.playerHp; mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL); duel.playerHp = mapRun.playerHp;
         extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${mapRun.playerHp - before} ❤️ HP</strong></div>`;
     }
+    document.getElementById('chestModalDesc').innerText = 'W ślepym zaułku za pokonanym strażnikiem otwierasz okutą skrzynię!';
     document.getElementById('chestLootSummary').innerHTML = `<div><span>Znaleziony brąz:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
     updateUI(); toggleModal('chestModal', true);
 }
@@ -996,7 +1116,7 @@ function startDuelFromMapNode(node) {
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     document.getElementById('enemyHand').innerHTML = '';
     document.getElementById('ui-enemy-label').innerText = node.type === 'boss' ? '👑 BOSS HP:' : (node.type === 'elite' ? '💀 ELITA HP:' : 'Wróg HP:');
-    document.getElementById('log').innerText = `Odkryto salę: ${currentEnemyTrait.name} (${duel.enemyMaxHp} HP). Wybierz karty na Atak!`;
+    document.getElementById('log').innerText = `Starcie na szlaku: ${currentEnemyTrait.name} (${duel.enemyMaxHp} HP). Wybierz karty na Atak!`;
     initGame();
 }
 
@@ -1029,8 +1149,7 @@ function duelEnd(win) {
 
         xpGained = node ? (node.xp || 50) : 50; levelsGained = gainXp(xpGained);
 
-        // Oznaczenie wyczyszczenia węzła
-        if(node) { node.cleared = true; node.icon = '🪵'; }
+        if (node) { node.cleared = true; node.type = 'empty'; node.icon = '🪵'; }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
     } else { runFinishedAt = Date.now(); }
@@ -1257,4 +1376,3 @@ function updateDuelPanel() {
 }
 
 initGame();
-</script>
