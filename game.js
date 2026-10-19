@@ -131,7 +131,10 @@ const HAND_RULES = {
     highCard: { name: 'Wysoka Karta', baseChips: 5, mult: 1 }
 };
 
-function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+function toggleModal(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'flex' : 'none';
+}
 
 const HAPTIC_PATTERNS = {
     tap: 12,
@@ -775,7 +778,7 @@ function updateUI() {
     refreshButtons(); applyDuelView();
 }
 
-// ======================= GENERATOR NIEREGULARNEJ MAPY Z ODNOGAMI =======================
+// ======================= GENERATOR NIEREGULARNEJ MAPY BEZ NAKŁADANIA KÓŁ =======================
 function connectNodes(nodes, idA, idB) {
     const a = nodes.find(n => n.id === idA);
     const b = nodes.find(n => n.id === idB);
@@ -784,7 +787,143 @@ function connectNodes(nodes, idA, idB) {
     if (!b.targets.includes(idA)) b.targets.push(idA);
 }
 
-function generateActMap
+function resolveMapCollisions(nodes) {
+    const MIN_DIST = 15.5;
+    const ASPECT = 2.1;
+
+    for (let iter = 0; iter < 40; iter++) {
+        let moved = false;
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const a = nodes[i];
+                const b = nodes[j];
+
+                const dx = a.x - b.x;
+                const dy = (a.y - b.y) / ASPECT;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist < MIN_DIST) {
+                    moved = true;
+                    const overlap = (MIN_DIST - Math.max(0.1, dist)) / 2;
+                    const ux = dist > 0.1 ? dx / dist : (Math.random() - 0.5);
+                    const uy = dist > 0.1 ? dy / dist : (Math.random() - 0.5);
+
+                    const lockA = (a.type === 'start' || a.type === 'boss');
+                    const lockB = (b.type === 'start' || b.type === 'boss');
+
+                    if (!lockA) {
+                        a.x = Math.max(10, Math.min(88, a.x + ux * overlap));
+                        a.y = Math.max(15, Math.min(85, a.y + uy * overlap * ASPECT));
+                    }
+                    if (!lockB) {
+                        b.x = Math.max(10, Math.min(88, b.x - ux * overlap));
+                        b.y = Math.max(15, Math.min(85, b.y - uy * overlap * ASPECT));
+                    }
+                }
+            }
+        }
+        if (!moved) break;
+    }
+}
+
+function generateActMap(actNumber = 1) {
+    const boss = pickRandomCalionBoss();
+    const bonusHp = (actNumber - 1) * DUEL.ACT_HP_STEP;
+    const zbirHp = DUEL.ZBIR_BASE_HP + bonusHp;
+    const eliteHp = DUEL.ELITE_BASE_HP + bonusHp;
+    const bossHp = DUEL.BOSS_BASE_HP + bonusHp;
+
+    const rEnemies = () => REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
+    const eEnemies = () => pickRandomEnemyTrait();
+
+    const nodes = [];
+    let nextId = 0;
+
+    // 1. Główny szlak w środkowym pasie (Y: 36% - 64%)
+    const spineCols = [8, 24, 41, 58, 75, 91];
+    let prevY = 50;
+    const spineIds = [];
+
+    for (let i = 0; i < spineCols.length; i++) {
+        const isStart = (i === 0);
+        const isBoss = (i === spineCols.length - 1);
+        
+        let y = 50;
+        if (!isStart && !isBoss) {
+            const shift = (Math.random() < 0.5 ? -1 : 1) * (8 + Math.floor(Math.random() * 9));
+            y = Math.max(36, Math.min(64, prevY + shift));
+        }
+        prevY = y;
+
+        let type = 'empty', icon = '🪵', title = 'Pusty korytarz', hp = 0, xp = 0, enemy = null;
+
+        if (isStart) {
+            type = 'start'; icon = '🏕️'; title = 'Wejście';
+        } else if (isBoss) {
+            type = 'boss'; icon = '👑'; title = boss.name; hp = bossHp; xp = 250; enemy = boss;
+        } else if (i === 1 || i === 3) {
+            const e = rEnemies();
+            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
+        } else if (i === 4) {
+            type = 'shop'; icon = '🪙'; title = 'Karczemny Kram';
+        } else if (Math.random() < 0.45) {
+            const e = rEnemies();
+            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
+        }
+
+        const id = nextId++;
+        nodes.push({ id, x: spineCols[i], y, type, icon, title, hp, xp, enemy, targets: [], cleared: isStart });
+        spineIds.push(id);
+        if (i > 0) connectNodes(nodes, spineIds[i - 1], id);
+    }
+
+    // 2. Boczne ślepe odnogi: [Strażnik] -> [Skrzynia / Zapasy HP]
+    let lastBranchUp = Math.random() < 0.5;
+
+    [1, 2, 3].forEach(idx => {
+        if (idx === 2 || Math.random() < 0.7) {
+            const parent = nodes[spineIds[idx]];
+            const goUp = !lastBranchUp;
+            lastBranchUp = goUp;
+
+            const guardY = goUp ? 20 : 80;
+            const guardX = parent.x + 2;
+
+            const isEliteGuard = (idx >= 2 && Math.random() < 0.55);
+            const gEnemy = isEliteGuard ? eEnemies() : rEnemies();
+            const guardId = nextId++;
+
+            nodes.push({
+                id: guardId, x: guardX, y: guardY,
+                type: isEliteGuard ? 'elite' : 'fight',
+                icon: isEliteGuard ? '💀' : '⚔️',
+                title: gEnemy.name,
+                hp: isEliteGuard ? eliteHp : zbirHp,
+                xp: isEliteGuard ? 110 : 55,
+                enemy: gEnemy, targets: [], cleared: false
+            });
+            connectNodes(nodes, parent.id, guardId);
+
+            const rewardId = nextId++;
+            const rewardX = guardX + 11;
+            const rewardY = goUp ? 17 : 83;
+            const isHealSpring = Math.random() < 0.4;
+
+            nodes.push({
+                id: rewardId, x: rewardX, y: rewardY,
+                type: isHealSpring ? 'heal' : 'chest',
+                icon: isHealSpring ? '🧪' : '📦',
+                title: isHealSpring ? 'Zapasy Medyczne' : 'Ukryta Skrzynia',
+                hp: 0, xp: 0, enemy: null, targets: [], cleared: false
+            });
+            connectNodes(nodes, guardId, rewardId);
+        }
+    });
+
+    // 3. Odsunięcie zbyt bliskich kółek
+    resolveMapCollisions(nodes);
+
+    return { boss, nodes, bossHp };
 }
 
 function gainXp(amount) {
@@ -811,7 +950,9 @@ function startDuelRun() {
     gameOver = true; setHandResolutionPending(false);
     
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('lobbySectionModal', false);
-    document.getElementById('lobbyNotice').style.display = 'none'; document.getElementById('enemyHand').innerHTML = '';
+    const notice = document.getElementById('lobbyNotice');
+    if (notice) notice.style.display = 'none';
+    document.getElementById('enemyHand').innerHTML = '';
     
     initGame();
     openMapModal(false);
@@ -844,7 +985,6 @@ function renderDiceyMap(peekOnly) {
     const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
     if (!cur) return;
 
-    // 1. Rysowanie linii połączeń
     mapRun.nodes.forEach(node => {
         const x1 = (node.x / 100) * w; const y1 = (node.y / 100) * h;
         node.targets.forEach(tid => {
@@ -870,7 +1010,6 @@ function renderDiceyMap(peekOnly) {
         });
     });
 
-    // 2. Rysowanie okrągłych pól
     mapRun.nodes.forEach(node => {
         const div = document.createElement('div');
         div.className = 'node-plate';
@@ -925,7 +1064,8 @@ function openMapModal(peekOnly = false) {
 }
 
 window.addEventListener('resize', () => {
-    if (document.getElementById('mapModal').style.display === 'flex') renderDiceyMap(false);
+    const modal = document.getElementById('mapModal');
+    if (modal && modal.style.display === 'flex') renderDiceyMap(false);
 });
 
 function selectMapNode(nodeId) {
