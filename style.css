@@ -21,9 +21,7 @@ html, body {
 
 .-table {
 .tavern-table {
-  /* ... dotychczasowe style ... */
   background: url('tavern_table.png') center/cover no-repeat;
-  /* opcjonalnie lekka przyciemniająca nakładka dla jeszcze lepszej czytelności: */
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.7);
 }
 
