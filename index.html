@@ -30,12 +30,26 @@
       </div>
     </div>
 
+<div class="tavern-table">
+  <div class="top-bar">
+    <div class="top-left-btns">
+      <button class="btn-top" onclick="toggleModal('scoreModal', true)">ℹ️ Punkty</button>
+      <button class="btn-top btn-map-peek" onclick="openMapModal(true)">🗺️ Mapa</button>
+    </div>
+
+    <div class="top-enemy-header">
+      <h1 class="header-title" id="header-enemy-name">⚓ Pod Złamaną Kotwicą</h1>
+      <div class="boss-skill" id="header-boss-skill" style="display: none;">
+        <span class="skill-name" id="header-skill-name"></span>
+        <span id="header-skill-desc"></span>
+      </div>
+    </div>
+
     <div class="top-right-btns">
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
   </div>
 
-  <div class="board-grid">
   <div class="board-grid">
     <div class="left-col">
       <div class="status-bar">
