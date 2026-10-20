@@ -1337,6 +1337,7 @@ function duelCap() {
     let baseCap = Math.round(duel.enemyMaxHp * DUEL.CAP_PCT);
     if (duel.kaelEnraged) baseCap = Math.round(baseCap * 1.10);
     return baseCap;
+}
 function isFatigued() { return duel.round >= duel.fatigueRound; }
 function fatigueMult() { return isFatigued() ? DUEL.FATIGUE_MULT : 1; }
 
