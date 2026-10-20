@@ -112,15 +112,14 @@
     </div>
     <div class="lobby-right">
       <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
-      <button class="btn-action hub-main-action" style="background:linear-gradient(180deg,#2c6b4f,#194230);border-color:#58b889" onclick="startDuelRun()">
+      <button class="btn-action hub-main-action" style="background:linear-gradient(180deg,#2c6b4f,#194230);border-color:#58b889" onclick="()">
         <span>🗺️ Wyprawa PvE (Mapa)<small>Zbir 500 HP · Elita 750 HP · Boss 900 HP · Skrzynie i EXP</small></span><span>›</span>
       </button>
       <div class="hub-grid">
-        <button class="hub-tile" onclick="openShopFromMenu()">🪙 Handlarz</button>
         <button class="hub-tile" onclick="openLobbySection('quests')">📜 Zadania</button>
         <button class="hub-tile" onclick="openLobbySection('skills')">✨ Umiejętności</button>
         <button class="hub-tile" onclick="openLobbySection('achievements')">🏆 Osiągnięcia</button>
-        <button class="hub-tile" style="grid-column:span 2" onclick="openLobbySection('stats')">📊 Statystyki</button>
+        <button class="hub-tile" onclick="openLobbySection('stats')">📊 Statystyki</button>
       </div>
     </div>
   </div>
