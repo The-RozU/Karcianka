@@ -6,7 +6,9 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 html, body {
-  margin: 0; padding: 0; width: 100dvw; height: 100dvh;
+  margin: 0; padding: 0; 
+  width: 100vw; height: 100vh; /* <-- Dodane wsparcie dla starszych tabletów */
+  width: 100dvw; height: 100dvh;
   background: #050302; color: var(--text); font-family: system-ui, sans-serif;
   display: flex; justify-content: center; align-items: center; overflow: hidden;
 }
@@ -19,9 +21,23 @@ html, body {
   #rotate-overlay:not(.dismissed) { display: flex; }
 }
 
+/* PANORAMICZNY STÓŁ KARCZMY 16:9 */
 .tavern-table {
-  background: url('img/tavern_table.jpg') center/cover no-repeat;
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.7);
+  /* Fallback dla starszych przeglądarek na tablety (vw, vh) */
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  /* Główne reguły (nadpiszą te wyżej na nowych urządzeniach) */
+  width: min(100dvw, calc(100dvh * 16 / 9));
+  height: min(100dvh, calc(100dvw * 9 / 16));
+  aspect-ratio: 16 / 9;
+  background: radial-gradient(circle at 55% 45%, var(--felt-light) 0%, var(--felt-dark) 100%);
+  display: flex; flex-direction: column;
+  padding: clamp(8px, 1.8vh, 16px) clamp(12px, 2vw, 22px);
+  border: 3px solid var(--wood-border);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.9), 0 0 35px rgba(0,0,0,0.95);
+  overflow: hidden;
 }
 
 .top-bar {
