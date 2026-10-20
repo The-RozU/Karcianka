@@ -19,9 +19,8 @@ html, body {
   #rotate-overlay:not(.dismissed) { display: flex; }
 }
 
-.-table {
 .tavern-table {
-  background: url('Img/tavern_table.jpg') center/cover no-repeat;
+  background: url('img/tavern_table.jpg') center/cover no-repeat;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.7);
 }
 
