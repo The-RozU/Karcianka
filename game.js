@@ -47,7 +47,7 @@ const CALION_BOSSES = [
     { id: 'boss_riwi', name: 'Riven Wistlow „Riwi”', traitName: 'Obcięcie Palca', desc: 'Po Twoim pierwszym ataku odcina Ci palec — limit kart na ręce spada z 8 do 7 do końca walki' },
     { id: 'boss_flinch', name: 'Dorian Flinch „Mr. Fox”', traitName: 'Pijawka Krwi', desc: 'Co 2. rundę po ataku leczy się o 50% zadanych Ci w HP obrażeń (pełny blok tarczą zapobiega leczeniu)' },
     { id: 'boss_farron', name: 'Farron Lockhide „Fogborn”', traitName: 'Błyskawiczna Kontra', desc: 'Gdy zagrasz Wysoką Kartę lub Parę w ataku, natychmiast strzela z pistoletu za 15 DMG' },
-    { id: 'boss_daren', name: 'Daren Velk', traitName: 'Zatruty Sztylet', desc: 'Każdy jego atak nakłada +1 ładunek Trucizny (10 DMG co rundę za każdy ładunek)' },
+    { id: 'boss_daren', name: 'Daren Velk', traitName: 'Zatruty Sztylet', desc: 'Każdy jego atak nakłada +1 ładunek Trucizny (5 DMG co rundę za każdy ładunek, omija tarczę)' },
     { id: 'boss_lokar', name: 'Lokar', traitName: 'Szał Bojowy', desc: 'Gdy jego HP spadnie poniżej 30%, wyprowadza podwójny atak w swojej turze' }
 ];
 
@@ -88,7 +88,7 @@ const DUEL = {
     SHIELD_MAX_CARDS: 3,
     SHIELD_MULT: 2,
     PLAY_LIMIT: 8,
-    KARWASZ_BONUS: 10
+    KARWASZ_BONUS: 10,     POISON_DMG: 5
 };
 let shieldCards = [];
 
@@ -217,21 +217,6 @@ function openLobbySection(section) {
         content.innerHTML = sections[section].html;
     }
     toggleModal('lobbySectionModal', true);
-}
-
-function openShopFromMenu() {
-    shopReturnsToMenu = true;
-    renderShop();
-    toggleModal('mainMenu', false);
-    document.getElementById('shopProceedBtn').innerText = 'Wróć do menu';
-    document.getElementById('shopProceedBtn').onclick = closeShopToMenu;
-    document.getElementById('shopLeaveDuelBtn').style.display = 'none';
-    toggleModal('shopModal', true);
-}
-
-function closeShopToMenu() {
-    toggleModal('shopModal', false);
-    toggleModal('mainMenu', true);
 }
 
 function createDeck() {
@@ -973,6 +958,7 @@ function startDuelRun() {
     };
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
+    inventory = []; relics = { karwasz: false, lucky_coin: false }; coins = 0;
     gameOver = true; setHandResolutionPending(false);
     
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('lobbySectionModal', false);
@@ -1346,7 +1332,11 @@ function revealEnemyCard(card, role) {
 function setEnemyNote(text) { document.getElementById('duelEnemyNote').innerText = text; }
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 function motionScale() { return (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0.5 : 1; }
-function duelCap() { let baseCap = Math.round(duel.enemyMaxHp * DUEL.CAP_PCT); if (duel.kaelEnraged) baseCap = Math.round(baseCap * 1.10); return baseCap; }
+function duelCap() {
+    if (mapRun.active && mapRun.act > 1) return Infinity;
+    let baseCap = Math.round(duel.enemyMaxHp * DUEL.CAP_PCT);
+    if (duel.kaelEnraged) baseCap = Math.round(baseCap * 1.10);
+    return baseCap;
 function isFatigued() { return duel.round >= duel.fatigueRound; }
 function fatigueMult() { return isFatigued() ? DUEL.FATIGUE_MULT : 1; }
 
@@ -1395,7 +1385,7 @@ async function duelEnemyTurn(token) {
     }
 
     if (duel.poisonStacks > 0 && duel.playerHp > 0) {
-        const poisonDmg = duel.poisonStacks * 10; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
+        const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
         if (mapRun.active) mapRun.playerHp = duel.playerHp; duel.stats.taken += poisonDmg;
         showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); updateUI();
         if (duel.playerHp === 0) { duelEnd(false); return; } await wait(450 * k); if (!alive()) return;
@@ -1423,7 +1413,7 @@ function updateDuelPanel() {
     const fm = fatigueMult(); document.getElementById('duelRound').innerText = `Runda ${duel.round} · ${duel.phase === 'attack' ? 'Etap 1/2: Atak ⚔' : 'Etap 2/2: Tarcza 🛡'}`;
     document.getElementById('duelFatigueTag').style.display = isFatigued() ? 'inline' : 'none';
     const poisonTag = document.getElementById('duelPoisonTag');
-    if (duel.poisonStacks > 0) { poisonTag.style.display = 'inline'; poisonTag.innerText = `☠️ Trucizna: ${duel.poisonStacks * 10} DMG/t.`; } else { poisonTag.style.display = 'none'; }
+    if (duel.poisonStacks > 0) { poisonTag.style.display = 'inline'; poisonTag.innerText = `☠️ Trucizna: ${duel.poisonStacks * DUEL.POISON_DMG} DMG/t.`; } else { poisonTag.style.display = 'none'; }
     document.getElementById('duelPlayerShield').innerText = duel.playerShield; document.getElementById('duelEnemyShield').innerText = duel.enemyShield;
 
     const hintEl = document.getElementById('duelHint');
@@ -1438,9 +1428,15 @@ function updateDuelPanel() {
     } else if (duel.phase === 'shield') { lines.push(`⚔ Atak pominięty (0 DMG)`); }
     const shEval = evaluateShieldCards(shield, true); const totalPreviewShield = duel.playerShield + shEval.total;
     if (shEval.total > 0) lines.push(`🛡 ${shEval.name}: +${shEval.total} (łącznie ${totalPreviewShield} 🛡)`);
-    const maxIn = Math.floor(duelCap() * fm); const worst = Math.max(0, maxIn - totalPreviewShield) + (duel.poisonStacks * 10);
-    lines.push(`Wróg uderzy za max ${maxIn}${totalPreviewShield ? ` (po tarczy${duel.poisonStacks ? ' i truciźnie' : ''}: ${worst})` : ''}.`);
-    let html = lines.join('<br>'); if (!gameOver && duel.playerHp <= worst) html += '<br><span class="duel-warn">⚠ Możesz paść w tej rundzie!</span>';
+    const poisonNow = duel.poisonStacks * DUEL.POISON_DMG;
+    let html;
+    if (Number.isFinite(duelCap())) {
+        const maxIn = Math.floor(duelCap() * fm); const worst = Math.max(0, maxIn - totalPreviewShield) + poisonNow;
+        lines.push(`Wróg uderzy za max ${maxIn}${totalPreviewShield ? ` (po tarczy${duel.poisonStacks ? ' i truciźnie' : ''}: ${worst})` : ''}.`);
+        html = lines.join('<br>'); if (!gameOver && duel.playerHp <= worst) html += '<br><span class="duel-warn">⚠ Możesz paść w tej rundzie!</span>';
+    } else {
+        lines.push(`Wróg nie ma limitu obrażeń${poisonNow ? ` · trucizna: −${poisonNow} HP po jego ruchu` : ''}.`);
+        html = lines.join('<br>');
     document.getElementById('duelPreview').innerHTML = html;
 }
 
