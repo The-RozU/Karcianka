@@ -756,14 +756,42 @@ function updateUI() {
     document.getElementById('ui-xp-fill').style.width = `${xpPct}%`;
     document.getElementById('ui-xp-text').innerText = `${mapRun.xp} / ${mapRun.xpNext} EXP`;
 
+const headerName = document.getElementById('header-enemy-name');
+    const bossSkillBox = document.getElementById('header-boss-skill');
+    const bossSkillName = document.getElementById('header-skill-name');
+    const bossSkillDesc = document.getElementById('header-skill-desc');
     const traitBar = document.getElementById('ui-enemy-trait');
+
     if (currentEnemyTrait && duel.active) {
-        traitBar.style.display = 'block'; let extraBadges = '';
-        if (duel.corvenBlockArmed) extraBadges += ` · <b style="color:#5dade2">[🛡️ Blok 100% Aktywny!]</b>`;
-        if (duel.kaelEnraged) extraBadges += ` · <b style="color:#e74c3c">[🔥 SZAŁ +10% DMG]</b>`;
-        if (duel.handLimit < 8) extraBadges += ` · <b style="color:#e74c3c">[🩸 Limit 7 kart]</b>`;
-        traitBar.innerHTML = `⚔ <b>${currentEnemyTrait.name}</b> — <i>${currentEnemyTrait.traitName}</i>: ${currentEnemyTrait.desc}${extraBadges}`;
-    } else { traitBar.style.display = 'none'; }
+        const isBoss = currentEnemyTrait.id.startsWith('boss_');
+        headerName.innerText = isBoss ? `👑 ${currentEnemyTrait.name}` : `⚔ ${currentEnemyTrait.name}`;
+
+        let extraBadges = '';
+        if (duel.corvenBlockArmed) extraBadges += ` [🛡️ Blok 100% Aktywny!]`;
+        if (duel.kaelEnraged) extraBadges += ` [🔥 SZAŁ +10% DMG]`;
+        if (duel.handLimit < 8) extraBadges += ` [🩸 Limit 7 kart]`;
+
+        if (isBoss) {
+            // Jeśli to Boss -> pokaż umiejętność na górze po prawej od nazwy i ukryj stary pasek w lewej kolumnie
+            bossSkillBox.style.display = 'block';
+            bossSkillName.innerText = `${currentEnemyTrait.traitName}:`;
+            bossSkillDesc.innerText = `${currentEnemyTrait.desc}${extraBadges}`;
+            traitBar.style.display = 'none';
+        } else {
+            // Zwykły wróg lub Elita -> ukryj ramkę bossa na górze, zostaw pasek cechy dla Elity po lewej
+            bossSkillBox.style.display = 'none';
+            if (currentEnemyTrait.traitName !== 'Brak cechy') {
+                traitBar.style.display = 'block';
+                traitBar.innerHTML = `<i>${currentEnemyTrait.traitName}</i>: ${currentEnemyTrait.desc}`;
+            } else {
+                traitBar.style.display = 'none';
+            }
+        }
+    } else {
+        headerName.innerText = '⚓ Pod Złamaną Kotwicą';
+        bossSkillBox.style.display = 'none';
+        traitBar.style.display = 'none';
+    }
 
     let buffText = activeBuff.turns > 0 ? `(💪 +${activeBuff.dmg} na ${activeBuff.turns} ataki)` : '';
     document.getElementById('ui-buff').innerText = buffText;
