@@ -1437,6 +1437,7 @@ function updateDuelPanel() {
     } else {
         lines.push(`Wróg nie ma limitu obrażeń${poisonNow ? ` · trucizna: −${poisonNow} HP po jego ruchu` : ''}.`);
         html = lines.join('<br>');
+    }
     document.getElementById('duelPreview').innerHTML = html;
 }
 
