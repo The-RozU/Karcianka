@@ -58,19 +58,8 @@
       <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
     </section>
 
-    <section class="battle-center" aria-label="Ocena układu i komunikat rundy">
-      <div class="eval-screen">
-        <div class="eval-name" id="evalName">Wybierz karty</div>
-        <div class="eval-dmg" id="evalDmg">Zadane Obrażenia: 0</div>
-      </div>
-      <div class="info-strip">
-        <div id="log">Zaczynamy grę!</div>
-        <div class="duel-hint" id="duelHint">Krok 1/2 (⚔ Atak): Wybierz 0–5 kart i kliknij „Atak”</div>
-      </div>
-      <div class="fight-bonus">Bonus za układy w walce: +<span id="ui-fight-bonus">0</span> 🪙</div>
-    </section>
-
     <section class="player-hud battle-panel" aria-label="Stan gracza i ekwipunek">
+      <div class="fight-bonus">Bonus za układy w walce: +<span id="ui-fight-bonus">0</span> 🪙</div>
       <div class="status-bar">
         <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <b id="ui-player-hp">750/750</b> <span id="ui-buff" class="color-buff"></span></span>
         <span class="player-shield">🛡 Tarcza: <b id="duelPlayerShield">0</b></span>
@@ -92,6 +81,14 @@
     </section>
 
     <div class="right-col">
+      <div class="info-strip">
+        <div id="log">Zaczynamy grę!</div>
+        <div class="duel-hint" id="duelHint">Krok 1/2 (⚔ Atak): Wybierz 0–5 kart i kliknij „Atak”</div>
+      </div>
+      <div class="eval-screen">
+        <div class="eval-name" id="evalName">Wybierz karty</div>
+        <div class="eval-dmg" id="evalDmg">Zadane Obrażenia: 0</div>
+      </div>
       <div class="play-area">
         <div class="hand-zone" id="hand"></div>
         <div class="controls">
