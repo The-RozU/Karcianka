@@ -22,76 +22,81 @@
       <button class="btn-top btn-map-peek" onclick="openMapModal(true)">🗺️ Mapa</button>
     </div>
 
-    <div class="top-enemy-header">
-      <h1 class="header-title" id="header-enemy-name">⚓ Pod Złamaną Kotwicą</h1>
-      <div class="boss-skill" id="header-boss-skill" style="display: none;">
-        <span class="skill-name" id="header-skill-name"></span>
-        <span id="header-skill-desc"></span>
-      </div>
-    </div>
-
     <div class="top-right-btns">
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
   </div>
 
   <div class="board-grid">
-    <div class="left-col">
-      <div class="status-bar">
-        <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <span id="ui-player-hp">750/750</span> <span id="ui-buff" class="color-buff"></span></span>
-        <span>Odrzuty: <span id="ui-discards">5</span></span>
-        <span class="hp-enemy"><span id="ui-enemy-label">Wróg HP:</span> <span id="ui-enemy-hp">500</span></span>
-      </div>
-
-      <div class="xp-bar-wrap" id="ui-xp-bar">
-        <span class="xp-badge" id="ui-level">⭐ Poz. 1</span>
-        <div class="xp-track"><div class="xp-fill" id="ui-xp-fill"></div></div>
-        <span class="xp-text" id="ui-xp-text">0 / 100 EXP</span>
-      </div>
-
-      <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
-
+    <section class="enemy-board battle-panel" aria-label="Karty i zamiary przeciwnika">
+      <div class="panel-kicker">Karty i zamiar przeciwnika</div>
       <div class="duel-panel" id="duelPanel">
         <div class="duel-top">
           <span id="duelRound">Runda 1</span>
           <span class="duel-poison" id="duelPoisonTag" style="display:none">☠️ Trucizna: 0</span>
           <span class="duel-fatigue" id="duelFatigueTag" style="display:none">Zmęczenie: +25% DMG</span>
         </div>
-        <div class="duel-shields"><span>🛡 Ty: <b id="duelPlayerShield">0</b></span><span>🛡 Wróg: <b id="duelEnemyShield">0</b></span></div>
         <div class="enemy-hand" id="enemyHand" aria-label="Karty wroga"></div>
         <div class="duel-note" id="duelEnemyNote">Wróg losuje karty na początku swojego ruchu.</div>
         <div class="duel-preview" id="duelPreview"></div>
       </div>
+    </section>
 
-      <div class="fight-bonus">Bonus za układy w walce: +<span id="ui-fight-bonus">0</span> 🪙</div>
-
-      <div class="inv-bar">
-        <div class="inv-slots" id="ui-inventory">
-            <div class="inv-slot"></div><div class="inv-slot"></div><div class="inv-slot"></div>
+    <section class="enemy-hud battle-panel" aria-label="Stan przeciwnika">
+      <div class="top-enemy-header">
+        <h1 class="header-title" id="header-enemy-name">⚓ Pod Złamaną Kotwicą</h1>
+        <div class="boss-skill" id="header-boss-skill" style="display:none">
+          <span class="skill-name" id="header-skill-name"></span>
+          <span id="header-skill-desc"></span>
         </div>
-        <div class="relic-badges" id="ui-relics"></div>
-        <span class="coins-display">🪙 <span id="ui-coins">0</span></span>
       </div>
-    </div>
+      <div class="enemy-vitals">
+        <span class="hp-enemy"><span id="ui-enemy-label">Wróg HP:</span> <b id="ui-enemy-hp">500</b></span>
+        <span class="enemy-shield">🛡 Tarcza: <b id="duelEnemyShield">0</b></span>
+      </div>
+      <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
+    </section>
 
-    <div class="right-col">
+    <section class="battle-center" aria-label="Ocena układu i komunikat rundy">
       <div class="eval-screen">
         <div class="eval-name" id="evalName">Wybierz karty</div>
         <div class="eval-dmg" id="evalDmg">Zadane Obrażenia: 0</div>
       </div>
-
       <div class="info-strip">
         <div id="log">Zaczynamy grę!</div>
         <div class="duel-hint" id="duelHint">Krok 1/2 (⚔ Atak): Wybierz 0–5 kart i kliknij „Atak”</div>
       </div>
+      <div class="fight-bonus">Bonus za układy w walce: +<span id="ui-fight-bonus">0</span> 🪙</div>
+    </section>
 
+    <section class="player-hud battle-panel" aria-label="Stan gracza i ekwipunek">
+      <div class="status-bar">
+        <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <b id="ui-player-hp">750/750</b> <span id="ui-buff" class="color-buff"></span></span>
+        <span class="player-shield">🛡 Tarcza: <b id="duelPlayerShield">0</b></span>
+        <span class="discard-count">🔄 Odrzuty: <b id="ui-discards">5</b></span>
+      </div>
+      <div class="xp-bar-wrap" id="ui-xp-bar">
+        <span class="xp-badge" id="ui-level">⭐ Poz. 1</span>
+        <div class="xp-track"><div class="xp-fill" id="ui-xp-fill"></div></div>
+        <span class="xp-text" id="ui-xp-text">0 / 100 EXP</span>
+      </div>
+      <div class="inv-bar">
+        <span class="inventory-label">🎒 Ekwipunek</span>
+        <div class="inv-slots" id="ui-inventory">
+          <div class="inv-slot"></div><div class="inv-slot"></div><div class="inv-slot"></div>
+        </div>
+        <div class="relic-badges" id="ui-relics"></div>
+        <span class="coins-display">🪙 <span id="ui-coins">0</span></span>
+      </div>
+    </section>
+
+    <div class="right-col">
       <div class="play-area">
         <div class="hand-zone" id="hand"></div>
-        
         <div class="controls">
           <button class="btn btn-discard" id="btnDiscard" onclick="discardCards()" disabled>Odrzuć</button>
-          <button class="btn btn-play" id="btnPlay" onclick="playHand()" disabled>Zagraj</button>
-          <button class="btn btn-surrender" id="btnSurrender" onclick="surrender()">🏳️ Poddaj się</button>
+          <button class="btn btn-play" id="btnPlay" onclick="playHand()" disabled>⚔ Atak</button>
+          <button class="btn btn-surrender" id="btnSurrender" onclick="surrender()">🏳️ Porzuć</button>
         </div>
       </div>
     </div>
