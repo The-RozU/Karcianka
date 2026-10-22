@@ -175,8 +175,53 @@ html, body {
 .card.red { color: #8b0000; }
 .card.selected { transform: translateY(-12px) scale(1.05); border-color: var(--gold); box-shadow: 0 12px 20px rgba(179,135,67,0.4); z-index: 5;}
 .card:not(.selected):active { transform: translateY(-5px); }
-.card.locked { opacity: 0.45; filter: grayscale(70%); border-color: #c0392b; border-style: dotted; cursor: not-allowed; }
-.card.locked::after { content: '🔒'; position: absolute; top: -9px; right: -6px; font-size: 13px; line-height: 1; }
+.card.locked {
+  opacity: 1;
+  filter: grayscale(100%);
+  background: #b9b9b9;
+  border: 2px solid #666b70;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18), 0 3px 7px rgba(0,0,0,0.55);
+  cursor: not-allowed;
+  transform: none;
+}
+.card.locked::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(135deg, rgba(35,39,43,0.12) 0 5px, rgba(255,255,255,0.10) 5px 10px),
+    rgba(95,100,105,0.34);
+  pointer-events: none;
+  z-index: 2;
+}
+.card.locked::after {
+  content: '🔒\\A BLOKADA';
+  white-space: pre;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  padding: 4px 2px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  background: rgba(38, 42, 46, 0.94);
+  color: #fff;
+  font: 900 clamp(7px, 1.25vh, 9px)/1.2 system-ui, sans-serif;
+  text-align: center;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  pointer-events: none;
+  z-index: 3;
+}
+.card.locked:hover,
+.card.locked:active {
+  transform: none !important;
+}
 .card-top { display: flex; flex-direction: column; align-items: flex-start; line-height: 0.9; }
 .card-bottom { display: flex; flex-direction: column; align-items: flex-end; line-height: 0.9; transform: rotate(180deg); }
 
