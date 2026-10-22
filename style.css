@@ -86,27 +86,46 @@ html, body {
   margin-right: 4px;
 }
 .board-grid {
-  flex: 1; min-height: 0; display: grid; grid-template-columns: 40% 1fr; gap: clamp(10px, 1.8vw, 20px);
+  flex: 1; min-height: 0; display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, .78fr) auto minmax(0, 1.22fr);
+  gap: clamp(5px, 1vh, 10px) clamp(8px, 1.5vw, 18px);
 }
-.left-col, .right-col { display: flex; flex-direction: column; min-height: 0; }
-.left-col { justify-content: flex-start; gap: clamp(4px, 0.9vh, 8px); overflow-y: auto; padding-right: 2px; }
-.right-col { justify-content: space-between; gap: clamp(6px, 1.2vh, 12px); }
-
+.battle-panel {
+  min-width: 0; min-height: 0; padding: clamp(6px, 1vh, 10px);
+  background: rgba(0,0,0,.58); border: 1px solid rgba(179,135,67,.38);
+  border-radius: 9px; box-shadow: inset 0 2px 7px rgba(0,0,0,.4);
+}
+.enemy-board { grid-area: 1 / 1; display:flex; flex-direction:column; justify-content:center; }
+.enemy-hud { grid-area: 1 / 2; display:flex; flex-direction:column; justify-content:center; gap:clamp(4px,.8vh,8px); }
+.battle-center {
+  grid-area: 2 / 1 / 3 / 3; min-width:0; display:grid;
+  grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
+  align-items:center; gap:clamp(6px,1vw,12px);
+}
+.player-hud { grid-area: 3 / 1; display:flex; flex-direction:column; justify-content:center; gap:clamp(5px,.8vh,9px); }
+.right-col { grid-area: 3 / 2; display:flex; flex-direction:column; justify-content:center; min-width:0; min-height:0; }
+.panel-kicker { color:#c6a66b; font-size:clamp(9px,1.5vh,11px); font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; }
+.top-enemy-header { display:flex; flex-direction:column; align-items:flex-start; gap:5px; min-width:0; }
+.top-enemy-header .header-title { font-size:clamp(15px,2.6vh,22px); }
+.boss-skill { max-width:100%; font-size:clamp(9px,1.4vh,11px); }
+.enemy-vitals { display:flex; align-items:center; flex-wrap:wrap; gap:clamp(8px,1.5vw,18px); font-size:clamp(11px,1.9vh,14px); font-weight:bold; }
+.enemy-shield,.player-shield { color:var(--chips); white-space:nowrap; }
 .status-bar {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px;
-  background: rgba(0,0,0,0.7); padding: clamp(6px, 1.2vh, 10px);
-  border-radius: 8px; font-weight: bold; font-size: clamp(11px, 2vh, 14px);
-  border: 1px solid rgba(0,0,0,0.5); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+  display:grid; grid-template-columns:1fr 1fr; gap:5px 8px; align-items:center;
+  background:rgba(0,0,0,.55); padding:clamp(5px,.9vh,9px); border-radius:8px;
+  font-weight:bold; font-size:clamp(10px,1.8vh,13px); border:1px solid rgba(0,0,0,.5);
 }
-.hp-player { color: var(--heal); }
-.hp-enemy { color: var(--mult); }
-.fight-bonus { text-align: center; color: #f1c40f; font-size: clamp(10px, 1.7vh, 12px); font-weight: bold; }
+.hp-player { color:var(--heal); }
+.hp-enemy { color:var(--mult); }
+.discard-count { color:#d6c8ae; }
+.fight-bonus { grid-column:1 / -1; text-align:center; color:#f1c40f; font-size:clamp(9px,1.5vh,11px); font-weight:bold; }
 .enemy-trait-bar {
-  text-align: center; font-size: clamp(10px, 1.7vh, 12px); color: #f39c12;
-  background: rgba(0,0,0,0.5); border: 1px solid rgba(243,156,18,0.35);
-  border-radius: 6px; padding: clamp(4px, 0.8vh, 7px) 8px; line-height: 1.3;
+  text-align:left; font-size:clamp(9px,1.5vh,11px); color:#f3b34c;
+  background:rgba(0,0,0,.45); border:1px solid rgba(243,156,18,.35);
+  border-radius:6px; padding:clamp(4px,.7vh,7px) 8px; line-height:1.3;
 }
-.hp-enemy.hit { animation: enemy-hit 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.hp-enemy.hit { animation:enemy-hit .4s cubic-bezier(.36,.07,.19,.97) both; }
 
 .xp-bar-wrap {
   display: none; align-items: center; justify-content: space-between; gap: 8px;
@@ -434,3 +453,60 @@ body.duel-mode .card.spent::before {
 .fatigue-card { border-color:#e67e22; }
 .fatigue-title { font-size:clamp(30px,8vw,46px); font-weight:900; color:#e67e22; text-shadow:0 3px 10px rgba(0,0,0,.9); line-height:1.1; }
 .fatigue-text { font-size:13px; color:#ccc; line-height:1.5; margin:12px 0 16px; }
+
+.battle-center .eval-screen { min-height:clamp(42px,8vh,64px); }
+.battle-center .info-strip { min-width:0; }
+.player-hud .xp-bar-wrap { margin:0; }
+.inv-bar { margin-top:0; min-width:0; gap:6px; flex-wrap:wrap; }
+.inventory-label { color:#cbbda5; white-space:nowrap; font-weight:700; }
+.player-hud .inv-slots { gap:clamp(3px,.5vw,6px); }
+.player-hud .relic-badges { flex:1; min-width:30px; }
+.duel-panel { min-width:0; }
+.duel-panel .duel-top { justify-content:flex-start; }
+.duel-preview { max-height:7vh; overflow-y:auto; }
+.play-area { margin-top:0; gap:clamp(5px,1vh,10px); }
+.hand-zone { min-height:clamp(62px,17vh,100px); }
+.card { height:clamp(58px,16vh,92px); }
+.controls { gap:clamp(4px,.7vw,8px); }
+.controls .btn { padding:clamp(6px,1.2vh,10px) clamp(6px,.8vw,10px); }
+.btn-surrender { white-space:normal; }
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .tavern-table { padding:6px 10px; }
+  .top-bar { padding-bottom:4px; margin-bottom:5px; }
+  .board-grid { grid-template-rows:minmax(0,.7fr) auto minmax(0,1.3fr); gap:5px 8px; }
+  .battle-panel { padding:5px 7px; }
+  .duel-preview { max-height:5vh; }
+  .hand-zone { min-height:60px; }
+  .card { max-width:clamp(38px,6vw,58px); height:clamp(54px,15vh,78px); }
+  .player-hud .inv-slot { width:26px; height:26px; }
+}
+
+@media (max-width: 700px) {
+  html, body { width:100%; height:100%; overflow:hidden; }
+  .tavern-table {
+    width:100vw; height:100dvh; max-width:none; aspect-ratio:auto;
+    border:0; border-radius:0; padding:8px; overflow-y:auto;
+  }
+  .top-bar { gap:6px; align-items:flex-start; }
+  .top-left-btns,.top-right-btns { gap:4px; flex-wrap:wrap; }
+  .top-right-btns .btn-top { font-size:9px; }
+  .board-grid {
+    flex:none; display:flex; flex-direction:column; gap:8px;
+    min-height:0; overflow:visible;
+  }
+  .enemy-board { min-height:110px; }
+  .enemy-hud { min-height:100px; }
+  .battle-center { display:grid; grid-template-columns:1fr; gap:6px; }
+  .battle-center .eval-screen { min-height:54px; }
+  .battle-center .fight-bonus { grid-column:auto; }
+  .player-hud { min-height:0; }
+  .right-col { min-height:190px; }
+  .play-area { gap:8px; }
+  .hand-zone { min-height:96px; flex-wrap:wrap; }
+  .card { flex:0 1 clamp(36px,10vw,54px); height:clamp(56px,15vw,76px); }
+  .controls { grid-template-columns:1fr 1fr; }
+  .btn-surrender { grid-column:1 / -1; }
+  .duel-preview { max-height:none; }
+  body.duel-mode .tavern-table { overflow-y:auto; }
+}
