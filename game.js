@@ -173,7 +173,8 @@ function currentHandLimit() {
     return duel.active ? duel.handLimit : HAND_SIZE;
 }
 
-function updateLockedCard() {
+function updateLockedCard(reroll = false) {
+    if (!reroll && lockedCardId && hand.some(card => card.id === lockedCardId)) return;
     lockedCardId = null;
     if (!currentEnemyTrait || hand.length === 0) return;
 
@@ -527,13 +528,13 @@ function discardCards() {
     drawReplacements();
 }
 
-function drawReplacements() {
+function drawReplacements(rerollLockedCard = false) {
     const limit = currentHandLimit();
     const need = Math.max(0, limit - hand.length);
     if (need > 0) hand = hand.concat(drawCards(need));
     animateNextRender = true;
     hand.sort((a, b) => rankOrder.get(a.rank) - rankOrder.get(b.rank));
-    updateLockedCard(); evaluateHand(); updateUI();
+    updateLockedCard(rerollLockedCard); evaluateHand(); updateUI();
 }
 
 function surrender() {
@@ -1399,7 +1400,7 @@ async function duelEnemyTurn(token) {
     if (duel.round % 5 === 0) { discardsLeft++; showFloatingText('+1 Odrzut (5. runda!)', '#3498db', '65%', '28%', '18px'); bonusDiscardMsg = ' · Otrzymujesz +1 darmowy odrzut!'; }
 
     document.getElementById('log').innerText = `Runda ${duel.round} — Etap 1/2: Wybierz karty na Atak${bonusDiscardMsg}`;
-    setHandResolutionPending(false); drawReplacements();
+    setHandResolutionPending(false); drawReplacements(true);
     if (!duel.fatigueShown && duel.round >= duel.fatigueRound) { duel.fatigueShown = true; toggleModal('fatigueModal', true); }
 }
 
