@@ -196,7 +196,7 @@ html, body {
   z-index: 2;
 }
 .card.locked::after {
-  content: '🔒\\A BLOKADA';
+  content: '🔒\A BLOKADA';
   white-space: pre;
   position: absolute;
   left: 50%;
