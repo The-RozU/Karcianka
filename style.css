@@ -455,11 +455,14 @@ body.duel-mode .card.spent::before {
 .fatigue-text { font-size:13px; color:#ccc; line-height:1.5; margin:12px 0 16px; }
 
 .board-grid {
-  grid-template-rows:minmax(145px,34%) minmax(66px,12%) minmax(175px,30%) minmax(0,1fr);
+  grid-template-rows:minmax(135px,23%) minmax(0,1fr) minmax(190px,32%);
 }
-.enemy-hud { align-self:start; height:auto; }
-.battle-center { align-self:start; }
+.enemy-hud { align-self:start; justify-self:end; width:min(100%,560px); height:auto; }
 .player-hud,.right-col { align-self:end; }
+.right-col { gap:clamp(5px,1vh,9px); }
+.right-col .info-strip { min-width:0; }
+.right-col .eval-screen { min-height:clamp(48px,8vh,68px); padding:clamp(5px,1vh,9px); }
+.player-hud > .fight-bonus { text-align:right; margin-bottom:-3px; }
 .battle-center .eval-screen { min-height:clamp(40px,7vh,58px); padding:clamp(5px,1vh,9px); }
 .battle-center .info-strip { min-width:0; }
 .player-hud .xp-bar-wrap { margin:0; }
@@ -483,7 +486,7 @@ body.duel-mode .card.spent::before {
 @media (max-width: 900px) and (orientation: landscape) {
   .tavern-table { padding:6px 10px; }
   .top-bar { padding-bottom:4px; margin-bottom:5px; }
-  .board-grid { grid-template-rows:minmax(120px,33%) minmax(60px,12%) minmax(150px,30%) minmax(0,1fr); gap:5px 8px; }
+  .board-grid { grid-template-rows:minmax(115px,23%) minmax(0,1fr) minmax(165px,32%); gap:5px 8px; }
   .battle-panel { padding:5px 7px; }
   .duel-preview { max-height:5vh; }
   .hand-zone { min-height:52px; }
@@ -505,9 +508,9 @@ body.duel-mode .card.spent::before {
   }
   .enemy-board { min-height:110px; }
   .enemy-hud { min-height:100px; }
-  .battle-center { display:grid; grid-template-columns:1fr; gap:6px; }
-  .battle-center .eval-screen { min-height:54px; }
-  .battle-center .fight-bonus { grid-column:auto; }
+  .right-col { gap:7px; }
+  .right-col .eval-screen { min-height:54px; }
+  .player-hud > .fight-bonus { text-align:left; }
   .player-hud { min-height:0; }
   .right-col { min-height:170px; }
   .play-area { gap:7px; }
