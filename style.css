@@ -180,14 +180,18 @@ html, body {
 #log { font-size: clamp(11px, 1.9vh, 13px); color: #ccc; min-height: 16px; margin-bottom: 2px; }
 
 .play-area { display: flex; flex-direction: column; gap: clamp(8px, 1.8vh, 14px); margin-top: auto; }
-/* === POWIĘKSZONE KARTY (nadpisuje wcześniejsze ustawienia) === */
 .hand-zone {
-  min-height: clamp(120px, 26vh, 230px) !important;
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: center;
+  gap: clamp(4px, 0.7vw, 8px); width: 100%;
+  min-height: clamp(110px, 26vh, 200px); perspective: 1000px;
 }
 .card {
-  max-width: clamp(70px, 9.5vw, 170px) !important;
-  height: clamp(110px, 24vh, 220px) !important;
-  font-size: clamp(18px, 3.8vh, 32px) !important;
+  position: relative; flex: 1; max-width: clamp(70px, 9vw, 130px); height: clamp(105px, 24vh, 190px);
+  background: #e8e4d9; border-radius: 6px; color: #111;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: clamp(4px, 0.9vh, 8px); font-weight: 900; font-size: clamp(16px, 3.4vh, 28px);
+  border: 2px solid #222; transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease, opacity 0.15s ease;
+  cursor: pointer; box-shadow: -2px 4px 8px rgba(0,0,0,0.6);
 }
 .card.dealing { animation: card-deal 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; animation-delay: calc(var(--card-index, 0) * 40ms); }
 .card.red { color: #8b0000; }
