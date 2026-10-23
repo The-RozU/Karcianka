@@ -587,7 +587,7 @@ function animateCardsToEnemy(playedCards, enemyStatus, options = {}) {
         Object.assign(clone.style, { position:'fixed', left:rect.left+'px', top:rect.top+'px', width:rect.width+'px', height:rect.height+'px', margin:'0', zIndex:'9999', pointerEvents:'none', transformOrigin:'center center' });
         document.body.appendChild(clone);
         const dx=targetX-(rect.left+rect.width/2), dy=targetY-(rect.top+rect.height/2);
-        const delay = reduceMotion ? index*35 : (options.stagger ?? 95)*index;
+        const delay = (reduceMotion ? index*35 : (options.stagger ?? 95)*index) + (options.groupSplit && index >= 3 ? (options.groupDelay ?? 470) : 0);
         let frames;
         if (options.arc) {
             const direction = index % 2 ? 1 : -1;
@@ -616,13 +616,9 @@ function animateCardsToEnemy(playedCards, enemyStatus, options = {}) {
 
 function animateFullCombo(cards, enemyStatus, table) {
     if (!cards.length || !enemyStatus) return;
-    const first = cards.slice(0,3), second = cards.slice(3,5);
-    animateCardsToEnemy(first, enemyStatus, { stagger:75, duration:520 });
-    setTimeout(() => {
-        animateCardsToEnemy(second, enemyStatus, { stagger:65, duration:430 });
-        animateEnemyHits(enemyStatus, 2);
-        animateScreenShake(table, true);
-    }, 470);
+    // Clone every card before updateUI removes the played hand from the DOM.
+    animateCardsToEnemy(cards, enemyStatus, { stagger:65, duration:520, groupSplit:true, groupDelay:470 });
+    setTimeout(() => { animateEnemyHits(enemyStatus, 2); animateScreenShake(table, true); }, 470);
 }
 
 function animateColorRibbon(cards, table, enemyStatus, color) {
