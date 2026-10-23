@@ -575,10 +575,98 @@ function animateKaretaExecution(enemyStatus, table) {
     animateScreenShake(table, true);
 }
 
+function animateCardsToEnemy(playedCards, enemyStatus, options = {}) {
+    if (!enemyStatus || !playedCards.length) return;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const target = enemyStatus.getBoundingClientRect();
+    const targetX = target.left + target.width / 2, targetY = target.top + target.height / 2;
+    const elements = playedCards.map(card => Array.from(document.querySelectorAll('#hand .card')).find(el => el.dataset.cardId === card.id)).filter(Boolean);
+    elements.forEach((source, index) => {
+        const rect = source.getBoundingClientRect(), clone = source.cloneNode(true);
+        clone.removeAttribute('id'); clone.setAttribute('aria-hidden', 'true');
+        Object.assign(clone.style, { position:'fixed', left:rect.left+'px', top:rect.top+'px', width:rect.width+'px', height:rect.height+'px', margin:'0', zIndex:'9999', pointerEvents:'none', transformOrigin:'center center' });
+        document.body.appendChild(clone);
+        const dx=targetX-(rect.left+rect.width/2), dy=targetY-(rect.top+rect.height/2);
+        const delay = reduceMotion ? index*35 : (options.stagger ?? 95)*index;
+        let frames;
+        if (options.arc) {
+            const direction = index % 2 ? 1 : -1;
+            frames = [
+                { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:1, offset:0 },
+                { transform:`translate(${dx*.45 + direction*48}px,${dy*.35 - 75}px) rotate(${direction*190}deg) scale(.8)`, opacity:1, offset:.55 },
+                { transform:`translate(${dx}px,${dy}px) rotate(${direction*390}deg) scale(.22)`, opacity:0, filter:'brightness(2.2)', offset:1 }
+            ];
+        } else {
+            frames = [
+                { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:1, filter:'brightness(1)', offset:0 },
+                { transform:`translate(${dx*.68}px,${dy*.68}px) rotate(${index%2 ? 10 : -10}deg) scale(.7)`, opacity:1, filter:'brightness(1.7)', offset:.7 },
+                { transform:`translate(${dx}px,${dy}px) rotate(${index%2 ? 18 : -18}deg) scale(.18)`, opacity:0, filter:'brightness(2.3)', offset:1 }
+            ];
+        }
+        if (typeof clone.animate === 'function') {
+            const animation=clone.animate(frames,{duration:reduceMotion?280:(options.duration??580),delay,easing:'cubic-bezier(.18,.75,.22,1)',fill:'forwards'});
+            animation.onfinish=()=>clone.remove(); animation.oncancel=()=>clone.remove();
+        } else {
+            clone.style.transition=`transform ${reduceMotion?280:(options.duration??580)}ms ease ${delay}ms, opacity ${reduceMotion?280:(options.duration??580)}ms ease ${delay}ms`;
+            requestAnimationFrame(()=>{ clone.style.transform=`translate(${dx}px,${dy}px) scale(.2) rotate(20deg)`; clone.style.opacity='0'; });
+            setTimeout(()=>clone.remove(),delay+(options.duration??580)+100);
+        }
+    });
+}
+
+function animateFullCombo(cards, enemyStatus, table) {
+    if (!cards.length || !enemyStatus) return;
+    const first = cards.slice(0,3), second = cards.slice(3,5);
+    animateCardsToEnemy(first, enemyStatus, { stagger:75, duration:520 });
+    setTimeout(() => {
+        animateCardsToEnemy(second, enemyStatus, { stagger:65, duration:430 });
+        animateEnemyHits(enemyStatus, 2);
+        animateScreenShake(table, true);
+    }, 470);
+}
+
+function animateColorRibbon(cards, table, enemyStatus, color) {
+    if (!table || !enemyStatus) return;
+    animateCardsToEnemy(cards, enemyStatus, { stagger:55, duration:680 });
+    const rect=enemyStatus.getBoundingClientRect(), ribbon=document.createElement('div');
+    ribbon.className='color-ribbon '+(color==='red'?'color-ribbon-red':'color-ribbon-black');
+    Object.assign(ribbon.style,{position:'fixed',left:(rect.left+rect.width/2)+'px',top:(rect.top+rect.height/2)+'px',width:Math.max(150,rect.width*1.65)+'px',height:Math.max(60,rect.height*1.2)+'px',zIndex:'9997',pointerEvents:'none'});
+    ribbon.setAttribute('aria-hidden','true');
+    ribbon.innerHTML='<span></span><span></span><span></span>';
+    document.body.appendChild(ribbon);
+    if(typeof ribbon.animate==='function'){
+        const a=ribbon.animate([{opacity:0,transform:'translate(-50%,-50%) scaleX(.05) rotate(-12deg)'},{opacity:1,transform:'translate(-50%,-50%) scaleX(1.08) rotate(0deg)',offset:.4},{opacity:0,transform:'translate(-50%,-50%) scaleX(1.18) rotate(8deg)'}],{duration:850,easing:'cubic-bezier(.15,.8,.2,1)'});
+        a.onfinish=()=>ribbon.remove(); a.oncancel=()=>ribbon.remove();
+    } else setTimeout(()=>ribbon.remove(),900);
+    animateEnemyHits(enemyStatus,3);
+}
+
+function animateCrossPair(cards, enemyStatus, table) {
+    if (!cards.length || !enemyStatus) return;
+    animateCardsToEnemy(cards, enemyStatus, { stagger:0, duration:620 });
+    const rect=enemyStatus.getBoundingClientRect(), cross=document.createElement('div');
+    cross.className='two-pair-cross';
+    Object.assign(cross.style,{position:'fixed',left:(rect.left+rect.width/2)+'px',top:(rect.top+rect.height/2)+'px',width:Math.max(130,rect.width*1.3)+'px',height:Math.max(90,rect.height*1.7)+'px',zIndex:'9998',pointerEvents:'none'});
+    cross.setAttribute('aria-hidden','true');
+    cross.innerHTML='<span></span><span></span>';
+    document.body.appendChild(cross);
+    if(typeof cross.animate==='function'){
+        const a=cross.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.45)'},{opacity:1,transform:'translate(-50%,-50%) scale(1.08)',offset:.4},{opacity:0,transform:'translate(-50%,-50%) scale(1.2)'}],{duration:680,easing:'ease-out'});
+        a.onfinish=()=>cross.remove(); a.oncancel=()=>cross.remove();
+    } else setTimeout(()=>cross.remove(),700);
+    animateEnemyHits(enemyStatus,2); animateScreenShake(table);
+}
+
+function animatePairStrike(cards, enemyStatus) {
+    animateCardsToEnemy(cards, enemyStatus, { stagger:190, duration:410 });
+    if (enemyStatus) animateEnemyHits(enemyStatus,2);
+}
+
 function runHandAnimation(handName, playedCards) {
     const table = document.querySelector('.tavern-table');
     const enemyStatus = document.querySelector('.hp-enemy');
     if (handName === 'Poker') {
+        animateCardsToEnemy(playedCards, enemyStatus, { stagger:35, duration:780 });
         animateScreenShake(table, true);
         const banner = document.createElement('div'); banner.className = 'hand-announcement'; banner.textContent = 'POKER!'; table.appendChild(banner);
         if (typeof banner.animate === 'function') {
@@ -587,9 +675,12 @@ function runHandAnimation(handName, playedCards) {
             animation.onfinish = () => banner.remove();
         } else { setTimeout(() => banner.remove(), 1650); }
     } else if (handName === 'Kareta') { animateKaretaExecution(enemyStatus, table); }
-    else if (handName === 'Full') { animateScreenShake(table); }
-    else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); }
+    else if (handName === 'Full') { animateFullCombo(playedCards, enemyStatus, table); }
+    else if (handName === 'Kolor') { animateColorRibbon(playedCards, table, enemyStatus, playedCards[0]?.color === 'red' ? 'red' : 'black'); }
     else if (handName === 'Trójka') { animateCardsFlyingToEnemy(playedCards, table, enemyStatus); }
+    else if (handName === 'Dwie Pary') { animateCrossPair(playedCards, enemyStatus, table); }
+    else if (handName === 'Para') { animatePairStrike(playedCards, enemyStatus); }
+    else if (handName === 'Wysoka Karta') { animateCardsToEnemy(playedCards.slice(0,1), enemyStatus, { arc:true, duration:650, stagger:0 }); }
 }
 
 function playHand() { duelPlay(); }
