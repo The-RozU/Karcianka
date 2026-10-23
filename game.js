@@ -715,7 +715,7 @@ function executeItem(idx) {
     else if (item.id === 'heal_pot') {
         const before = duel.playerHp; duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + DUEL.HEAL_POTION_VAL);
         if (mapRun.active) mapRun.playerHp = duel.playerHp;
-        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '15%', '22%', '22px');
+        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '17%', '72%', '22px');
     }
     else if (item.id === 'shield_pot') { duel.playerShield += 25; showFloatingText('+25 🛡', '#5dade2', '15%', '35%', '22px'); }
     else if (item.id === 'time') { duel.fatigueRound++; showFloatingText('Zmęczenie +1 runda', '#f1c40f', '25%', '22%', '16px'); }
@@ -1302,7 +1302,7 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     } else { duel.enemyShield = 0; }
 
     const shEval = evaluateShieldCards(shieldHand, true); duel.playerShield += shEval.total;
-    if (shEval.total > 0) showFloatingText(`+${shEval.total} 🛡`, '#5dade2', '15%', '34%', '20px');
+    if (shEval.total > 0) showFloatingText(`+${shEval.total} 🛡`, '#5dade2', '17%', '80%', '20px');
 
     const usedIds = attackCards.concat(shieldHand).map(c => c.id); const used = hand.filter(c => usedIds.includes(c.id));
     hand = hand.filter(c => !usedIds.includes(c.id)); discardPile.push(...used);
@@ -1374,8 +1374,8 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     duel.stats.taken += dealt; duel.stats.blocked += absorbed;
 
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
-    if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '15%', '34%', '18px');
-    showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '15%', '22%', '26px');
+    if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
+    showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '17%', '72%', '26px');
     if (dealt > 0) { playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {
