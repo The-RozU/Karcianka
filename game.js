@@ -616,8 +616,11 @@ function animateCardsToEnemy(playedCards, enemyStatus, options = {}) {
 
 function animateFullCombo(cards, enemyStatus, table) {
     if (!cards.length || !enemyStatus) return;
+    const counts = cards.reduce((acc, card) => { acc[card.rank] = (acc[card.rank] || 0) + 1; return acc; }, {});
+    const tripleRank = Object.keys(counts).find(rank => counts[rank] === 3);
+    const ordered = tripleRank ? cards.filter(card => String(card.rank) === tripleRank).concat(cards.filter(card => String(card.rank) !== tripleRank)) : cards;
     // Clone every card before updateUI removes the played hand from the DOM.
-    animateCardsToEnemy(cards, enemyStatus, { stagger:65, duration:520, groupSplit:true, groupDelay:470 });
+    animateCardsToEnemy(ordered, enemyStatus, { stagger:65, duration:520, groupSplit:true, groupDelay:470 });
     setTimeout(() => { animateEnemyHits(enemyStatus, 2); animateScreenShake(table, true); }, 470);
 }
 
@@ -1423,7 +1426,13 @@ function duelPlay() {
     }
 
     const go = () => resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand);
-    if (handName === 'Strit') { setHandResolutionPending(true); animateStraightCards(attackCards, () => { setHandResolutionPending(false); go(); }); return; }
+    if (handName === 'Strit') {
+        setHandResolutionPending(true);
+        animateCardsToEnemy(attackCards, document.querySelector('.hp-enemy'), { stagger:115, duration:430 });
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        setTimeout(() => { setHandResolutionPending(false); go(); }, (reduceMotion ? 280 : 430) + (attackCards.length - 1) * (reduceMotion ? 35 : 115) + 50);
+        return;
+    }
     go();
 }
 
