@@ -533,3 +533,19 @@ body.duel-mode .card.spent::before {
   .duel-preview { max-height:none; }
   body.duel-mode .tavern-table { overflow-y:auto; }
 }
+
+
+/* Selected card-rank combat animations */
+.color-ribbon { transform:translate(-50%,-50%); filter:drop-shadow(0 0 9px currentColor); }
+.color-ribbon span { position:absolute; left:0; right:0; top:50%; height:8px; border-radius:999px; transform-origin:center; }
+.color-ribbon span:nth-child(1) { transform:translateY(-13px) rotate(-13deg); }
+.color-ribbon span:nth-child(2) { height:13px; }
+.color-ribbon span:nth-child(3) { transform:translateY(13px) rotate(13deg); }
+.color-ribbon-red { color:#ff493f; }
+.color-ribbon-red span { background:linear-gradient(90deg,transparent,#ff493f 18%,#fff3d0 50%,#ff493f 82%,transparent); box-shadow:0 0 12px rgba(255,60,48,.9); }
+.color-ribbon-black { color:#dcecff; }
+.color-ribbon-black span { background:linear-gradient(90deg,transparent,#8ba8d4 18%,#fff 50%,#8ba8d4 82%,transparent); box-shadow:0 0 12px rgba(180,215,255,.85); }
+.two-pair-cross { transform:translate(-50%,-50%); filter:drop-shadow(0 0 8px rgba(255,225,155,.95)); }
+.two-pair-cross span { position:absolute; left:50%; top:50%; width:125%; height:8px; border-radius:999px; background:linear-gradient(90deg,transparent,#e8b85f 20%,#fff7d7 50%,#e8b85f 80%,transparent); box-shadow:0 0 10px #d79c3b,0 0 22px rgba(255,218,130,.8); }
+.two-pair-cross span:first-child { transform:translate(-50%,-50%) rotate(42deg); }
+.two-pair-cross span:last-child { transform:translate(-50%,-50%) rotate(-42deg); }
