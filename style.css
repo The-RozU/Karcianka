@@ -549,3 +549,8 @@ body.duel-mode .card.spent::before {
 .two-pair-cross span { position:absolute; left:50%; top:50%; width:125%; height:8px; border-radius:999px; background:linear-gradient(90deg,transparent,#e8b85f 20%,#fff7d7 50%,#e8b85f 80%,transparent); box-shadow:0 0 10px #d79c3b,0 0 22px rgba(255,218,130,.8); }
 .two-pair-cross span:first-child { transform:translate(-50%,-50%) rotate(42deg); }
 .two-pair-cross span:last-child { transform:translate(-50%,-50%) rotate(-42deg); }
+/* === WYSOKIE KARTY === */
+.hand-zone .card {
+  height: auto !important;
+  aspect-ratio: 2 / 3 !important;
+}
