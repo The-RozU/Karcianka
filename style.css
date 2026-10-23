@@ -186,7 +186,7 @@ html, body {
   min-height: clamp(110px, 26vh, 200px); perspective: 1000px;
 }
 .card {
-  position: relative; flex: 1; max-width: clamp(70px, 9vw, 130px); height: clamp(105px, 24vh, 190px);
+  position: relative; flex: 1; max-width: clamp(70px, 9vw, 130px); height: clamp(150px, 34vh, 260px);
   background: #e8e4d9; border-radius: 6px; color: #111;
   display: flex; flex-direction: column; justify-content: space-between;
   padding: clamp(4px, 0.9vh, 8px); font-weight: 900; font-size: clamp(16px, 3.4vh, 28px);
