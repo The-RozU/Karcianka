@@ -158,7 +158,7 @@ function showFloatingText(msg, color, leftPercent, topPercent, fontSize="22px") 
     el.style.fontSize = fontSize;
     el.innerHTML = msg;
     document.querySelector('.tavern-table').appendChild(el);
-    setTimeout(() => el.remove(), 1200);
+    setTimeout(() => el.remove(), 1800);
 }
 
 function pickRandomEnemyTrait() {
@@ -406,12 +406,12 @@ function playMotion(element, frames, duration, fallbackClass, removeClasses = []
 }
 
 function animateScreenShake(table, strong = false) {
-    const distance = strong ? 15 : 11;
+    const distance = strong ? 12 : 8;
     playMotion(table, [
         { transform: 'translate(0,0)' }, { transform: `translate(${-distance}px,3px)`, offset: 0.18 },
         { transform: `translate(${distance}px,-3px)`, offset: 0.36 }, { transform: `translate(${-distance + 2}px,-2px)`, offset: 0.54 },
         { transform: `translate(${distance - 2}px,2px)`, offset: 0.72 }, { transform: 'translate(0,0)' }
-    ], 560, 'screen-shake', ['color-flash-red', 'color-flash-black']);
+    ], 760, 'screen-shake', ['color-flash-red', 'color-flash-black']);
 }
 
 function animateEnemyHits(enemy, count) {
@@ -424,7 +424,7 @@ function animateEnemyHits(enemy, count) {
         hitFrames.push({ transform: 'translateX(0) scale(1)', filter: 'brightness(1)', textShadow: 'none', offset: start + 0.09 });
     }
     hitFrames.push({ transform: 'translateX(0) scale(1)', filter: 'brightness(1)', textShadow: 'none' });
-    playMotion(enemy, hitFrames, count === 4 ? 1000 : 790, count === 4 ? 'enemy-four-hit' : 'enemy-three-hit', ['hit', 'enemy-four-hit', 'enemy-three-hit']);
+    playMotion(enemy, hitFrames, count === 4 ? 1300 : 1100, count === 4 ? 'enemy-four-hit' : 'enemy-three-hit', ['hit', 'enemy-four-hit', 'enemy-three-hit']);
 }
 
 function animateColorFlash(table, color) {
@@ -436,10 +436,10 @@ function animateColorFlash(table, color) {
     table.appendChild(flash);
     if (typeof flash.animate === 'function') {
         const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 360 : 680, easing: 'ease-out' });
+        const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 450 : 950, easing: 'ease-out' });
         animation.onfinish = () => flash.remove();
     } else {
-        flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black'); setTimeout(() => flash.remove(), 700);
+        flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black'); setTimeout(() => flash.remove(), 1000);
     }
 }
 
@@ -490,6 +490,22 @@ function animateStraightCards(cards, onComplete) {
     });
 }
 
+function animateEnemyHpChange() {
+    const hp = document.getElementById('ui-enemy-hp');
+    if (!hp) return;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof hp.animate === 'function') {
+        hp.animate([
+            { transform: 'scale(1)', color: 'inherit', textShadow: 'none' },
+            { transform: 'scale(1.55)', color: '#fff', textShadow: '0 0 12px rgba(231,76,60,.95), 0 0 24px rgba(231,76,60,.65)', offset: .22 },
+            { transform: 'scale(1.3)', color: '#ffb0a8', textShadow: '0 0 10px rgba(231,76,60,.8)', offset: .5 },
+            { transform: 'scale(1)', color: 'inherit', textShadow: 'none' }
+        ], { duration: reduceMotion ? 500 : 950, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    } else {
+        restartAnimation(hp, 'hp-damage-pulse');
+    }
+}
+
 function runHandAnimation(handName, playedCards) {
     const table = document.querySelector('.tavern-table');
     const enemyStatus = document.querySelector('.hp-enemy');
@@ -498,9 +514,9 @@ function runHandAnimation(handName, playedCards) {
         const banner = document.createElement('div'); banner.className = 'hand-announcement'; banner.textContent = 'POKER!'; table.appendChild(banner);
         if (typeof banner.animate === 'function') {
             const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 600 : 1150, easing: 'cubic-bezier(.16,.8,.3,1)' });
+            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 650 : 1600, easing: 'cubic-bezier(.16,.8,.3,1)' });
             animation.onfinish = () => banner.remove();
-        } else { setTimeout(() => banner.remove(), 1200); }
+        } else { setTimeout(() => banner.remove(), 1650); }
     } else if (handName === 'Kareta') { animateEnemyHits(enemyStatus, 4); } 
     else if (handName === 'Full') { animateScreenShake(table); } 
     else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); } 
@@ -1271,8 +1287,8 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
         if (incoming > runStats.bestHandDmg) { runStats.bestHandDmg = incoming; runStats.bestHandName = handName; }
         runStats.totalDamage += dealt;
 
-        if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '30%', '34%', '18px');
-        showFloatingText(`-${dealt}`, '#e74c3c', '30%', '22%', '26px'); pendingDiceRoll = 0;
+        if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '76%', '25%', '18px');
+        showFloatingText(`-${dealt}`, '#e74c3c', '76%', '17%', '26px'); pendingDiceRoll = 0;
         if (activeBuff.turns > 0) { activeBuff.turns--; if (activeBuff.turns === 0) activeBuff.dmg = 0; }
 
         if (currentEnemyTrait && duel.enemyHp > 0) {
@@ -1292,10 +1308,11 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     hand = hand.filter(c => !usedIds.includes(c.id)); discardPile.push(...used);
     selectedCards = []; shieldCards = []; duel.phase = 'attack'; evaluateHand();
 
-    if (duel.enemyHp === 0) { updateUI(); duelEnd(true); return; }
-    if (duel.playerHp === 0) { updateUI(); duelEnd(false); return; }
+    if (duel.enemyHp === 0) { updateUI(); if (attackCards.length && damage > 0) animateEnemyHpChange(); duelEnd(true); return; }
+    if (duel.playerHp === 0) { updateUI(); if (attackCards.length && damage > 0) animateEnemyHpChange(); duelEnd(false); return; }
 
     setHandResolutionPending(true); updateUI();
+    if (attackCards.length && damage > 0) animateEnemyHpChange();
     duelEnemyTurn(duel.token).catch(err => { console.error(err); setHandResolutionPending(false); });
 }
 
