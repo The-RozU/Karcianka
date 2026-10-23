@@ -120,16 +120,17 @@ function newDuelState() {
 let duel = newDuelState();
 
 const HAND_RULES = {
-    poker: { name: 'Poker', baseChips: 100, mult: 8 },
-    fourKind: { name: 'Kareta', baseChips: 60, mult: 7 },
-    fullHouse: { name: 'Full', baseChips: 40, mult: 4 },
-    flush: { name: 'Kolor', baseChips: 35, mult: 4 },
-    straight: { name: 'Strit', baseChips: 30, mult: 4 },
-    threeKind: { name: 'Trójka', baseChips: 30, mult: 3 },
-    twoPair: { name: 'Dwie Pary', baseChips: 20, mult: 2 },
-    pair: { name: 'Para', baseChips: 10, mult: 2 },
+    poker: { name: 'Poker', baseChips: 60, mult: 5 },
+    fourKind: { name: 'Kareta', baseChips: 45, mult: 4 },
+    fullHouse: { name: 'Full', baseChips: 35, mult: 3.5 },
+    flush: { name: 'Kolor', baseChips: 25, mult: 3 },
+    straight: { name: 'Strit', baseChips: 25, mult: 3 },
+    threeKind: { name: 'Trójka', baseChips: 20, mult: 2.5 },
+    twoPair: { name: 'Dwie Pary', baseChips: 15, mult: 2 },
+    pair: { name: 'Para', baseChips: 10, mult: 1.5 },
     highCard: { name: 'Wysoka Karta', baseChips: 5, mult: 1 }
 };
+
 
 function toggleModal(id, show) {
     const el = document.getElementById(id);
