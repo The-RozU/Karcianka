@@ -197,15 +197,15 @@ function openLobbySection(section) {
     const sections = {
         quests: {
             title: 'Zadania',
-            html: '<p>Wypatruj dodatkowych wyzwań za Gwiazdki.</p><ul><li>Przykład: zagraj Full trzy razy.</li><li>Nagrody i aktywne zadania pojawią się w dalszym etapie.</li></ul>'
+            html: '<p>Wypatruj dodatkowych wyzwań za Gwiazdki.</p><ul><li>Przykład: zagraj Full trzy razy.</li><li>Nagrody i aktywne zadania pojawią się w dalszym etapie.</li></ul><p><strong>Wkrótce</strong></p>'
         },
         skills: {
             title: 'Umiejętności',
-            html: '<p>Planowane pasywne ulepszenia kupowane za Gwiazdki:</p><ul><li>Atak i zarobek</li><li>Więcej slotów ekwipunku i odrzutów</li><li>Ulepszenia wybranych figur</li></ul><p>Rozwój umiejętności nie jest jeszcze aktywny.</p>'
+            html: '<p>Planowane pasywne ulepszenia kupowane za Gwiazdki:</p><ul><li>Atak i zarobek</li><li>Więcej slotów ekwipunku i odrzutów</li><li>Ulepszenia wybranych figur</li></ul><p>Rozwój umiejętności nie jest jeszcze aktywny.</p><p><strong>Wkrótce</strong></p>'
         },
         achievements: {
             title: 'Osiągnięcia',
-            html: '<p>Planowane cele wypraw:</p><ul><li>Pierwsza Krew — pokonaj pierwszego przeciwnika</li><li>Król Karciarzy — zagraj Pokera</li><li>Szuler — wygraj 10 walk</li><li>Pierwszy Boss — pokonaj pierwszego Bossa</li></ul>'
+            html: '<p>Planowane cele wypraw:</p><ul><li>Pierwsza Krew — pokonaj pierwszego przeciwnika</li><li>Król Karciarzy — zagraj Pokera</li><li>Szuler — wygraj 10 walk</li><li>Pierwszy Boss — pokonaj pierwszego Bossa</li></ul><p><strong>Wkrótce</strong></p>'
         }
     };
     const title = document.getElementById('lobbySectionTitle');
