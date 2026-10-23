@@ -159,7 +159,7 @@ function showFloatingText(msg, color, leftPercent, topPercent, fontSize="22px") 
     el.style.fontSize = fontSize;
     el.innerHTML = msg;
     document.querySelector('.tavern-table').appendChild(el);
-    setTimeout(() => el.remove(), 1200);
+    setTimeout(() => el.remove(), 1800);
 }
 
 function pickRandomEnemyTrait() {
@@ -412,7 +412,27 @@ function animateScreenShake(table, strong = false) {
         { transform: 'translate(0,0)' }, { transform: `translate(${-distance}px,3px)`, offset: 0.18 },
         { transform: `translate(${distance}px,-3px)`, offset: 0.36 }, { transform: `translate(${-distance + 2}px,-2px)`, offset: 0.54 },
         { transform: `translate(${distance - 2}px,2px)`, offset: 0.72 }, { transform: 'translate(0,0)' }
-    ], 560, 'screen-shake', ['color-flash-red', 'color-flash-black']);
+    ], 760, 'screen-shake', ['color-flash-red', 'color-flash-black']);
+}
+
+
+function animateEnemyHpChange() {
+    const hp = document.getElementById('ui-enemy-hp');
+    if (!hp || typeof hp.animate !== 'function') {
+        if (hp) {
+            hp.classList.remove('hp-damage-pulse');
+            void hp.offsetWidth;
+            hp.classList.add('hp-damage-pulse');
+        }
+        return;
+    }
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    hp.animate([
+        { transform: 'scale(1)', color: '', textShadow: '0 0 0 rgba(231,76,60,0)' },
+        { transform: 'scale(1.55)', color: '#fff', textShadow: '0 0 12px rgba(231,76,60,.95), 0 0 24px rgba(231,76,60,.65)', offset: 0.22 },
+        { transform: 'scale(1.35)', color: '#ffb0a8', textShadow: '0 0 10px rgba(231,76,60,.8)', offset: 0.48 },
+        { transform: 'scale(1)', color: '', textShadow: '0 0 0 rgba(231,76,60,0)' }
+    ], { duration: reduceMotion ? 550 : 950, easing: 'cubic-bezier(.2,.75,.25,1)' });
 }
 
 function animateEnemyHits(enemy, count) {
@@ -425,7 +445,7 @@ function animateEnemyHits(enemy, count) {
         hitFrames.push({ transform: 'translateX(0) scale(1)', filter: 'brightness(1)', textShadow: 'none', offset: start + 0.09 });
     }
     hitFrames.push({ transform: 'translateX(0) scale(1)', filter: 'brightness(1)', textShadow: 'none' });
-    playMotion(enemy, hitFrames, count === 4 ? 1000 : 790, count === 4 ? 'enemy-four-hit' : 'enemy-three-hit', ['hit', 'enemy-four-hit', 'enemy-three-hit']);
+    playMotion(enemy, hitFrames, count === 4 ? 1300 : 1100, count === 4 ? 'enemy-four-hit' : 'enemy-three-hit', ['hit', 'enemy-four-hit', 'enemy-three-hit']);
 }
 
 function animateColorFlash(table, color) {
@@ -437,10 +457,10 @@ function animateColorFlash(table, color) {
     table.appendChild(flash);
     if (typeof flash.animate === 'function') {
         const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 360 : 680, easing: 'ease-out' });
+        const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 480 : 950, easing: 'ease-out' });
         animation.onfinish = () => flash.remove();
     } else {
-        flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black'); setTimeout(() => flash.remove(), 700);
+        flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black'); setTimeout(() => flash.remove(), 1000);
     }
 }
 
@@ -499,9 +519,9 @@ function runHandAnimation(handName, playedCards) {
         const banner = document.createElement('div'); banner.className = 'hand-announcement'; banner.textContent = 'POKER!'; table.appendChild(banner);
         if (typeof banner.animate === 'function') {
             const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 600 : 1150, easing: 'cubic-bezier(.16,.8,.3,1)' });
+            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 750 : 1600, easing: 'cubic-bezier(.16,.8,.3,1)' });
             animation.onfinish = () => banner.remove();
-        } else { setTimeout(() => banner.remove(), 1200); }
+        } else { setTimeout(() => banner.remove(), 1650); }
     } else if (handName === 'Kareta') { animateEnemyHits(enemyStatus, 4); } 
     else if (handName === 'Full') { animateScreenShake(table); } 
     else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); } 
@@ -1258,6 +1278,7 @@ function duelPlay() {
 
 function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     if (gameOver || !duel.active) return; const fm = fatigueMult();
+    let enemyDamageDealt = 0;
 
     if (attackCards.length) {
         playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards); currentFightBonus += HAND_WIN_BONUS[handName] || 0;
@@ -1266,6 +1287,7 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
         if (duel.corvenBlockArmed) { incoming = 0; duel.corvenBlockArmed = false; showFloatingText('🛡️ ZABLOKOWANO 100%', '#5dade2', '30%', '28%', '20px'); }
 
         const absorbed = Math.min(duel.enemyShield, incoming); const dealt = incoming - absorbed;
+        enemyDamageDealt = dealt;
         duel.enemyShield = 0; duel.enemyHp = Math.max(0, duel.enemyHp - dealt);
         duel.stats.dealt += dealt;
         if (incoming > duel.stats.bestDmg) { duel.stats.bestDmg = incoming; duel.stats.bestName = handName; }
@@ -1293,10 +1315,10 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     hand = hand.filter(c => !usedIds.includes(c.id)); discardPile.push(...used);
     selectedCards = []; shieldCards = []; duel.phase = 'attack'; evaluateHand();
 
-    if (duel.enemyHp === 0) { updateUI(); duelEnd(true); return; }
-    if (duel.playerHp === 0) { updateUI(); duelEnd(false); return; }
+    if (duel.enemyHp === 0) { updateUI(); if (enemyDamageDealt > 0) animateEnemyHpChange(); duelEnd(true); return; }
+    if (duel.playerHp === 0) { updateUI(); if (enemyDamageDealt > 0) animateEnemyHpChange(); duelEnd(false); return; }
 
-    setHandResolutionPending(true); updateUI();
+    setHandResolutionPending(true); updateUI(); if (enemyDamageDealt > 0) animateEnemyHpChange();
     duelEnemyTurn(duel.token).catch(err => { console.error(err); setHandResolutionPending(false); });
 }
 
