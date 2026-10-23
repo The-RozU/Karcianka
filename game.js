@@ -664,6 +664,7 @@ function animatePairStrike(cards, enemyStatus) {
 function runHandAnimation(handName, playedCards) {
     const table = document.querySelector('.tavern-table');
     const enemyStatus = document.querySelector('.hp-enemy');
+    const scoringCards = scoreCards(playedCards)?.scoringCards || playedCards;
     if (handName === 'Poker') {
         animateCardsToEnemy(playedCards, enemyStatus, { stagger:35, duration:780 });
         animateScreenShake(table, true);
@@ -676,10 +677,10 @@ function runHandAnimation(handName, playedCards) {
     } else if (handName === 'Kareta') { animateKaretaExecution(enemyStatus, table); }
     else if (handName === 'Full') { animateFullCombo(playedCards, enemyStatus, table); }
     else if (handName === 'Kolor') { animateColorRibbon(playedCards, table, enemyStatus, playedCards[0]?.color === 'red' ? 'red' : 'black'); }
-    else if (handName === 'Trójka') { animateCardsFlyingToEnemy(playedCards, table, enemyStatus); }
-    else if (handName === 'Dwie Pary') { animateCrossPair(playedCards, enemyStatus, table); }
-    else if (handName === 'Para') { animatePairStrike(playedCards, enemyStatus); }
-    else if (handName === 'Wysoka Karta') { animateCardsToEnemy(playedCards.slice(0,1), enemyStatus, { arc:true, duration:650, stagger:0 }); }
+    else if (handName === 'Trójka') { animateCardsFlyingToEnemy(scoringCards, table, enemyStatus); }
+    else if (handName === 'Dwie Pary') { animateCrossPair(scoringCards, enemyStatus, table); }
+    else if (handName === 'Para') { animatePairStrike(scoringCards, enemyStatus); }
+    else if (handName === 'Wysoka Karta') { animateCardsToEnemy(scoringCards.slice(0,1), enemyStatus, { arc:true, duration:650, stagger:0 }); }
 }
 
 function playHand() { duelPlay(); }
