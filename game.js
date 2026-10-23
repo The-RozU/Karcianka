@@ -506,6 +506,75 @@ function animateEnemyHpChange() {
     }
 }
 
+function animateCardsFlyingToEnemy(playedCards, table, enemyStatus) {
+    if (!table || !enemyStatus || !playedCards.length) return;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const target = enemyStatus.getBoundingClientRect();
+    const targetX = target.left + target.width / 2;
+    const targetY = target.top + target.height / 2;
+    const cardElements = playedCards.map(card => Array.from(document.querySelectorAll('#hand .card')).find(el => el.dataset.cardId === card.id)).filter(Boolean);
+    cardElements.forEach((cardEl, index) => {
+        const rect = cardEl.getBoundingClientRect();
+        const clone = cardEl.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.setAttribute('aria-hidden', 'true');
+        Object.assign(clone.style, {
+            position: 'fixed', left: rect.left + 'px', top: rect.top + 'px',
+            width: rect.width + 'px', height: rect.height + 'px', margin: '0',
+            zIndex: '9999', pointerEvents: 'none', transformOrigin: 'center center'
+        });
+        document.body.appendChild(clone);
+        const dx = targetX - (rect.left + rect.width / 2);
+        const dy = targetY - (rect.top + rect.height / 2);
+        if (typeof clone.animate === 'function') {
+            const animation = clone.animate([
+                { transform: 'translate(0,0) scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)' },
+                { transform: `translate(${dx * .55}px,${dy * .55}px) scale(.72) rotate(${index % 2 ? 12 : -12}deg)`, opacity: 1, filter: 'brightness(1.6)', offset: .68 },
+                { transform: `translate(${dx}px,${dy}px) scale(.22) rotate(${index % 2 ? 24 : -24}deg)`, opacity: 0, filter: 'brightness(2)' }
+            ], { duration: reduceMotion ? 260 : 560, delay: reduceMotion ? index * 45 : index * 110, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'forwards' });
+            animation.onfinish = () => clone.remove();
+            animation.oncancel = () => clone.remove();
+        } else {
+            clone.style.transition = 'transform 560ms ease, opacity 560ms ease';
+            requestAnimationFrame(() => { clone.style.transform = `translate(${dx}px,${dy}px) scale(.22) rotate(20deg)`; clone.style.opacity = '0'; });
+            setTimeout(() => clone.remove(), 650 + index * 110);
+        }
+    });
+}
+
+function animateKaretaExecution(enemyStatus, table) {
+    if (!enemyStatus || !table) return;
+    const rect = enemyStatus.getBoundingClientRect();
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const effect = document.createElement('div');
+    effect.className = 'kareta-execution';
+    effect.setAttribute('aria-hidden', 'true');
+    Object.assign(effect.style, {
+        position: 'fixed', left: (rect.left + rect.width / 2) + 'px',
+        top: (rect.top + rect.height / 2) + 'px',
+        width: Math.max(110, rect.width * 1.35) + 'px',
+        height: Math.max(74, rect.height * 2.1) + 'px',
+        zIndex: '9998', pointerEvents: 'none'
+    });
+    effect.innerHTML = '<span class="kareta-slash kareta-slash-a"></span><span class="kareta-slash kareta-slash-b"></span>';
+    document.body.appendChild(effect);
+    if (typeof effect.animate === 'function') {
+        const animation = effect.animate([
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(1.12)', offset: .28 },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .58 },
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(1.12)' }
+        ], { duration: reduceMotion ? 380 : 760, easing: 'cubic-bezier(.2,.75,.25,1)' });
+        animation.onfinish = () => effect.remove();
+        animation.oncancel = () => effect.remove();
+    } else {
+        effect.classList.add('kareta-execution-fallback');
+        setTimeout(() => effect.remove(), 800);
+    }
+    animateEnemyHits(enemyStatus, 4);
+    animateScreenShake(table, true);
+}
+
 function runHandAnimation(handName, playedCards) {
     const table = document.querySelector('.tavern-table');
     const enemyStatus = document.querySelector('.hp-enemy');
@@ -517,10 +586,10 @@ function runHandAnimation(handName, playedCards) {
             const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 650 : 1600, easing: 'cubic-bezier(.16,.8,.3,1)' });
             animation.onfinish = () => banner.remove();
         } else { setTimeout(() => banner.remove(), 1650); }
-    } else if (handName === 'Kareta') { animateEnemyHits(enemyStatus, 4); } 
-    else if (handName === 'Full') { animateScreenShake(table); } 
-    else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); } 
-    else if (handName === 'Trójka') { animateEnemyHits(enemyStatus, 3); }
+    } else if (handName === 'Kareta') { animateKaretaExecution(enemyStatus, table); }
+    else if (handName === 'Full') { animateScreenShake(table); }
+    else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); }
+    else if (handName === 'Trójka') { animateCardsFlyingToEnemy(playedCards, table, enemyStatus); }
 }
 
 function playHand() { duelPlay(); }
