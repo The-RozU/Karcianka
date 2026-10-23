@@ -183,13 +183,13 @@ html, body {
 .hand-zone {
   display: flex; flex-wrap: nowrap; justify-content: center; align-items: center;
   gap: clamp(5px, 0.8vw, 10px); width: 100%;
-  min-height: clamp(84px, 23vh, 130px); perspective: 1000px;
+   min-height: clamp(100px, 28vh, 170px); perspective: 1000px;
 }
 .card {
-  position: relative; flex: 1; max-width: clamp(54px, 7vw, 84px); height: clamp(78px, 22vh, 120px);
+  position: relative; flex: 1;   max-width: clamp(60px, 8.5vw, 120px); height: clamp(90px, 26vh, 160px);
   background: #e8e4d9; border-radius: 7px; color: #111; 
   display: flex; flex-direction: column; justify-content: space-between; 
-  padding: clamp(4px, 0.8vh, 7px); font-weight: 900; font-size: clamp(14px, 2.8vh, 20px);
+  padding: clamp(4px, 0.8vh, 7px); font-weight: 900;   font-size: clamp(16px, 3.4vh, 26px);
   border: 2px solid #222; transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease, opacity 0.15s ease;
   cursor: pointer; box-shadow: -2px 4px 8px rgba(0,0,0,0.6);
 }
