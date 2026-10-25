@@ -502,7 +502,7 @@ body.duel-mode .card.spent::before {
   .battle-panel { padding:5px 7px; }
   .duel-preview { max-height:5vh; }
   .hand-zone { min-height:76px; gap:clamp(4px,.6vw,7px); }
-  .card { max-width:clamp(48px,5.8vw,66px); height:clamp(62px,13vh,82px); font-size:clamp(13px,1.8vh,16px); }
+  .card { max-width:clamp(48px,5.8vw,66px); height:clamp(62px,13vh,82px); font-size:clamp(8px,1.8vh,11px); }
 }
 
 @media (max-width: 700px) {
@@ -527,7 +527,7 @@ body.duel-mode .card.spent::before {
   .right-col { min-height:170px; }
   .play-area { gap:7px; }
   .hand-zone { min-height:84px; flex-wrap:wrap; }
-  .card { flex:0 1 clamp(34px,9vw,50px); height:clamp(50px,14vw,68px); font-size:clamp(12px,3.2vw,15px); }
+  .card { flex:0 1 clamp(34px,9vw,50px); height:clamp(50px,14vw,68px); font-size:clamp(7px,3.2vw,10px); }
   .controls { grid-template-columns:1fr 1fr; }
   .btn-surrender { grid-column:1 / -1; }
   .duel-preview { max-height:none; }
