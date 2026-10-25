@@ -1626,4 +1626,178 @@ function updateDuelPanel() {
     document.getElementById('duelPreview').innerHTML = html;
 }
 
+
+/* ==========================================
+   TRYB EDYTORA HUD (tylko gałąź developerska)
+   Włączanie/wyłączanie: F2
+   ========================================== */
+(() => {
+    let hudEditMode = false;
+    let hudPanel = null;
+    const EDITABLE_SELECTORS = [
+        '.top-enemy-header',
+        '#ui-enemy-hp',
+        '#duelRound',
+        '.top-left-btns',
+        '.top-right-btns',
+        '#hand',
+        '#ui-inventory',
+        '#btnPlay',
+        '#btnDiscard',
+        '#btnSurrender',
+        '#evalName',
+        '#evalDmg'
+    ];
+    const editedElements = new Set();
+
+    function ensureHudPanel() {
+        if (hudPanel) return hudPanel;
+        hudPanel = document.createElement('div');
+        hudPanel.id = 'hud-dev-panel';
+        hudPanel.style.cssText = [
+            'position:fixed', 'right:10px', 'bottom:10px', 'z-index:99999',
+            'max-width:min(300px,calc(100vw - 20px))', 'background:rgba(0,0,0,.94)',
+            'border:1px solid #f1c40f', 'padding:10px', 'color:#fff',
+            'border-radius:8px', 'font:12px/1.45 system-ui,sans-serif',
+            'box-shadow:0 4px 18px rgba(0,0,0,.6)'
+        ].join(';');
+        hudPanel.innerHTML = `
+            <div style="font-weight:800;color:#f1c40f;margin-bottom:4px">🛠️ Tryb edycji HUD (F2)</div>
+            <div style="margin-bottom:8px">Przeciągaj obramowane elementy myszką lub palcem. Zmiany są tymczasowe.</div>
+            <button type="button" id="btnExportHud" style="background:#2ecc71;color:#000;border:0;padding:7px 9px;font-weight:800;cursor:pointer;border-radius:4px">Kopiuj CSS pozycji</button>
+            <button type="button" id="btnResetHud" style="background:#333;color:#fff;border:1px solid #777;padding:7px 9px;margin-left:4px;cursor:pointer;border-radius:4px">Resetuj</button>
+        `;
+        document.body.appendChild(hudPanel);
+        hudPanel.querySelector('#btnExportHud').addEventListener('click', exportHudPositions);
+        hudPanel.querySelector('#btnResetHud').addEventListener('click', resetHudPositions);
+        return hudPanel;
+    }
+
+    function attachDrag(el) {
+        if (el.dataset.hudDragReady === '1') return;
+        el.dataset.hudDragReady = '1';
+        el.dataset.hudDx = el.dataset.hudDx || '0';
+        el.dataset.hudDy = el.dataset.hudDy || '0';
+        el.style.touchAction = 'none';
+
+        el.addEventListener('pointerdown', (event) => {
+            if (!hudEditMode || event.button > 0 || event.target.closest('#hud-dev-panel')) return;
+            const startX = event.clientX;
+            const startY = event.clientY;
+            const startDx = Number(el.dataset.hudDx) || 0;
+            const startDy = Number(el.dataset.hudDy) || 0;
+            let moved = false;
+
+            function onMove(moveEvent) {
+                const dx = moveEvent.clientX - startX;
+                const dy = moveEvent.clientY - startY;
+                if (!moved && Math.hypot(dx, dy) < 3) return;
+                moved = true;
+                moveEvent.preventDefault();
+                el.dataset.hudDx = String(Math.round(startDx + dx));
+                el.dataset.hudDy = String(Math.round(startDy + dy));
+                el.style.translate = `${el.dataset.hudDx}px ${el.dataset.hudDy}px`;
+            }
+            function onUp() {
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup', onUp);
+                document.removeEventListener('pointercancel', onUp);
+                if (moved) {
+                    el.dataset.hudWasMoved = '1';
+                    window.setTimeout(() => { delete el.dataset.hudWasMoved; }, 0);
+                }
+            }
+            document.addEventListener('pointermove', onMove, { passive: false });
+            document.addEventListener('pointerup', onUp);
+            document.addEventListener('pointercancel', onUp);
+        });
+        // Gdy przeciągnięto przycisk, nie uruchamiaj akcji gry.
+        el.addEventListener('click', (event) => {
+            if (hudEditMode || el.dataset.hudWasMoved === '1') {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        }, true);
+    }
+
+    function toggleHudEditor(active) {
+        hudEditMode = active;
+        const panel = ensureHudPanel();
+        panel.style.display = active ? 'block' : 'none';
+        document.body.classList.toggle('hud-edit-mode', active);
+
+        EDITABLE_SELECTORS.forEach((selector) => {
+            document.querySelectorAll(selector).forEach((el) => {
+                if (active) {
+                    editedElements.add(el);
+                    attachDrag(el);
+                    el.dataset.hudOldOutline = el.style.outline || '';
+                    el.dataset.hudOldCursor = el.style.cursor || '';
+                    el.style.outline = '2px dashed #f39c12';
+                    el.style.cursor = 'move';
+                    el.style.position = el.style.position || '';
+                } else {
+                    el.style.outline = el.dataset.hudOldOutline || '';
+                    el.style.cursor = el.dataset.hudOldCursor || '';
+                    el.style.touchAction = '';
+                }
+            });
+        });
+    }
+
+    function exportHudPositions() {
+        let cssOutput = '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\\n';
+        EDITABLE_SELECTORS.forEach((selector) => {
+            document.querySelectorAll(selector).forEach((el, index) => {
+                const dx = Number(el.dataset.hudDx) || 0;
+                const dy = Number(el.dataset.hudDy) || 0;
+                if (dx !== 0 || dy !== 0) {
+                    const target = index === 0 ? selector : `${selector}:nth-of-type(${index + 1})`;
+                    cssOutput += `${target} {\\n  translate: ${dx}px ${dy}px;\\n}\\n`;
+                }
+            });
+        });
+        if (cssOutput === '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\\n') {
+            cssOutput += '/* Nie przesunięto jeszcze żadnych elementów. */';
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(cssOutput).then(() => {
+                alert('Skopiowano CSS pozycji do schowka!');
+            }).catch(() => showCssFallback(cssOutput));
+        } else {
+            showCssFallback(cssOutput);
+        }
+    }
+
+    function showCssFallback(cssOutput) {
+        const output = document.createElement('textarea');
+        output.value = cssOutput;
+        output.setAttribute('readonly', '');
+        output.style.cssText = 'position:fixed;inset:10% 5%;width:90%;height:70%;z-index:100000;background:#111;color:#fff;padding:12px;border:1px solid #f1c40f';
+        document.body.appendChild(output);
+        output.focus();
+        output.select();
+        alert('Nie można automatycznie skopiować. CSS zaznaczono, skopiuj go ręcznie.');
+        output.addEventListener('blur', () => output.remove(), { once: true });
+    }
+
+    function resetHudPositions() {
+        editedElements.forEach((el) => {
+            el.dataset.hudDx = '0';
+            el.dataset.hudDy = '0';
+            el.style.translate = 'none';
+        });
+    }
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'F2') {
+            event.preventDefault();
+            toggleHudEditor(!hudEditMode);
+        }
+        if (event.key === 'Escape' && hudEditMode) {
+            toggleHudEditor(false);
+        }
+    });
+})();
+
 initGame();
