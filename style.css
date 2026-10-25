@@ -554,3 +554,74 @@ body.duel-mode .card.spent::before {
   height: auto !important;
   aspect-ratio: 2 / 3 !important;
 }
+
+/* === VisBug HUD layout (desktop): reconstructed from the saved 0.3.3 page ===
+   Proportional coordinates avoid VisBug's hard-coded 1920px transforms.
+   The existing responsive phone layout remains unchanged.
+*/
+@media (min-width: 1100px) and (orientation: landscape) {
+  .board-grid {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    transform: none;
+  }
+  .board-grid > .enemy-board,
+  .board-grid > .enemy-hud,
+  .board-grid > .player-hud,
+  .board-grid > .right-col {
+    position: absolute;
+    min-width: 0;
+    margin: 0;
+    transform: none;
+  }
+  .board-grid > .enemy-board {
+    left: 3.6%; top: 1.6%;
+    width: 34.6%; height: 19%;
+    min-height: 0;
+  }
+  .board-grid > .enemy-hud {
+    left: 59.5%; top: 1.6%;
+    width: 24.8%; height: auto;
+    justify-self: auto;
+    align-self: auto;
+  }
+  .board-grid > .player-hud {
+    left: 3.6%; bottom: 6.1%;
+    width: 34.6%; min-height: 19%;
+    align-self: auto;
+  }
+  .board-grid > .right-col {
+    left: 48.9%; bottom: 2.0%;
+    width: 46.1%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-areas: "info evaluate" "cards cards";
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    align-content: end;
+    gap: clamp(6px, 1vh, 10px) clamp(6px, .55vw, 10px);
+  }
+  .right-col > .info-strip {
+    grid-area: info;
+    width: auto;
+    min-width: 0;
+    min-height: clamp(48px, 6.3vh, 68px);
+  }
+  .right-col > .eval-screen {
+    grid-area: evaluate;
+    width: auto;
+    min-width: 0;
+    min-height: clamp(48px, 6.3vh, 68px);
+  }
+  .right-col > .play-area {
+    grid-area: cards;
+    min-width: 0;
+    margin-top: 0;
+  }
+  .enemy-hud .top-enemy-header { align-items: center; text-align: center; }
+  .enemy-hud .header-title { display: flex; align-items: center; justify-content: center; width: 100%; }
+  .enemy-hud .enemy-vitals { justify-content: center; }
+}
