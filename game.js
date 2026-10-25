@@ -1798,10 +1798,13 @@ function updateDuelPanel() {
             document.querySelectorAll(selector).forEach((el, index) => {
                 const dx = Number(el.dataset.hudDx) || 0;
                 const dy = Number(el.dataset.hudDy) || 0;
-                if (dx !== 0 || dy !== 0) {
-                    const target = index === 0 ? selector : `${selector}:nth-of-type(${index + 1})`;
-                    cssOutput += `${target} {\n  translate: ${dx}px ${dy}px;\n}\n`;
-                }
+                const target = index === 0 ? selector : `${selector}:nth-of-type(${index + 1})`;
+                const rules = [];
+                if (dx !== 0 || dy !== 0) rules.push(`  translate: ${dx}px ${dy}px;`);
+                [['width','width'],['height','height'],['fontSize','font-size'],['padding','padding'],['borderWidth','border-width'],['borderRadius','border-radius']].forEach(([prop,css]) => {
+                    if (el.style[prop]) rules.push(`  ${css}: ${el.style[prop]};`);
+                });
+                if (rules.length) cssOutput += `${target} {\n${rules.join('\n')}\n}\n`;
             });
         });
         if (cssOutput === '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\n') {
