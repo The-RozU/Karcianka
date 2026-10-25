@@ -540,6 +540,19 @@ body.duel-mode .card.spent::before {
   body.duel-mode .tavern-table { overflow-y:auto; }
 }
 
+/* Małe telefony w poziomie: zachowaj układ walki 1/3 + 2/3. */
+@media (max-width: 700px) and (orientation: landscape) {
+  .board-grid {
+    flex:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
+    grid-template-rows:minmax(95px,23%) minmax(0,1fr) minmax(135px,32%);
+    gap:5px 6px; min-height:0; overflow:hidden;
+  }
+  .enemy-board { grid-area:1 / 1 / 2 / 4; min-height:0; }
+  .enemy-hud { grid-area:1 / 4 / 2 / 7; min-height:0; }
+  .battle-center { grid-area:2 / 1 / 3 / 7; }
+  .player-hud { grid-area:3 / 1 / 4 / 3; min-height:0; }
+  .right-col { grid-area:3 / 3 / 4 / 7; min-height:0; }
+}
 
 /* Selected card-rank combat animations */
 .color-ribbon { transform:translate(-50%,-50%); filter:drop-shadow(0 0 9px currentColor); }
