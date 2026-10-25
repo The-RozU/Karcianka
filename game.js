@@ -1746,18 +1746,18 @@ function updateDuelPanel() {
     }
 
     function exportHudPositions() {
-        let cssOutput = '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\\n';
+        let cssOutput = '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\n';
         EDITABLE_SELECTORS.forEach((selector) => {
             document.querySelectorAll(selector).forEach((el, index) => {
                 const dx = Number(el.dataset.hudDx) || 0;
                 const dy = Number(el.dataset.hudDy) || 0;
                 if (dx !== 0 || dy !== 0) {
                     const target = index === 0 ? selector : `${selector}:nth-of-type(${index + 1})`;
-                    cssOutput += `${target} {\\n  translate: ${dx}px ${dy}px;\\n}\\n`;
+                    cssOutput += `${target} {\n  translate: ${dx}px ${dy}px;\n}\n`;
                 }
             });
         });
-        if (cssOutput === '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\\n') {
+        if (cssOutput === '/* --- WYEKSPORTOWANY UKŁAD HUD --- */\n') {
             cssOutput += '/* Nie przesunięto jeszcze żadnych elementów. */';
         }
         if (navigator.clipboard && window.isSecureContext) {
