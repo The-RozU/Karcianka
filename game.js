@@ -1662,15 +1662,58 @@ function updateDuelPanel() {
             'box-shadow:0 4px 18px rgba(0,0,0,.6)'
         ].join(';');
         hudPanel.innerHTML = `
-            <div style="font-weight:800;color:#f1c40f;margin-bottom:4px">🛠️ Tryb edycji HUD (F2)</div>
-            <div style="margin-bottom:8px">Przeciągaj obramowane elementy myszką lub palcem. Zmiany są tymczasowe.</div>
-            <button type="button" id="btnExportHud" style="background:#2ecc71;color:#000;border:0;padding:7px 9px;font-weight:800;cursor:pointer;border-radius:4px">Kopiuj CSS pozycji</button>
-            <button type="button" id="btnResetHud" style="background:#333;color:#fff;border:1px solid #777;padding:7px 9px;margin-left:4px;cursor:pointer;border-radius:4px">Resetuj</button>
+            <div style="font-weight:800;color:#f1c40f;margin-bottom:4px">🛠️ Edytor HUD (F2)</div>
+            <div style="margin-bottom:8px">Przeciągaj elementy lub zmieniaj ich rozmiar. Wybierz element, by edytować wygląd.</div>
+            <label style="display:block;margin:5px 0">Element<select id="hudTarget" style="display:block;width:100%;margin-top:3px;padding:5px;background:#222;color:#fff;border:1px solid #777"></select></label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+              <label>Szerokość px<input id="hudWidth" type="number" min="0" style="width:100%;box-sizing:border-box"></label>
+              <label>Wysokość px<input id="hudHeight" type="number" min="0" style="width:100%;box-sizing:border-box"></label>
+              <label>Czcionka px<input id="hudFontSize" type="number" min="6" style="width:100%;box-sizing:border-box"></label>
+              <label>Padding px<input id="hudPadding" type="number" min="0" style="width:100%;box-sizing:border-box"></label>
+              <label>Ramka px<input id="hudBorderWidth" type="number" min="0" max="20" style="width:100%;box-sizing:border-box"></label>
+              <label>Zaokrąglenie px<input id="hudRadius" type="number" min="0" max="100" style="width:100%;box-sizing:border-box"></label>
+            </div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+              <button type="button" id="btnExportHud" style="background:#2ecc71;color:#000;border:0;padding:7px 9px;font-weight:800;cursor:pointer;border-radius:4px">Kopiuj CSS</button>
+              <button type="button" id="btnResetHud" style="background:#333;color:#fff;border:1px solid #777;padding:7px 9px;cursor:pointer;border-radius:4px">Resetuj</button>
+            </div>
         `;
         document.body.appendChild(hudPanel);
         hudPanel.querySelector('#btnExportHud').addEventListener('click', exportHudPositions);
         hudPanel.querySelector('#btnResetHud').addEventListener('click', resetHudPositions);
+        EDITABLE_SELECTORS.forEach(selector => {
+            const option=document.createElement('option'); option.value=selector; option.textContent=selector;
+            hudPanel.querySelector('#hudTarget').appendChild(option);
+        });
+        hudPanel.querySelector('#hudTarget').addEventListener('change', selectHudTarget);
+        ['Width','Height','FontSize','Padding','BorderWidth','Radius'].forEach(key =>
+            hudPanel.querySelector('#hud'+key).addEventListener('change', applyHudControls));
         return hudPanel;
+    }
+
+    let selectedHudElement = null;
+    const originalHudStyles = new WeakMap();
+    function selectHudTarget() {
+        selectedHudElement=document.querySelector(hudPanel.querySelector('#hudTarget').value);
+        if(!selectedHudElement) return;
+        if(!originalHudStyles.has(selectedHudElement)) originalHudStyles.set(selectedHudElement, {
+            width:selectedHudElement.style.width,height:selectedHudElement.style.height,fontSize:selectedHudElement.style.fontSize,
+            padding:selectedHudElement.style.padding,borderWidth:selectedHudElement.style.borderWidth,borderRadius:selectedHudElement.style.borderRadius
+        });
+        const r=selectedHudElement.getBoundingClientRect(), s=getComputedStyle(selectedHudElement);
+        const vals={Width:Math.round(r.width),Height:Math.round(r.height),FontSize:parseFloat(s.fontSize)||0,
+            Padding:parseFloat(s.padding)||0,BorderWidth:parseFloat(s.borderTopWidth)||0,Radius:parseFloat(s.borderRadius)||0};
+        Object.entries(vals).forEach(([k,v])=>hudPanel.querySelector('#hud'+k).value=v);
+        document.querySelectorAll('[data-hud-selected="1"]').forEach(el=>{el.style.boxShadow=el.dataset.hudOldShadow||'';el.removeAttribute('data-hud-selected');});
+        selectedHudElement.dataset.hudSelected='1'; selectedHudElement.dataset.hudOldShadow=selectedHudElement.style.boxShadow||'';
+        selectedHudElement.style.boxShadow='0 0 0 2px #2ecc71';
+    }
+    function applyHudControls() {
+        if(!selectedHudElement) return;
+        [['Width','width'],['Height','height'],['FontSize','fontSize'],['Padding','padding'],['BorderWidth','borderWidth'],['Radius','borderRadius']].forEach(([k,p])=>{
+            const input=hudPanel.querySelector('#hud'+k);
+            if(input.value!=='' && Number(input.value)>=0) selectedHudElement.style[p]=input.value+'px';
+        });
     }
 
     function attachDrag(el) {
@@ -1725,6 +1768,8 @@ function updateDuelPanel() {
         const panel = ensureHudPanel();
         panel.style.display = active ? 'block' : 'none';
         document.body.classList.toggle('hud-edit-mode', active);
+        if(active) selectHudTarget();
+        else document.querySelectorAll('[data-hud-selected="1"]').forEach(el=>{el.style.boxShadow=el.dataset.hudOldShadow||'';el.removeAttribute('data-hud-selected');});
 
         EDITABLE_SELECTORS.forEach((selector) => {
             document.querySelectorAll(selector).forEach((el) => {
@@ -1735,6 +1780,8 @@ function updateDuelPanel() {
                     el.dataset.hudOldCursor = el.style.cursor || '';
                     el.style.outline = '2px dashed #f39c12';
                     el.style.cursor = 'move';
+                    el.style.resize = 'both';
+                    el.style.overflow = el.style.overflow || 'auto';
                     el.style.position = el.style.position || '';
                 } else {
                     el.style.outline = el.dataset.hudOldOutline || '';
@@ -1783,9 +1830,9 @@ function updateDuelPanel() {
 
     function resetHudPositions() {
         editedElements.forEach((el) => {
-            el.dataset.hudDx = '0';
-            el.dataset.hudDy = '0';
-            el.style.translate = 'none';
+            el.dataset.hudDx = '0'; el.dataset.hudDy = '0'; el.style.translate = 'none';
+            const original=originalHudStyles.get(el);
+            if(original) Object.entries(original).forEach(([prop,value])=>el.style[prop]=value);
         });
     }
 
