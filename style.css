@@ -498,17 +498,11 @@ body.duel-mode .card.spent::before {
 @media (max-width: 900px) and (orientation: landscape) {
   .tavern-table { padding:6px 10px; }
   .top-bar { padding-bottom:4px; margin-bottom:5px; }
-  .board-grid { grid-template-columns:repeat(6,minmax(0,1fr)); grid-template-rows:minmax(115px,23%) minmax(0,1fr) minmax(165px,32%); gap:5px 8px; }
-  /* Zachowaj górę 50/50, a dolny panel walki ustaw w proporcji 1/3 do 2/3. */
-  .enemy-board { grid-area:1 / 1 / 2 / 4; }
-  .enemy-hud { grid-area:1 / 4 / 2 / 7; }
-  .battle-center { grid-area:2 / 1 / 3 / 7; }
-  .player-hud { grid-area:3 / 1 / 4 / 3; }
-  .right-col { grid-area:3 / 3 / 4 / 7; }
+  .board-grid { grid-template-rows:minmax(115px,23%) minmax(0,1fr) minmax(165px,32%); gap:5px 8px; }
   .battle-panel { padding:5px 7px; }
   .duel-preview { max-height:5vh; }
   .hand-zone { min-height:76px; gap:clamp(4px,.6vw,7px); }
-  .card { max-width:clamp(48px,5.8vw,66px); height:clamp(62px,13vh,82px); font-size:clamp(10px,1.8vh,13px); }
+  .card { max-width:clamp(48px,5.8vw,66px); height:clamp(62px,13vh,82px); font-size:clamp(13px,1.8vh,16px); }
 }
 
 @media (max-width: 700px) {
@@ -533,26 +527,13 @@ body.duel-mode .card.spent::before {
   .right-col { min-height:170px; }
   .play-area { gap:7px; }
   .hand-zone { min-height:84px; flex-wrap:wrap; }
-  .card { flex:0 1 clamp(34px,9vw,50px); height:clamp(50px,14vw,68px); font-size:clamp(9px,3.2vw,12px); }
+  .card { flex:0 1 clamp(34px,9vw,50px); height:clamp(50px,14vw,68px); font-size:clamp(12px,3.2vw,15px); }
   .controls { grid-template-columns:1fr 1fr; }
   .btn-surrender { grid-column:1 / -1; }
   .duel-preview { max-height:none; }
   body.duel-mode .tavern-table { overflow-y:auto; }
 }
 
-/* Małe telefony w poziomie: zachowaj układ walki 1/3 + 2/3. */
-@media (max-width: 700px) and (orientation: landscape) {
-  .board-grid {
-    flex:1; display:grid; grid-template-columns:repeat(6,minmax(0,1fr));
-    grid-template-rows:minmax(95px,23%) minmax(0,1fr) minmax(135px,32%);
-    gap:5px 6px; min-height:0; overflow:hidden;
-  }
-  .enemy-board { grid-area:1 / 1 / 2 / 4; min-height:0; }
-  .enemy-hud { grid-area:1 / 4 / 2 / 7; min-height:0; }
-  .battle-center { grid-area:2 / 1 / 3 / 7; }
-  .player-hud { grid-area:3 / 1 / 4 / 3; min-height:0; }
-  .right-col { grid-area:3 / 3 / 4 / 7; min-height:0; }
-}
 
 /* Selected card-rank combat animations */
 .color-ribbon { transform:translate(-50%,-50%); filter:drop-shadow(0 0 9px currentColor); }
@@ -572,4 +553,75 @@ body.duel-mode .card.spent::before {
 .hand-zone .card {
   height: auto !important;
   aspect-ratio: 2 / 3 !important;
+}
+
+/* === VisBug HUD layout (desktop): reconstructed from the saved 0.3.3 page ===
+   Proportional coordinates avoid VisBug's hard-coded 1920px transforms.
+   The existing responsive phone layout remains unchanged.
+*/
+@media (min-width: 1100px) and (orientation: landscape) {
+  .board-grid {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    transform: none;
+  }
+  .board-grid > .enemy-board,
+  .board-grid > .enemy-hud,
+  .board-grid > .player-hud,
+  .board-grid > .right-col {
+    position: absolute;
+    min-width: 0;
+    margin: 0;
+    transform: none;
+  }
+  .board-grid > .enemy-board {
+    left: 3.6%; top: 1.6%;
+    width: 34.6%; height: 19%;
+    min-height: 0;
+  }
+  .board-grid > .enemy-hud {
+    left: 59.5%; top: 1.6%;
+    width: 24.8%; height: auto;
+    justify-self: auto;
+    align-self: auto;
+  }
+  .board-grid > .player-hud {
+    left: 3.6%; bottom: 6.1%;
+    width: 34.6%; min-height: 19%;
+    align-self: auto;
+  }
+  .board-grid > .right-col {
+    left: 48.9%; bottom: 2.0%;
+    width: 46.1%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-areas: "info evaluate" "cards cards";
+    grid-template-rows: auto auto;
+    align-items: stretch;
+    align-content: end;
+    gap: clamp(6px, 1vh, 10px) clamp(6px, .55vw, 10px);
+  }
+  .right-col > .info-strip {
+    grid-area: info;
+    width: auto;
+    min-width: 0;
+    min-height: clamp(48px, 6.3vh, 68px);
+  }
+  .right-col > .eval-screen {
+    grid-area: evaluate;
+    width: auto;
+    min-width: 0;
+    min-height: clamp(48px, 6.3vh, 68px);
+  }
+  .right-col > .play-area {
+    grid-area: cards;
+    min-width: 0;
+    margin-top: 0;
+  }
+  .enemy-hud .top-enemy-header { align-items: center; text-align: center; }
+  .enemy-hud .header-title { display: flex; align-items: center; justify-content: center; width: 100%; }
+  .enemy-hud .enemy-vitals { justify-content: center; }
 }
