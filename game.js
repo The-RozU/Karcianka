@@ -120,17 +120,16 @@ function newDuelState() {
 let duel = newDuelState();
 
 const HAND_RULES = {
-    poker: { name: 'Poker', baseChips: 60, mult: 5 },
-    fourKind: { name: 'Kareta', baseChips: 45, mult: 4 },
-    fullHouse: { name: 'Full', baseChips: 35, mult: 3.5 },
-    flush: { name: 'Kolor', baseChips: 25, mult: 3 },
-    straight: { name: 'Strit', baseChips: 25, mult: 3 },
-    threeKind: { name: 'Trójka', baseChips: 20, mult: 2.5 },
-    twoPair: { name: 'Dwie Pary', baseChips: 15, mult: 2 },
-    pair: { name: 'Para', baseChips: 10, mult: 1.5 },
+    poker: { name: 'Poker', baseChips: 100, mult: 8 },
+    fourKind: { name: 'Kareta', baseChips: 60, mult: 7 },
+    fullHouse: { name: 'Full', baseChips: 40, mult: 4 },
+    flush: { name: 'Kolor', baseChips: 35, mult: 4 },
+    straight: { name: 'Strit', baseChips: 30, mult: 4 },
+    threeKind: { name: 'Trójka', baseChips: 30, mult: 3 },
+    twoPair: { name: 'Dwie Pary', baseChips: 20, mult: 2 },
+    pair: { name: 'Para', baseChips: 10, mult: 2 },
     highCard: { name: 'Wysoka Karta', baseChips: 5, mult: 1 }
 };
-
 
 function toggleModal(id, show) {
     const el = document.getElementById(id);
@@ -197,15 +196,15 @@ function openLobbySection(section) {
     const sections = {
         quests: {
             title: 'Zadania',
-            html: '<p>Wypatruj dodatkowych wyzwań za Gwiazdki.</p><ul><li>Przykład: zagraj Full trzy razy.</li><li>Nagrody i aktywne zadania pojawią się w dalszym etapie.</li></ul><p><strong>Wkrótce</strong></p>'
+            html: '<p>Wypatruj dodatkowych wyzwań za Gwiazdki.</p><ul><li>Przykład: zagraj Full trzy razy.</li><li>Nagrody i aktywne zadania pojawią się w dalszym etapie.</li></ul>'
         },
         skills: {
             title: 'Umiejętności',
-            html: '<p>Planowane pasywne ulepszenia kupowane za Gwiazdki:</p><ul><li>Atak i zarobek</li><li>Więcej slotów ekwipunku i odrzutów</li><li>Ulepszenia wybranych figur</li></ul><p>Rozwój umiejętności nie jest jeszcze aktywny.</p><p><strong>Wkrótce</strong></p>'
+            html: '<p>Planowane pasywne ulepszenia kupowane za Gwiazdki:</p><ul><li>Atak i zarobek</li><li>Więcej slotów ekwipunku i odrzutów</li><li>Ulepszenia wybranych figur</li></ul><p>Rozwój umiejętności nie jest jeszcze aktywny.</p>'
         },
         achievements: {
             title: 'Osiągnięcia',
-            html: '<p>Planowane cele wypraw:</p><ul><li>Pierwsza Krew — pokonaj pierwszego przeciwnika</li><li>Król Karciarzy — zagraj Pokera</li><li>Szuler — wygraj 10 walk</li><li>Pierwszy Boss — pokonaj pierwszego Bossa</li></ul><p><strong>Wkrótce</strong></p>'
+            html: '<p>Planowane cele wypraw:</p><ul><li>Pierwsza Krew — pokonaj pierwszego przeciwnika</li><li>Król Karciarzy — zagraj Pokera</li><li>Szuler — wygraj 10 walk</li><li>Pierwszy Boss — pokonaj pierwszego Bossa</li></ul>'
         }
     };
     const title = document.getElementById('lobbySectionTitle');
@@ -407,32 +406,12 @@ function playMotion(element, frames, duration, fallbackClass, removeClasses = []
 }
 
 function animateScreenShake(table, strong = false) {
-    const distance = strong ? 15 : 11;
+    const distance = strong ? 12 : 8;
     playMotion(table, [
         { transform: 'translate(0,0)' }, { transform: `translate(${-distance}px,3px)`, offset: 0.18 },
         { transform: `translate(${distance}px,-3px)`, offset: 0.36 }, { transform: `translate(${-distance + 2}px,-2px)`, offset: 0.54 },
         { transform: `translate(${distance - 2}px,2px)`, offset: 0.72 }, { transform: 'translate(0,0)' }
     ], 760, 'screen-shake', ['color-flash-red', 'color-flash-black']);
-}
-
-
-function animateEnemyHpChange() {
-    const hp = document.getElementById('ui-enemy-hp');
-    if (!hp || typeof hp.animate !== 'function') {
-        if (hp) {
-            hp.classList.remove('hp-damage-pulse');
-            void hp.offsetWidth;
-            hp.classList.add('hp-damage-pulse');
-        }
-        return;
-    }
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    hp.animate([
-        { transform: 'scale(1)', color: '', textShadow: '0 0 0 rgba(231,76,60,0)' },
-        { transform: 'scale(1.55)', color: '#fff', textShadow: '0 0 12px rgba(231,76,60,.95), 0 0 24px rgba(231,76,60,.65)', offset: 0.22 },
-        { transform: 'scale(1.35)', color: '#ffb0a8', textShadow: '0 0 10px rgba(231,76,60,.8)', offset: 0.48 },
-        { transform: 'scale(1)', color: '', textShadow: '0 0 0 rgba(231,76,60,0)' }
-    ], { duration: reduceMotion ? 550 : 950, easing: 'cubic-bezier(.2,.75,.25,1)' });
 }
 
 function animateEnemyHits(enemy, count) {
@@ -457,7 +436,7 @@ function animateColorFlash(table, color) {
     table.appendChild(flash);
     if (typeof flash.animate === 'function') {
         const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 480 : 950, easing: 'ease-out' });
+        const animation = flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: reduceMotion ? 450 : 950, easing: 'ease-out' });
         animation.onfinish = () => flash.remove();
     } else {
         flash.classList.add('animation-flash', color === 'red' ? 'color-flash-red' : 'color-flash-black'); setTimeout(() => flash.remove(), 1000);
@@ -511,21 +490,197 @@ function animateStraightCards(cards, onComplete) {
     });
 }
 
+function animateEnemyHpChange() {
+    const hp = document.getElementById('ui-enemy-hp');
+    if (!hp) return;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof hp.animate === 'function') {
+        hp.animate([
+            { transform: 'scale(1)', color: 'inherit', textShadow: 'none' },
+            { transform: 'scale(1.55)', color: '#fff', textShadow: '0 0 12px rgba(231,76,60,.95), 0 0 24px rgba(231,76,60,.65)', offset: .22 },
+            { transform: 'scale(1.3)', color: '#ffb0a8', textShadow: '0 0 10px rgba(231,76,60,.8)', offset: .5 },
+            { transform: 'scale(1)', color: 'inherit', textShadow: 'none' }
+        ], { duration: reduceMotion ? 500 : 950, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    } else {
+        restartAnimation(hp, 'hp-damage-pulse');
+    }
+}
+
+function animateCardsFlyingToEnemy(playedCards, table, enemyStatus) {
+    if (!table || !enemyStatus || !playedCards.length) return;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const target = enemyStatus.getBoundingClientRect();
+    const targetX = target.left + target.width / 2;
+    const targetY = target.top + target.height / 2;
+    const cardElements = playedCards.map(card => Array.from(document.querySelectorAll('#hand .card')).find(el => el.dataset.cardId === card.id)).filter(Boolean);
+    cardElements.forEach((cardEl, index) => {
+        const rect = cardEl.getBoundingClientRect();
+        const clone = cardEl.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.setAttribute('aria-hidden', 'true');
+        Object.assign(clone.style, {
+            position: 'fixed', left: rect.left + 'px', top: rect.top + 'px',
+            width: rect.width + 'px', height: rect.height + 'px', margin: '0',
+            zIndex: '9999', pointerEvents: 'none', transformOrigin: 'center center'
+        });
+        document.body.appendChild(clone);
+        const dx = targetX - (rect.left + rect.width / 2);
+        const dy = targetY - (rect.top + rect.height / 2);
+        if (typeof clone.animate === 'function') {
+            const animation = clone.animate([
+                { transform: 'translate(0,0) scale(1) rotate(0deg)', opacity: 1, filter: 'brightness(1)' },
+                { transform: `translate(${dx * .55}px,${dy * .55}px) scale(.72) rotate(${index % 2 ? 12 : -12}deg)`, opacity: 1, filter: 'brightness(1.6)', offset: .68 },
+                { transform: `translate(${dx}px,${dy}px) scale(.22) rotate(${index % 2 ? 24 : -24}deg)`, opacity: 0, filter: 'brightness(2)' }
+            ], { duration: reduceMotion ? 260 : 560, delay: reduceMotion ? index * 45 : index * 110, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'forwards' });
+            animation.onfinish = () => clone.remove();
+            animation.oncancel = () => clone.remove();
+        } else {
+            clone.style.transition = 'transform 560ms ease, opacity 560ms ease';
+            requestAnimationFrame(() => { clone.style.transform = `translate(${dx}px,${dy}px) scale(.22) rotate(20deg)`; clone.style.opacity = '0'; });
+            setTimeout(() => clone.remove(), 650 + index * 110);
+        }
+    });
+}
+
+function animateKaretaExecution(enemyStatus, table) {
+    if (!enemyStatus || !table) return;
+    const rect = enemyStatus.getBoundingClientRect();
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const effect = document.createElement('div');
+    effect.className = 'kareta-execution';
+    effect.setAttribute('aria-hidden', 'true');
+    Object.assign(effect.style, {
+        position: 'fixed', left: (rect.left + rect.width / 2) + 'px',
+        top: (rect.top + rect.height / 2) + 'px',
+        width: Math.max(110, rect.width * 1.35) + 'px',
+        height: Math.max(74, rect.height * 2.1) + 'px',
+        zIndex: '9998', pointerEvents: 'none'
+    });
+    effect.innerHTML = '<span class="kareta-slash kareta-slash-a"></span><span class="kareta-slash kareta-slash-b"></span>';
+    document.body.appendChild(effect);
+    if (typeof effect.animate === 'function') {
+        const animation = effect.animate([
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(1.12)', offset: .28 },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .58 },
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(1.12)' }
+        ], { duration: reduceMotion ? 380 : 760, easing: 'cubic-bezier(.2,.75,.25,1)' });
+        animation.onfinish = () => effect.remove();
+        animation.oncancel = () => effect.remove();
+    } else {
+        effect.classList.add('kareta-execution-fallback');
+        setTimeout(() => effect.remove(), 800);
+    }
+    animateEnemyHits(enemyStatus, 4);
+    animateScreenShake(table, true);
+}
+
+function animateCardsToEnemy(playedCards, enemyStatus, options = {}) {
+    if (!enemyStatus || !playedCards.length) return;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const target = enemyStatus.getBoundingClientRect();
+    const targetX = target.left + target.width / 2, targetY = target.top + target.height / 2;
+    const elements = playedCards.map(card => Array.from(document.querySelectorAll('#hand .card')).find(el => el.dataset.cardId === card.id)).filter(Boolean);
+    elements.forEach((source, index) => {
+        const rect = source.getBoundingClientRect(), clone = source.cloneNode(true);
+        clone.removeAttribute('id'); clone.setAttribute('aria-hidden', 'true');
+        Object.assign(clone.style, { position:'fixed', left:rect.left+'px', top:rect.top+'px', width:rect.width+'px', height:rect.height+'px', margin:'0', zIndex:'9999', pointerEvents:'none', transformOrigin:'center center' });
+        document.body.appendChild(clone);
+        const dx=targetX-(rect.left+rect.width/2), dy=targetY-(rect.top+rect.height/2);
+        const delay = (reduceMotion ? index*35 : (options.stagger ?? 95)*index) + (options.groupSplit && index >= 3 ? (options.groupDelay ?? 470) : 0);
+        let frames;
+        if (options.arc) {
+            const direction = index % 2 ? 1 : -1;
+            frames = [
+                { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:1, offset:0 },
+                { transform:`translate(${dx*.45 + direction*48}px,${dy*.35 - 75}px) rotate(${direction*190}deg) scale(.8)`, opacity:1, offset:.55 },
+                { transform:`translate(${dx}px,${dy}px) rotate(${direction*390}deg) scale(.22)`, opacity:0, filter:'brightness(2.2)', offset:1 }
+            ];
+        } else {
+            frames = [
+                { transform:'translate(0,0) rotate(0deg) scale(1)', opacity:1, filter:'brightness(1)', offset:0 },
+                { transform:`translate(${dx*.68}px,${dy*.68}px) rotate(${index%2 ? 10 : -10}deg) scale(.7)`, opacity:1, filter:'brightness(1.7)', offset:.7 },
+                { transform:`translate(${dx}px,${dy}px) rotate(${index%2 ? 18 : -18}deg) scale(.18)`, opacity:0, filter:'brightness(2.3)', offset:1 }
+            ];
+        }
+        if (typeof clone.animate === 'function') {
+            const animation=clone.animate(frames,{duration:reduceMotion?280:(options.duration??580),delay,easing:'cubic-bezier(.18,.75,.22,1)',fill:'forwards'});
+            animation.onfinish=()=>clone.remove(); animation.oncancel=()=>clone.remove();
+        } else {
+            clone.style.transition=`transform ${reduceMotion?280:(options.duration??580)}ms ease ${delay}ms, opacity ${reduceMotion?280:(options.duration??580)}ms ease ${delay}ms`;
+            requestAnimationFrame(()=>{ clone.style.transform=`translate(${dx}px,${dy}px) scale(.2) rotate(20deg)`; clone.style.opacity='0'; });
+            setTimeout(()=>clone.remove(),delay+(options.duration??580)+100);
+        }
+    });
+}
+
+function animateFullCombo(cards, enemyStatus, table) {
+    if (!cards.length || !enemyStatus) return;
+    const counts = cards.reduce((acc, card) => { acc[card.rank] = (acc[card.rank] || 0) + 1; return acc; }, {});
+    const tripleRank = Object.keys(counts).find(rank => counts[rank] === 3);
+    const ordered = tripleRank ? cards.filter(card => String(card.rank) === tripleRank).concat(cards.filter(card => String(card.rank) !== tripleRank)) : cards;
+    // Clone every card before updateUI removes the played hand from the DOM.
+    animateCardsToEnemy(ordered, enemyStatus, { stagger:65, duration:520, groupSplit:true, groupDelay:470 });
+    setTimeout(() => { animateEnemyHits(enemyStatus, 2); animateScreenShake(table, true); }, 470);
+}
+
+function animateColorRibbon(cards, table, enemyStatus, color) {
+    if (!table || !enemyStatus) return;
+    animateCardsToEnemy(cards, enemyStatus, { stagger:55, duration:680 });
+    const rect=enemyStatus.getBoundingClientRect(), ribbon=document.createElement('div');
+    ribbon.className='color-ribbon '+(color==='red'?'color-ribbon-red':'color-ribbon-black');
+    Object.assign(ribbon.style,{position:'fixed',left:(rect.left+rect.width/2)+'px',top:(rect.top+rect.height/2)+'px',width:Math.max(150,rect.width*1.65)+'px',height:Math.max(60,rect.height*1.2)+'px',zIndex:'9997',pointerEvents:'none'});
+    ribbon.setAttribute('aria-hidden','true');
+    ribbon.innerHTML='<span></span><span></span><span></span>';
+    document.body.appendChild(ribbon);
+    if(typeof ribbon.animate==='function'){
+        const a=ribbon.animate([{opacity:0,transform:'translate(-50%,-50%) scaleX(.05) rotate(-12deg)'},{opacity:1,transform:'translate(-50%,-50%) scaleX(1.08) rotate(0deg)',offset:.4},{opacity:0,transform:'translate(-50%,-50%) scaleX(1.18) rotate(8deg)'}],{duration:850,easing:'cubic-bezier(.15,.8,.2,1)'});
+        a.onfinish=()=>ribbon.remove(); a.oncancel=()=>ribbon.remove();
+    } else setTimeout(()=>ribbon.remove(),900);
+    animateEnemyHits(enemyStatus,3);
+}
+
+function animateCrossPair(cards, enemyStatus, table) {
+    if (!cards.length || !enemyStatus) return;
+    animateCardsToEnemy(cards, enemyStatus, { stagger:0, duration:620 });
+    const rect=enemyStatus.getBoundingClientRect(), cross=document.createElement('div');
+    cross.className='two-pair-cross';
+    Object.assign(cross.style,{position:'fixed',left:(rect.left+rect.width/2)+'px',top:(rect.top+rect.height/2)+'px',width:Math.max(130,rect.width*1.3)+'px',height:Math.max(90,rect.height*1.7)+'px',zIndex:'9998',pointerEvents:'none'});
+    cross.setAttribute('aria-hidden','true');
+    cross.innerHTML='<span></span><span></span>';
+    document.body.appendChild(cross);
+    if(typeof cross.animate==='function'){
+        const a=cross.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.45)'},{opacity:1,transform:'translate(-50%,-50%) scale(1.08)',offset:.4},{opacity:0,transform:'translate(-50%,-50%) scale(1.2)'}],{duration:680,easing:'ease-out'});
+        a.onfinish=()=>cross.remove(); a.oncancel=()=>cross.remove();
+    } else setTimeout(()=>cross.remove(),700);
+    animateEnemyHits(enemyStatus,2); animateScreenShake(table);
+}
+
+function animatePairStrike(cards, enemyStatus) {
+    animateCardsToEnemy(cards, enemyStatus, { stagger:190, duration:410 });
+    if (enemyStatus) animateEnemyHits(enemyStatus,2);
+}
+
 function runHandAnimation(handName, playedCards) {
     const table = document.querySelector('.tavern-table');
     const enemyStatus = document.querySelector('.hp-enemy');
+    const scoringCards = scoreCards(playedCards)?.scoringCards || playedCards;
     if (handName === 'Poker') {
+        animateCardsToEnemy(playedCards, enemyStatus, { stagger:35, duration:780 });
         animateScreenShake(table, true);
         const banner = document.createElement('div'); banner.className = 'hand-announcement'; banner.textContent = 'POKER!'; table.appendChild(banner);
         if (typeof banner.animate === 'function') {
             const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 750 : 1600, easing: 'cubic-bezier(.16,.8,.3,1)' });
+            const animation = banner.animate([ { opacity: 0, transform: 'translate(-50%,-50%) scale(.35) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.22) rotate(2deg)', offset: 0.24 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0.68 }, { opacity: 0, transform: 'translate(-50%,-75%) scale(1.08)' } ], { duration: reduceMotion ? 650 : 1600, easing: 'cubic-bezier(.16,.8,.3,1)' });
             animation.onfinish = () => banner.remove();
         } else { setTimeout(() => banner.remove(), 1650); }
-    } else if (handName === 'Kareta') { animateEnemyHits(enemyStatus, 4); } 
-    else if (handName === 'Full') { animateScreenShake(table); } 
-    else if (handName === 'Kolor') { animateColorFlash(table, playedCards[0]?.color === 'red' ? 'red' : 'black'); } 
-    else if (handName === 'Trójka') { animateEnemyHits(enemyStatus, 3); }
+    } else if (handName === 'Kareta') { animateKaretaExecution(enemyStatus, table); }
+    else if (handName === 'Full') { animateFullCombo(playedCards, enemyStatus, table); }
+    else if (handName === 'Kolor') { animateColorRibbon(playedCards, table, enemyStatus, playedCards[0]?.color === 'red' ? 'red' : 'black'); }
+    else if (handName === 'Trójka') { animateCardsFlyingToEnemy(scoringCards, table, enemyStatus); }
+    else if (handName === 'Dwie Pary') { animateCrossPair(scoringCards, enemyStatus, table); }
+    else if (handName === 'Para') { animatePairStrike(scoringCards, enemyStatus); }
+    else if (handName === 'Wysoka Karta') { animateCardsToEnemy(scoringCards.slice(0,1), enemyStatus, { arc:true, duration:650, stagger:0 }); }
 }
 
 function playHand() { duelPlay(); }
@@ -720,7 +875,7 @@ function executeItem(idx) {
     else if (item.id === 'heal_pot') {
         const before = duel.playerHp; duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + DUEL.HEAL_POTION_VAL);
         if (mapRun.active) mapRun.playerHp = duel.playerHp;
-        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '15%', '22%', '22px');
+        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '17%', '72%', '22px');
     }
     else if (item.id === 'shield_pot') { duel.playerShield += 25; showFloatingText('+25 🛡', '#5dade2', '15%', '35%', '22px'); }
     else if (item.id === 'time') { duel.fatigueRound++; showFloatingText('Zmęczenie +1 runda', '#f1c40f', '25%', '22%', '16px'); }
@@ -1272,13 +1427,18 @@ function duelPlay() {
     }
 
     const go = () => resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand);
-    if (handName === 'Strit') { setHandResolutionPending(true); animateStraightCards(attackCards, () => { setHandResolutionPending(false); go(); }); return; }
+    if (handName === 'Strit') {
+        setHandResolutionPending(true);
+        animateCardsToEnemy(attackCards, document.querySelector('.hp-enemy'), { stagger:115, duration:430 });
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        setTimeout(() => { setHandResolutionPending(false); go(); }, (reduceMotion ? 280 : 430) + (attackCards.length - 1) * (reduceMotion ? 35 : 115) + 50);
+        return;
+    }
     go();
 }
 
 function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     if (gameOver || !duel.active) return; const fm = fatigueMult();
-    let enemyDamageDealt = 0;
 
     if (attackCards.length) {
         playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards); currentFightBonus += HAND_WIN_BONUS[handName] || 0;
@@ -1287,15 +1447,14 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
         if (duel.corvenBlockArmed) { incoming = 0; duel.corvenBlockArmed = false; showFloatingText('🛡️ ZABLOKOWANO 100%', '#5dade2', '30%', '28%', '20px'); }
 
         const absorbed = Math.min(duel.enemyShield, incoming); const dealt = incoming - absorbed;
-        enemyDamageDealt = dealt;
         duel.enemyShield = 0; duel.enemyHp = Math.max(0, duel.enemyHp - dealt);
         duel.stats.dealt += dealt;
         if (incoming > duel.stats.bestDmg) { duel.stats.bestDmg = incoming; duel.stats.bestName = handName; }
         if (incoming > runStats.bestHandDmg) { runStats.bestHandDmg = incoming; runStats.bestHandName = handName; }
         runStats.totalDamage += dealt;
 
-        if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '30%', '34%', '18px');
-        showFloatingText(`-${dealt}`, '#e74c3c', '30%', '22%', '26px'); pendingDiceRoll = 0;
+        if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '76%', '25%', '18px');
+        showFloatingText(`-${dealt}`, '#e74c3c', '76%', '17%', '26px'); pendingDiceRoll = 0;
         if (activeBuff.turns > 0) { activeBuff.turns--; if (activeBuff.turns === 0) activeBuff.dmg = 0; }
 
         if (currentEnemyTrait && duel.enemyHp > 0) {
@@ -1309,16 +1468,17 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     } else { duel.enemyShield = 0; }
 
     const shEval = evaluateShieldCards(shieldHand, true); duel.playerShield += shEval.total;
-    if (shEval.total > 0) showFloatingText(`+${shEval.total} 🛡`, '#5dade2', '15%', '34%', '20px');
+    if (shEval.total > 0) showFloatingText(`+${shEval.total} 🛡`, '#5dade2', '17%', '80%', '20px');
 
     const usedIds = attackCards.concat(shieldHand).map(c => c.id); const used = hand.filter(c => usedIds.includes(c.id));
     hand = hand.filter(c => !usedIds.includes(c.id)); discardPile.push(...used);
     selectedCards = []; shieldCards = []; duel.phase = 'attack'; evaluateHand();
 
-    if (duel.enemyHp === 0) { updateUI(); if (enemyDamageDealt > 0) animateEnemyHpChange(); duelEnd(true); return; }
-    if (duel.playerHp === 0) { updateUI(); if (enemyDamageDealt > 0) animateEnemyHpChange(); duelEnd(false); return; }
+    if (duel.enemyHp === 0) { updateUI(); if (attackCards.length && damage > 0) animateEnemyHpChange(); duelEnd(true); return; }
+    if (duel.playerHp === 0) { updateUI(); if (attackCards.length && damage > 0) animateEnemyHpChange(); duelEnd(false); return; }
 
-    setHandResolutionPending(true); updateUI(); if (enemyDamageDealt > 0) animateEnemyHpChange();
+    setHandResolutionPending(true); updateUI();
+    if (attackCards.length && damage > 0) animateEnemyHpChange();
     duelEnemyTurn(duel.token).catch(err => { console.error(err); setHandResolutionPending(false); });
 }
 
@@ -1380,8 +1540,8 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     duel.stats.taken += dealt; duel.stats.blocked += absorbed;
 
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
-    if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '15%', '34%', '18px');
-    showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '15%', '22%', '26px');
+    if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
+    showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '17%', '72%', '26px');
     if (dealt > 0) { playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Calion - Szulernia (Wyprawa PvE 16:9)</title>
+<title>Calion - Szulernia · Wyprawa PvE · 0.3.2</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,76 +22,79 @@
       <button class="btn-top btn-map-peek" onclick="openMapModal(true)">🗺️ Mapa</button>
     </div>
 
-    <div class="top-enemy-header">
-      <h1 class="header-title" id="header-enemy-name">⚓ Pod Złamaną Kotwicą</h1>
-      <div class="boss-skill" id="header-boss-skill" style="display: none;">
-        <span class="skill-name" id="header-skill-name"></span>
-        <span id="header-skill-desc"></span>
-      </div>
-    </div>
-
     <div class="top-right-btns">
+      <span class="game-version" aria-label="Wersja 0.3.2">v0.3.2</span>
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
   </div>
 
   <div class="board-grid">
-    <div class="left-col">
-      <div class="status-bar">
-        <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <span id="ui-player-hp">750/750</span> <span id="ui-buff" class="color-buff"></span></span>
-        <span>Odrzuty: <span id="ui-discards">5</span></span>
-        <span class="hp-enemy"><span id="ui-enemy-label">Wróg HP:</span> <span id="ui-enemy-hp">500</span></span>
-      </div>
-
-      <div class="xp-bar-wrap" id="ui-xp-bar">
-        <span class="xp-badge" id="ui-level">⭐ Poz. 1</span>
-        <div class="xp-track"><div class="xp-fill" id="ui-xp-fill"></div></div>
-        <span class="xp-text" id="ui-xp-text">0 / 100 EXP</span>
-      </div>
-
-      <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
-
+    <section class="enemy-board battle-panel" aria-label="Karty i zamiary przeciwnika">
+      <div class="panel-kicker">Karty i zamiar przeciwnika</div>
       <div class="duel-panel" id="duelPanel">
         <div class="duel-top">
           <span id="duelRound">Runda 1</span>
           <span class="duel-poison" id="duelPoisonTag" style="display:none">☠️ Trucizna: 0</span>
           <span class="duel-fatigue" id="duelFatigueTag" style="display:none">Zmęczenie: +25% DMG</span>
         </div>
-        <div class="duel-shields"><span>🛡 Ty: <b id="duelPlayerShield">0</b></span><span>🛡 Wróg: <b id="duelEnemyShield">0</b></span></div>
         <div class="enemy-hand" id="enemyHand" aria-label="Karty wroga"></div>
         <div class="duel-note" id="duelEnemyNote">Wróg losuje karty na początku swojego ruchu.</div>
         <div class="duel-preview" id="duelPreview"></div>
       </div>
+    </section>
 
+    <section class="enemy-hud battle-panel" aria-label="Stan przeciwnika">
+      <div class="top-enemy-header">
+        <h1 class="header-title" id="header-enemy-name">⚓ Pod Złamaną Kotwicą</h1>
+        <div class="boss-skill" id="header-boss-skill" style="display:none">
+          <span class="skill-name" id="header-skill-name"></span>
+          <span id="header-skill-desc"></span>
+        </div>
+      </div>
+      <div class="enemy-vitals">
+        <span class="hp-enemy"><span id="ui-enemy-label">Wróg HP:</span> <b id="ui-enemy-hp">500</b></span>
+        <span class="enemy-shield">🛡 Tarcza: <b id="duelEnemyShield">0</b></span>
+      </div>
+      <div class="enemy-trait-bar" id="ui-enemy-trait" style="display:none"></div>
+    </section>
+
+    <section class="player-hud battle-panel" aria-label="Stan gracza i ekwipunek">
       <div class="fight-bonus">Bonus za układy w walce: +<span id="ui-fight-bonus">0</span> 🪙</div>
-
+      <div class="status-bar">
+        <span class="hp-player"><span id="ui-turns-label">Twoje HP:</span> <b id="ui-player-hp">750/750</b> <span id="ui-buff" class="color-buff"></span></span>
+        <span class="player-shield">🛡 Tarcza: <b id="duelPlayerShield">0</b></span>
+        <span class="discard-count">🔄 Odrzuty: <b id="ui-discards">5</b></span>
+      </div>
+      <div class="xp-bar-wrap" id="ui-xp-bar">
+        <span class="xp-badge" id="ui-level">⭐ Poz. 1</span>
+        <div class="xp-track"><div class="xp-fill" id="ui-xp-fill"></div></div>
+        <span class="xp-text" id="ui-xp-text">0 / 100 EXP</span>
+      </div>
       <div class="inv-bar">
+        <span class="inventory-label">🎒 Ekwipunek</span>
         <div class="inv-slots" id="ui-inventory">
-            <div class="inv-slot"></div><div class="inv-slot"></div><div class="inv-slot"></div>
+          <div class="inv-slot"></div><div class="inv-slot"></div><div class="inv-slot"></div>
         </div>
         <div class="relic-badges" id="ui-relics"></div>
         <span class="coins-display">🪙 <span id="ui-coins">0</span></span>
       </div>
-    </div>
+    </section>
 
     <div class="right-col">
-      <div class="eval-screen">
-        <div class="eval-name" id="evalName">Wybierz karty</div>
-        <div class="eval-dmg" id="evalDmg">Zadane Obrażenia: 0</div>
-      </div>
-
       <div class="info-strip">
         <div id="log">Zaczynamy grę!</div>
         <div class="duel-hint" id="duelHint">Krok 1/2 (⚔ Atak): Wybierz 0–5 kart i kliknij „Atak”</div>
       </div>
-
+      <div class="eval-screen">
+        <div class="eval-name" id="evalName">Wybierz karty</div>
+        <div class="eval-dmg" id="evalDmg">Zadane Obrażenia: 0</div>
+      </div>
       <div class="play-area">
         <div class="hand-zone" id="hand"></div>
-        
         <div class="controls">
           <button class="btn btn-discard" id="btnDiscard" onclick="discardCards()" disabled>Odrzuć</button>
-          <button class="btn btn-play" id="btnPlay" onclick="playHand()" disabled>Zagraj</button>
-          <button class="btn btn-surrender" id="btnSurrender" onclick="surrender()">🏳️ Poddaj się</button>
+          <button class="btn btn-play" id="btnPlay" onclick="playHand()" disabled>⚔ Atak</button>
+          <button class="btn btn-surrender" id="btnSurrender" onclick="surrender()">🏳️ Porzuć</button>
         </div>
       </div>
     </div>
@@ -105,7 +108,7 @@
       <div class="lobby-kicker">Karczemna gra karciana</div>
       <div class="lobby-emblem" aria-hidden="true">⚓</div>
       <h2 class="lobby-title">Pod Złamaną<br>Kotwicą</h2>
-      <div class="lobby-subtitle">Karczma Calionu · Wyprawa PvE (16:9)</div>
+      <div class="lobby-subtitle">Karczma Calionu · Wyprawa PvE · wersja 0.3.2</div>
       <div class="lobby-cards" aria-hidden="true"><div class="lobby-card-face">A</div><div class="lobby-card-face">K</div><div class="lobby-card-face">Q</div></div>
       <p class="hub-intro">Wyrusz na szlak Calionu: walcz z wrogami, otwieraj skrzynie, zdobywaj EXP i pokonaj Bossa piętra.</p>
       <div class="lobby-wallet">🪙 Monety: <span id="ui-lobby-coins">0</span></div>
@@ -191,18 +194,17 @@
   <div class="modal-content">
     <div class="modal-title">Tabela Punktacji</div>
     <div style="max-height: 58dvh; overflow-y: auto; padding-right: 5px;">
-          <table class="score-table">
-            <tr><td>Poker<div class="hand-hint">5 kart z rzędu w tym samym znaczniku (np. 9♠, 8♠, 7♠, 6♠, 5♠)</div></td><td>60</td><td>x 5</td></tr>
-            <tr><td>Kareta<div class="hand-hint">4 karty o tej samej wartości (np. 8, 8, 8, 8)</div></td><td>45</td><td>x 4</td></tr>
-            <tr><td>Full<div class="hand-hint">Trójka i Para (np. K, K, K, 7, 7)</div></td><td>35</td><td>x 3.5</td></tr>
-            <tr><td>Kolor<div class="hand-hint">5 kart o tym samym znaczniku (np. pięć kierów ♥)</div></td><td>25</td><td>x 3</td></tr>
-            <tr><td>Strit<div class="hand-hint">5 kart z rzędu (np. Q, J, 10, 9, 8)</div></td><td>25</td><td>x 3</td></tr>
-            <tr><td>Trójka<div class="hand-hint">3 karty o tej samej wartości (np. 10, 10, 10)</div></td><td>20</td><td>x 2.5</td></tr>
-            <tr><td>Dwie Pary<div class="hand-hint">Dwie różne pary (np. J, J, 5, 5)</div></td><td>15</td><td>x 2</td></tr>
-            <tr><td>Para<div class="hand-hint">2 karty o tej samej wartości (np. A, A)</div></td><td>10</td><td>x 1.5</td></tr>
-            <tr><td>Wysoka Karta<div class="hand-hint">Dowolna pojedyncza najwyższa karta</div></td><td>5</td><td>x 1</td></tr>
-          </table>
-
+        <table class="score-table">
+          <tr><td>Poker<div class="hand-hint">5 kart z rzędu w tym samym znaczniku (np. 9♠, 8♠, 7♠, 6♠, 5♠)</div></td><td>100</td><td>x 8</td></tr>
+          <tr><td>Kareta<div class="hand-hint">4 karty o tej samej wartości (np. 8, 8, 8, 8)</div></td><td>60</td><td>x 7</td></tr>
+          <tr><td>Full<div class="hand-hint">Trójka i Para (np. K, K, K, 7, 7)</div></td><td>40</td><td>x 4</td></tr>
+          <tr><td>Kolor<div class="hand-hint">5 kart o tym samym znaczniku (np. pięć kierów ♥)</div></td><td>35</td><td>x 4</td></tr>
+          <tr><td>Strit<div class="hand-hint">5 kart z rzędu (np. Q, J, 10, 9, 8)</div></td><td>30</td><td>x 4</td></tr>
+          <tr><td>Trójka (Atak i Tarcza 🛡)<div class="hand-hint">3 karty o tej samej wartości (np. 10, 10, 10)</div></td><td>30</td><td>x 3</td></tr>
+          <tr><td>Dwie Pary<div class="hand-hint">Dwie różne pary (np. J, J, 5, 5)</div></td><td>20</td><td>x 2</td></tr>
+          <tr><td>Para (Atak i Tarcza 🛡)<div class="hand-hint">2 karty o tej samej wartości (np. 9, 9)</div></td><td>10</td><td>x 2</td></tr>
+          <tr><td>Wysoka Karta<div class="hand-hint">Atak: najwyższa karta | Tarcza 🛡: suma wybranych kart x 2</div></td><td>5</td><td>x 1</td></tr>
+        </table>
     </div>
     <button class="btn-action" style="margin-top: 12px;" onclick="toggleModal('scoreModal', false)">Zamknij</button>
   </div>
