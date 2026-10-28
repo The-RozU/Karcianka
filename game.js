@@ -14,16 +14,33 @@ const pathFlask = "M9 7 L15 7 L19 19 C19.5 20.5 18 21.5 17 21.5 L7 21.5 C6 21.5 
 const pathRound = "M10 7 L14 7 L18 13 C20 17 18 21.5 12 21.5 C6 21.5 4 17 6 13 Z";
 
 const SHOP_ITEMS = [
-    { id: 'heal_pot', name: 'Mikstura Leczenia', icon: buildSVG('#2ecc71', pathRound, 22), desc: 'Przywraca +100 HP (w walce lub w Kramie)', price: 22 },
-    { id: 'discard', name: 'Miks. Odrzucenia', icon: buildSVG('#3498db', pathFlask, 20), desc: 'Odnawia 1 wymianę kart', price: 15 },
-    { id: 'shield_pot', name: 'Eliksir Pancerza', icon: buildSVG('#5dade2', pathRound, 20), desc: 'Natychmiast daje +25 🛡 Tarczy w tej rundzie', price: 22 },
-    { id: 'time', name: 'Złoty Zegar', icon: hourglassSVG, desc: 'Opóźnia Zmęczenie o 1 rundę', price: 35 },
-    { id: 'pow1', name: 'Mała Miks. Mocy', icon: buildSVG('#e67e22', pathRound, 18), desc: '+10 DMG (3 ataki)', price: 20 },
-    { id: 'pow2', name: 'Średnia Miks. Mocy', icon: buildSVG('#e74c3c', pathRound, 22), desc: '+15 DMG (3 ataki)', price: 30 },
-    { id: 'pow3', name: 'Duża Miks. Mocy', icon: buildSVG('#9b59b6', pathRound, 26), desc: '+20 DMG (3 ataki)', price: 42 },
-    { id: 'dice', name: 'Rzut Kością', icon: '🎲', desc: 'Zakup daje 3 użycia. Rzut 1 = 0 DMG; 2–6 dodaje wynik × 0,5 do mnożnika.', price: 40 },
-    { id: 'karwasz', name: 'Żelazny Karwasz', icon: '🛡️', desc: 'Relikt stały: dodaje +10 🛡 do każdej wystawionej Tarczy.', price: 65, isRelic: true },
-    { id: 'lucky_coin', name: 'Moneta Szczęścia', icon: '🪙', desc: 'Relikt stały: 10% szans przy każdym ataku na podwojenie mnożnika (x2).', price: 60, isRelic: true }
+    // Mikstury leczenia (dwa miejsca u handlarza)
+    { id: 'heal_small', name: 'Mała Mikstura Życia', icon: buildSVG('#2ecc71', pathRound, 18), desc: 'Przywraca 40 HP', price: 20, category: 'healing', heal: 40 },
+    { id: 'heal_medium', name: 'Średnia Mikstura Życia', icon: buildSVG('#27ae60', pathRound, 22), desc: 'Przywraca 80 HP', price: 35, category: 'healing', heal: 80 },
+    { id: 'heal_large', name: 'Duża Mikstura Życia', icon: buildSVG('#16a085', pathRound, 26), desc: 'Przywraca 140 HP', price: 55, category: 'healing', heal: 140 },
+    { id: 'heal_regen', name: 'Mikstura Regeneracji', icon: buildSVG('#58d68d', pathFlask, 22), desc: 'Przywraca 20 HP co turę przez 3 tury walki', price: 25, category: 'healing' },
+
+    // Jednorazowe (dwa miejsca u handlarza)
+    { id: 'glove', name: 'Rękawica Szulera', icon: '🧤', desc: 'Otrzymujesz 2 dodatkowe odrzuty', price: 20, category: 'consumable' },
+    { id: 'dice', name: 'Szczęśliwe Kości x3', icon: '🎲', desc: '3 użycia. Wynik 1 = 0 DMG; 2–6 dodaje wynik × 0,5 do mnożnika obrażeń', price: 40, category: 'consumable' },
+    { id: 'pow1', name: 'Mała Miks. Mocy', icon: buildSVG('#e67e22', pathRound, 18), desc: '+10 DMG przez 3 ataki', price: 19, category: 'consumable' },
+    { id: 'pow2', name: 'Średnia Miks. Mocy', icon: buildSVG('#e74c3c', pathRound, 22), desc: '+15 DMG przez 3 ataki', price: 30, category: 'consumable' },
+    { id: 'pow3', name: 'Duża Miks. Mocy', icon: buildSVG('#9b59b6', pathRound, 26), desc: '+20 DMG przez 3 ataki', price: 42, category: 'consumable' },
+    // Zachowane wcześniejsze przedmioty
+    { id: 'discard', name: 'Miks. Odrzucenia', icon: buildSVG('#3498db', pathFlask, 20), desc: 'Odnawia 1 wymianę kart', price: 15, category: 'consumable' },
+    { id: 'shield_pot', name: 'Eliksir Pancerza', icon: buildSVG('#5dade2', pathRound, 20), desc: 'Natychmiast daje +25 Tarczy', price: 22, category: 'consumable' },
+    { id: 'time', name: 'Złoty Zegar', icon: hourglassSVG, desc: 'Opóźnia Zmęczenie o 1 rundę', price: 35, category: 'consumable' },
+
+    // Artefakty (jedno miejsce u handlarza)
+    { id: 'lucky_coin', name: 'Szczęśliwa Moneta', icon: '🪙', desc: '10% szans przy każdym ataku na podwojenie mnożnika obrażeń', price: 80, category: 'relic', isRelic: true, badge: '🪙10%' },
+    { id: 'karwasz', name: 'Żelazny Karwasz', icon: '🛡️', desc: '+10 Tarczy do każdej wystawionej Tarczy', price: 75, category: 'relic', isRelic: true, badge: '🛡️+10' },
+    { id: 'iron_signet', name: 'Żelazny Sygnet', icon: '💍', desc: 'Atak Parą lub Dwiema Parami daje +5 Tarczy', price: 65, category: 'relic', isRelic: true, badge: '💍+5' },
+    { id: 'blood_amulet', name: 'Krwawy Amulet', icon: '🩸', desc: 'Po zagraniu Fulla odzyskujesz 15 HP', price: 99, category: 'relic', isRelic: true, badge: '🩸+15' },
+    { id: 'gambler_blade', name: 'Ostrze Hazardzisty', icon: '🗡️', desc: 'Wysoka Karta zadaje +30% obrażeń', price: 60, category: 'relic', isRelic: true, badge: '🗡️+30%' },
+    { id: 'fortune_crystal', name: 'Kryształ Fortuny', icon: '💎', desc: 'Strit i Kolor zadają +10% obrażeń', price: 85, category: 'relic', isRelic: true, badge: '💎+10%' },
+    { id: 'guardian_heart', name: 'Serce Strażnika', icon: '❤️‍🔥', desc: 'Na początku każdej walki otrzymujesz +20 Tarczy', price: 70, category: 'relic', isRelic: true, badge: '❤️‍🔥+20' },
+    { id: 'phoenix_ash', name: 'Popiół Feniksa', icon: '🔥', desc: 'Raz na walkę, gdy HP spadnie poniżej 25%, odzyskujesz 50 HP', price: 110, category: 'relic', isRelic: true, badge: '🔥+50' },
+    { id: 'triple_seal', name: 'Pieczęć Trójki', icon: '🔱', desc: 'Trójka zadaje +20% obrażeń', price: 70, category: 'relic', isRelic: true, badge: '🔱+20%' }
 ];
 
 const REGULAR_ENEMIES = [
@@ -63,7 +80,8 @@ let discardsLeft = MAX_DISCARDS, currentDamage = 0, coins = 0;
 let currentFightBonus = 0, pendingDiceRoll = 0;
 let rewardedHandsThisFight = new Set();
 let inventory = [];
-let relics = { karwasz: false, lucky_coin: false };
+let relics = {};
+let devShopOffers = null;
 let currentEnemyTrait = null;
 let lockedCardId = null;
 let activeBuff = { dmg: 0, turns: 0 };
@@ -79,7 +97,6 @@ const DUEL = {
     ELITE_BASE_HP: 750,
     BOSS_BASE_HP: 900,
     ACT_HP_STEP: 125,
-    HEAL_POTION_VAL: 100,
     POST_FIGHT_HEAL: 150,
     LEVEL_UP_HP: 100,
     ENEMY_HAND: 8,
@@ -113,7 +130,7 @@ function newDuelState() {
         playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
         enemyHp: DUEL.ZBIR_BASE_HP, enemyMaxHp: DUEL.ZBIR_BASE_HP,
         playerShield: 0, enemyShield: 0, fatigueRound: DUEL.FATIGUE_ROUND, fatigueShown: false,
-        handLimit: HAND_SIZE, poisonStacks: 0,
+        handLimit: HAND_SIZE, poisonStacks: 0, regenTurns: 0, phoenixUsed: false,
         corvenBlockArmed: false, corvenBlockTriggered: false, lokarFrenzyUsed: false, kaelEnraged: false,
         enemyCards: [], stats: { dealt: 0, taken: 0, blocked: 0, bestName: '-', bestDmg: 0 }
     };
@@ -1136,7 +1153,7 @@ function startDuelRun() {
     };
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
-    inventory = []; relics = { karwasz: false, lucky_coin: false }; coins = 0;
+    inventory = []; relics = {}; devShopOffers = null; coins = 0;
     gameOver = true; setHandResolutionPending(false);
     
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('lobbySectionModal', false);
@@ -1336,6 +1353,7 @@ function abandonMapRun() {
 function startDuelFromMapNode(node) {
     const token = duel.token + 1; const prevStreak = duel.streak;
     duel = newDuelState(); duel.token = token; duel.active = true; duel.phase = 'attack'; duel.streak = prevStreak;
+    if (relics.guardian_heart) duel.playerShield = 20;
     duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     duel.enemyMaxHp = node.hp; duel.enemyHp = node.hp;
     currentEnemyTrait = node.enemy;
