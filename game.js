@@ -346,6 +346,29 @@ function evaluateShieldCards(cards, includePlayerRelics = true) {
     return { total, name: 'Tarcza (Wysokie Karty)', formula: `${rawSum} x ${DUEL.SHIELD_MULT}${karwaszText} = +${total} 🛡` };
 }
 
+function playerRelicDamageMultiplier(handName) {
+    let bonus = 0;
+    if (handName === 'Wysoka Karta' && relics.gambler_blade) bonus += 0.30;
+    if ((handName === 'Strit' || handName === 'Kolor') && relics.fortune_crystal) bonus += 0.10;
+    if (handName === 'Trójka' && relics.triple_seal) bonus += 0.20;
+    return 1 + bonus;
+}
+
+function healPlayerBy(amount) {
+    const before = duel.playerHp;
+    duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + amount);
+    if (mapRun.active) mapRun.playerHp = duel.playerHp;
+    return duel.playerHp - before;
+}
+
+function triggerPhoenixIfNeeded() {
+    if (!relics.phoenix_ash || duel.phoenixUsed || !duel.active) return;
+    if (duel.playerHp <= 0 || duel.playerHp >= duel.playerMaxHp * 0.25) return;
+    duel.phoenixUsed = true;
+    const healed = healPlayerBy(50);
+    showFloatingText(`🔥 Feniks +${healed} HP`, '#2ecc71', '17%', '72%', '21px');
+}
+
 function computeAttackDamage(rule, sum, opts = {}) {
     const potionBonus = opts.potionBonus || 0;
     const dice = opts.dice || 0;
@@ -355,13 +378,14 @@ function computeAttackDamage(rule, sum, opts = {}) {
     else if (dice > 1) finalMultiplier += dice * 0.5;
     finalMultiplier *= luckyMult;
 
-    let damage = dice === 1 ? 0 : (rule.baseChips + sum) * finalMultiplier + potionBonus;
+    const relicMult = opts.applyPlayerRelics ? playerRelicDamageMultiplier(rule.name) : 1;
+    let damage = dice === 1 ? 0 : ((rule.baseChips + sum) * finalMultiplier + potionBonus) * relicMult;
 
     if (opts.applyEnemyTrait && currentEnemyTrait) {
         if (currentEnemyTrait.id === 'weaken_10') { damage = Math.floor(damage * 0.90); }
         else if (currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven') { damage = Math.floor(damage * 0.85); }
     }
-    return { damage, finalMultiplier, potionBonus };
+    return { damage, finalMultiplier, potionBonus, relicMult };
 }
 
 function evaluateHand() {
@@ -372,7 +396,7 @@ function evaluateHand() {
     } else {
         const { rule, sum } = scoreCards(active);
         attackRule = rule;
-        const calc = computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true });
+        const calc = computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, applyPlayerRelics: true });
         currentDamage = calc.damage;
 
         if (duel.phase === 'attack') {
@@ -386,10 +410,11 @@ function evaluateHand() {
                 return;
             }
             const potionText = calc.potionBonus > 0 ? ` + <span class="color-buff">${calc.potionBonus}</span>` : '';
+            const relicText = calc.relicMult > 1 ? ` <span class="color-buff">× ${calc.relicMult.toFixed(2)} (artefakt)</span>` : '';
             const diceText = pendingDiceRoll > 1 ? ` <span class="color-buff">(+${(pendingDiceRoll * 0.5).toFixed(1)} za 🎲 ${pendingDiceRoll})</span>` : '';
             const hasReduction = currentEnemyTrait && (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven');
             const traitModText = hasReduction ? ` <span style="color:#f39c12">(${currentEnemyTrait.id === 'weaken_10' ? '-10%' : '-15%'} ${currentEnemyTrait.traitName})</span>` : '';
-            document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${traitModText} = ${currentDamage} DMG`;
+            document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${relicText}${traitModText} = ${currentDamage} DMG`;
             return;
         }
     }
@@ -912,9 +937,10 @@ function confirmReplace(invIdx) {
 function useItem(idx) {
     if (gameOver || handResolutionPending || idx >= inventory.length) return;
     let item = inventory[idx];
-    if ((item.id === 'shield_pot' || item.id === 'heal_pot') && !duel.active) { document.getElementById('log').innerText = `${item.name} działa wyłącznie w trakcie wyprawy!`; return; }
-    if (item.id === 'heal_pot' && duel.active && duel.playerHp >= duel.playerMaxHp) { document.getElementById('log').innerText = 'Masz już pełne HP — nie potrzebujesz leczenia.'; return; }
+    if ((item.id === 'shield_pot' || item.category === 'healing') && !duel.active) { document.getElementById('log').innerText = `${item.name} działa wyłącznie w trakcie wyprawy!`; return; }
+    if (item.heal && duel.active && duel.playerHp >= duel.playerMaxHp) { document.getElementById('log').innerText = 'Masz już pełne HP — nie potrzebujesz leczenia.'; return; }
     if (duel.active && item.id === 'time' && isFatigued()) { document.getElementById('log').innerText = 'Zmęczenie już trwa — Złoty Zegar nic by nie dał.'; return; }
+    if (item.id === 'heal_regen' && duel.regenTurns > 0) { document.getElementById('log').innerText = 'Regeneracja jest już aktywna.'; return; }
     if (item.id === 'dice' && pendingDiceRoll > 0) { document.getElementById('log').innerText = 'Kość jest już przygotowana — najpierw zagraj atak.'; return; }
     confirmItemIdx = idx;
 
@@ -945,11 +971,12 @@ function executeItem(idx) {
     if (item.id !== 'dice') inventory.splice(idx, 1);
 
     if (item.id === 'discard') { discardsLeft++; showFloatingText('+1 Odrzut', '#3498db', '65%', '35%', '20px'); }
-    else if (item.id === 'heal_pot') {
-        const before = duel.playerHp; duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + DUEL.HEAL_POTION_VAL);
-        if (mapRun.active) mapRun.playerHp = duel.playerHp;
-        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '17%', '72%', '22px');
+    else if (item.id === 'glove') { discardsLeft += 2; showFloatingText('+2 Odrzuty', '#3498db', '65%', '35%', '20px'); }
+    else if (item.heal) {
+        const healed = healPlayerBy(item.heal);
+        showFloatingText(`+${healed} ❤️`, '#2ecc71', '17%', '72%', '22px');
     }
+    else if (item.id === 'heal_regen') { duel.regenTurns = 3; showFloatingText('❤️ Regeneracja ×3', '#2ecc71', '17%', '72%', '20px'); }
     else if (item.id === 'shield_pot') { duel.playerShield += 25; showFloatingText('+25 🛡', '#5dade2', '15%', '35%', '22px'); }
     else if (item.id === 'time') { duel.fatigueRound++; showFloatingText('Zmęczenie +1 runda', '#f1c40f', '25%', '22%', '16px'); }
     else if (item.id === 'pow1') { activeBuff = { dmg: 10, turns: 3 }; showFloatingText('+10 Bazy', '#e74c3c', '65%', '35%', '20px'); }
@@ -1386,13 +1413,15 @@ function openChestNode() {
     coins += foundCoins; runStats.coinsEarned += foundCoins;
 
     let extraRewardHtml = '';
-    const healItem = SHOP_ITEMS.find(i => i.id === 'heal_pot');
-    if (inventory.length < MAX_INV && healItem) {
+    // Zamiast wycofanej mikstury +100 HP losujemy jedną z trzech nowych mikstur natychmiastowych.
+    const chestPotions = SHOP_ITEMS.filter(item => item.category === 'healing' && item.heal);
+    const healItem = chestPotions[Math.floor(Math.random() * chestPotions.length)];
+    if (inventory.length < MAX_INV) {
         inventory.push(makeInventoryItem(healItem));
-        extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 Mikstura Leczenia (+100 HP w plecaku)</strong></div>`;
+        extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 ${healItem.name} (+${healItem.heal} HP w plecaku)</strong></div>`;
     } else {
-        const before = mapRun.playerHp; mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL); duel.playerHp = mapRun.playerHp;
-        extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${mapRun.playerHp - before} ❤️ HP</strong></div>`;
+        const healed = healPlayerBy(healItem.heal);
+        extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${healed} ❤️ HP</strong></div>`;
     }
     document.getElementById('chestModalDesc').innerText = 'W ślepym zaułku za pokonanym strażnikiem otwierasz okutą skrzynię!';
     document.getElementById('chestLootSummary').innerHTML = `<div><span>Znaleziony brąz:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
@@ -1497,7 +1526,7 @@ function duelPlay() {
         const { rule, sum } = scoreCards(attackCards); handName = rule.name;
         const luckyProc = relics.lucky_coin && Math.random() < 0.10;
         if (luckyProc) showFloatingText('🪙 Szczęście x2!', '#f1c40f', '65%', '35%', '20px');
-        damage = Math.floor(computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, luckyProc }).damage);
+        damage = Math.floor(computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, applyPlayerRelics: true, luckyProc }).damage);
     }
 
     const go = () => resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand);
@@ -1520,6 +1549,14 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
             currentFightBonus += HAND_WIN_BONUS[handName] || 0;
             rewardedHandsThisFight.add(handName);
         }
+        if (relics.iron_signet && (handName === 'Para' || handName === 'Dwie Pary')) {
+            duel.playerShield += 5;
+            showFloatingText('💍 +5 🛡', '#5dade2', '17%', '80%', '18px');
+        }
+        if (relics.blood_amulet && handName === 'Full') {
+            const healed = healPlayerBy(15);
+            if (healed) showFloatingText(`🩸 +${healed} HP`, '#2ecc71', '17%', '72%', '18px');
+        }
         let incoming = Math.floor(damage * fm);
 
         if (duel.corvenBlockArmed) { incoming = 0; duel.corvenBlockArmed = false; showFloatingText('🛡️ ZABLOKOWANO 100%', '#5dade2', '30%', '28%', '20px'); }
@@ -1540,7 +1577,7 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
             if (currentEnemyTrait.id === 'boss_corven' && !duel.corvenBlockTriggered && duel.enemyHp <= duel.enemyMaxHp * 0.5) { duel.corvenBlockTriggered = true; duel.corvenBlockArmed = true; showFloatingText('🛡️ TARCZA CORVENA!', '#5dade2', '30%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_riwi' && duel.handLimit === 8) { duel.handLimit = 7; showFloatingText('🩸 OBCIĘCIE PALCA!', '#e74c3c', '65%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_farron' && (handName === 'Wysoka Karta' || handName === 'Para')) {
-                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px');
+                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px'); triggerPhoenixIfNeeded();
             }
         }
     } else { duel.enemyShield = 0; }
@@ -1616,6 +1653,7 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     duel.playerShield = Math.max(0, duel.playerShield - incoming); duel.playerHp = Math.max(0, duel.playerHp - dealt);
     if (mapRun.active) mapRun.playerHp = duel.playerHp;
     duel.stats.taken += dealt; duel.stats.blocked += absorbed;
+    triggerPhoenixIfNeeded();
 
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
@@ -1650,10 +1688,15 @@ async function duelEnemyTurn(token) {
     if (duel.poisonStacks > 0 && duel.playerHp > 0) {
         const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
         if (mapRun.active) mapRun.playerHp = duel.playerHp; duel.stats.taken += poisonDmg;
-        showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); updateUI();
+        showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); triggerPhoenixIfNeeded(); updateUI();
         if (duel.playerHp === 0) { duelEnd(false); return; } await wait(450 * k); if (!alive()) return;
     }
 
+    if (duel.regenTurns > 0) {
+        duel.regenTurns--;
+        const healed = healPlayerBy(20);
+        if (healed) showFloatingText(`❤️ +${healed} HP (regeneracja)`, '#2ecc71', '17%', '72%', '18px');
+    }
     duel.playerShield = 0; duel.round++; duel.phase = 'attack'; duel.enemyCards = [];
     document.getElementById('enemyHand').innerHTML = ''; setEnemyNote('Wróg losuje karty na początku swojego ruchu.');
 
