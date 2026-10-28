@@ -798,11 +798,19 @@ function renderRelicsHTML() {
 
 function drawShopItems(category, count) {
     const pool = SHOP_ITEMS.filter(item => item.category === category && (category !== 'relic' || !relics[item.id]));
-    for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
+    if (category !== 'relic') {
+        // Każdy slot jest losowany niezależnie. Dwie takie same mikstury / jednorazówki są dozwolone.
+        // Zakup nie usuwa przedmiotu z puli następnych losowań.
+        return Array.from({ length: count }, () => ({
+            id: pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null,
+            sold: false
+        }));
     }
-    return Array.from({ length: count }, (_, index) => ({ id: pool[index] ? pool[index].id : null, sold: false }));
+    // Artefakty są unikatowe podczas całej wyprawy.
+    return Array.from({ length: count }, () => ({
+        id: pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null,
+        sold: false
+    }));
 }
 
 function generateShopOffers() {
@@ -859,23 +867,38 @@ function renderShop() {
 
     const offers = currentShopOffers();
     const container = document.getElementById('shopItemsContainer'); container.innerHTML = '';
-    const categoryTitles = { 0: 'Mikstury leczenia (2)', 2: 'Przedmioty jednorazowe (2)', 4: 'Artefakt (1)' };
-    offers.forEach((offer, idx) => {
-        if (categoryTitles[idx]) container.innerHTML += `<div class="shop-category-title">${categoryTitles[idx]}</div>`;
-        const item = SHOP_ITEMS.find(i => i.id === offer.id);
-        if (!item) {
-            container.innerHTML += '<div class="shop-item relic"><div class="shop-info"><span class="shop-name">Brak dostępnych artefaktów</span></div></div>';
-            return;
+    const groups = [
+        { title: 'Mikstury leczenia', from: 0, to: 2 },
+        { title: 'Przedmioty jednorazowe', from: 2, to: 4 },
+        { title: 'Artefakt', from: 4, to: 5 }
+    ];
+    let visibleCount = 0;
+    groups.forEach(group => {
+        const visible = [];
+        for (let idx = group.from; idx < group.to; idx++) {
+            const offer = offers[idx];
+            const item = offer && SHOP_ITEMS.find(i => i.id === offer.id);
+            // Kupiony przedmiot znika z aktualnej oferty, a posiadany artefakt nie wraca do sklepu.
+            if (!offer || offer.sold || !item || (item.isRelic && relics[item.id])) continue;
+            visible.push({ item, idx });
         }
-        const canAfford = coins >= item.price && !offer.sold && !(item.isRelic && relics[item.id]);
-        container.innerHTML += `
-            <div class="shop-item ${item.isRelic ? 'relic' : ''} ${offer.sold ? 'sold' : ''}">
-                <div style="font-size:22px;">${item.icon}</div>
-                <div class="shop-info"><span class="shop-name">${item.name}</span><span class="shop-desc">${item.desc}</span></div>
-                <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${offer.sold ? 'Sprzedano' : item.isRelic && relics[item.id] ? 'Posiadany' : `${item.price} 🪙`}</button>
-            </div>
-        `;
+        if (!visible.length) return;
+        container.innerHTML += `<div class="shop-category-title">${group.title} (${visible.length})</div>`;
+        visible.forEach(({ item, idx }) => {
+            const canAfford = coins >= item.price;
+            container.innerHTML += `
+                <div class="shop-item ${item.isRelic ? 'relic' : ''}">
+                    <div style="font-size:22px;">${item.icon}</div>
+                    <div class="shop-info"><span class="shop-name">${item.name}</span><span class="shop-desc">${item.desc}</span></div>
+                    <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${item.price} 🪙</button>
+                </div>
+            `;
+            visibleCount++;
+        });
     });
+    if (!visibleCount) {
+        container.innerHTML = '<div class="shop-category-title">Wykupiono całą ofertę. Możesz losować ponownie za 10 🪙.</div>';
+    }
     const reroll = document.getElementById('shopRerollBtn');
     if (reroll) reroll.disabled = coins < 10;
 }
