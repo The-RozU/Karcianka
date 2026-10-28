@@ -50,57 +50,90 @@ function generateFloorMap(floor = 1) {
         return node;
     }
 
-    const spine = [];
-    const mysteryStep = Math.max(2, Math.round(fieldsBeforeBoss * 0.55));
-    for (let step = 0; step <= fieldsBeforeBoss + 1; step++) {
-        let type;
-        if (step === 0) type = 'start';
-        else if (step === fieldsBeforeBoss + 1) type = 'boss';
-        else if (step === 1) type = 'fight';
-        else if (step === mysteryStep) type = 'event';
-        else if (step === fieldsBeforeBoss) type = 'shop';
-        else type = floorRandomPick(['fight', 'fight', 'fight', 'elite', 'event', 'event', 'chest', 'heal', 'shop']);
+    // Losowe 3–5 równoległych szlaków. Wspólne wejście i boss.
+    // Kolejne kolumny są obowiązkowe: żadna krawędź nie pomija piętra mapy.
+    const laneCount = 3 + Math.floor(Math.random() * 3);
+    const shortestLane = Math.floor(Math.random() * laneCount);
+    const laneGap = 310 / (laneCount - 1);
+    const lanes = Array.from({ length: laneCount }, (_, lane) => 70 + lane * laneGap);
+    const columns = [];
+    const start = addNode('start', FLOOR_START_X, 225, { column: 0 });
+    columns.push([start]);
 
-        const y = (step === 0 || step === fieldsBeforeBoss + 1)
-            ? 225 : 225 + Math.floor((Math.random() - 0.5) * 64);
-        const node = addNode(type, FLOOR_START_X + step * FLOOR_STEP_WIDTH, y, { column: step });
-        if (spine.length) floorDirectedEdge(spine[spine.length - 1], node);
-        spine.push(node);
+    const randomTypes = ['fight', 'fight', 'fight', 'elite', 'event', 'event', 'chest', 'heal', 'shop'];
+    for (let column = 1; column <= fieldsBeforeBoss; column++) {
+        const row = [];
+        for (let lane = 0; lane < laneCount; lane++) {
+            let type = floorRandomPick(randomTypes);
+            // Po drodze pojawią się nieznane wydarzenia, a przed bossem
+            // przynajmniej jedna szansa na zakup zapasów.
+            if (column === 1) type = 'fight';
+            if (column === fieldsBeforeBoss && lane === shortestLane) type = 'shop';
+            if (column === Math.ceil(fieldsBeforeBoss / 2) && lane === shortestLane) type = 'event';
+            const y = Math.round(lanes[lane] + (Math.random() - 0.5) * 24);
+            row.push(addNode(type, FLOOR_START_X + column * FLOOR_STEP_WIDTH, y, { column, lane }));
+        }
+        columns.push(row);
     }
-
-    // Dłuższe, opcjonalne trasy: walka/strażnik -> nagroda -> powrót na szlak.
-    // Nigdy nie skracają podstawowej trasy do bossa.
-    const candidateSegments = Array.from({length: fieldsBeforeBoss}, (_, i) => i);
-    for (let i = candidateSegments.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [candidateSegments[i], candidateSegments[j]] = [candidateSegments[j], candidateSegments[i]];
-    }
-    const detourCount = Math.min(fieldsBeforeBoss, 2 + Math.floor((number - 1) / 4), 5);
-    candidateSegments.slice(0, detourCount).sort((a, b) => a - b).forEach((segment, index) => {
-        const from = spine[segment], to = spine[segment + 1];
-        const upper = index % 2 === 0;
-        const sideY = upper ? 100 : 350;
-        const guard = addNode(
-            Math.random() < 0.35 ? 'elite' : 'fight',
-            from.x + FLOOR_STEP_WIDTH * 0.30,
-            sideY,
-            { column: segment + 0.30, optional: true }
-        );
-        const reward = addNode(
-            floorRandomPick(['event', 'event', 'chest', 'heal', 'shop']),
-            from.x + FLOOR_STEP_WIDTH * 0.70,
-            sideY + (upper ? -20 : 20),
-            { column: segment + 0.70, optional: true }
-        );
-        floorDirectedEdge(from, guard);
-        floorDirectedEdge(guard, reward);
-        floorDirectedEdge(reward, to);
+    const bossNode = addNode('boss', FLOOR_START_X + (fieldsBeforeBoss + 1) * FLOOR_STEP_WIDTH, 225, {
+        column: fieldsBeforeBoss + 1
     });
+    columns.push([bossNode]);
+
+    // Każda droga jest pełnoprawną trasą od wejścia aż do bossa.
+    for (let lane = 0; lane < laneCount; lane++) {
+        floorDirectedEdge(start, columns[1][lane]);
+        for (let column = 1; column < fieldsBeforeBoss; column++) {
+            const from = columns[column][lane];
+            const to = columns[column + 1][lane];
+            // Każda trasa poza losowo wybraną najkrótszą ma jeden
+            // dodatkowy etap (przed możliwością zmiany ścieżki).
+            if (lane !== shortestLane && column === 1) {
+                const extra = addNode(
+                    floorRandomPick(['fight', 'elite', 'event', 'chest']),
+                    Math.round((from.x + to.x) / 2),
+                    Math.round((from.y + to.y) / 2),
+                    { column: column + 0.5, lane, optional: true }
+                );
+                floorDirectedEdge(from, extra);
+                floorDirectedEdge(extra, to);
+            } else {
+                floorDirectedEdge(from, to);
+            }
+        }
+        floorDirectedEdge(columns[fieldsBeforeBoss][lane], bossNode);
+    }
+
+    // Połączenia pomiędzy trasami umożliwiają zmianę drogi
+    // w trakcie wyprawy. Łączą wyłącznie sąsiednie kolumny
+    // i sąsiednie pasy, więc nie skracają wymaganej liczby pól.
+    // Pierwsze rozgałęzienie jest bez skrótów, aby najkrótsza
+    // droga rzeczywiście zaczynała się od losowo wybranego pasa.
+    let crossings = 0;
+    for (let column = 2; column < fieldsBeforeBoss; column++) {
+        for (let lane = 0; lane < laneCount; lane++) {
+            const direction = Math.random() < 0.5 ? -1 : 1;
+            const targetLane = lane + direction;
+            if (targetLane < 0 || targetLane >= laneCount) continue;
+            if (Math.random() < 0.42) {
+                floorDirectedEdge(columns[column][lane], columns[column + 1][targetLane]);
+                crossings++;
+            }
+        }
+    }
+    // Gwarantowane przecięcie, również na pierwszych piętrach.
+    if (!crossings) {
+        const column = Math.min(2, fieldsBeforeBoss - 1);
+        const lane = Math.floor(Math.random() * (laneCount - 1));
+        floorDirectedEdge(columns[column][lane], columns[column + 1][lane + 1]);
+    }
 
     return {
         boss, nodes, bossHp,
         mapWidth: FLOOR_START_X * 2 + (fieldsBeforeBoss + 1) * FLOOR_STEP_WIDTH,
         mapHeight: FLOOR_MAP_HEIGHT,
-        shortestPathFields: fieldsBeforeBoss
+        shortestPathFields: fieldsBeforeBoss,
+        laneCount,
+        shortestLane
     };
 }
