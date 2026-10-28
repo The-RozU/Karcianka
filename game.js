@@ -87,9 +87,9 @@ let lockedCardId = null;
 let activeBuff = { dmg: 0, turns: 0 };
 let gameOver = true, animateNextRender = true, shopReturnsToMenu = false, handResolutionPending = false;
 let confirmItemIdx = -1, pendingBuyItemIdx = -1;
-let runStartedAt = 0, runFinishedAt = 0;
+let runStartedAt = 0, runFinishedAt = 0, runRecorded = false;
 
-let runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0 };
+let runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
 
 const DUEL = {
     START_HP: 750,
@@ -210,6 +210,24 @@ function updateLockedCard(reroll = false) {
     }
 }
 
+// Only a finished/abandoned RUN is persisted. Exiting the browser never invokes this.
+let playerStatsSaveFailed = false;
+function recordRunResult(outcome) {
+    if (!runStartedAt || runRecorded) return;
+    runRecorded = true; // prevents duplicate counting after defeat + return to lobby
+    runFinishedAt = Date.now();
+    playerStatsSaveFailed = !CalionPlayerStats.record({
+        outcome,
+        floor: mapRun.act,
+        enemiesDefeated: runStats.enemiesDefeated,
+        bossesDefeated: runStats.bossesDefeated,
+        coinsEarned: runStats.coinsEarned,
+        mysteryEvents: runStats.mysteryEvents,
+        durationSeconds: Math.floor((runFinishedAt - runStartedAt) / 1000),
+        finishedAt: new Date(runFinishedAt).toISOString()
+    });
+}
+
 function openLobbySection(section) {
     const sections = {
         quests: {
@@ -228,9 +246,32 @@ function openLobbySection(section) {
     const title = document.getElementById('lobbySectionTitle');
     const content = document.getElementById('lobbySectionContent');
     if (section === 'stats') {
-        title.innerText = 'Statystyki wyprawy';
-        const duration = runStartedAt ? formatDuration((runFinishedAt || Date.now()) - runStartedAt) : '—';
-        content.innerHTML = `<p>Wyniki ostatniej wyprawy w tej sesji:</p><ul><li>Poziom postaci (Mapa): ${mapRun.level} (${mapRun.xp}/${mapRun.xpNext} EXP)</li><li>Pokonani przeciwnicy: ${runStats.enemiesDefeated}</li><li>Pokonani bossowie: ${runStats.bossesDefeated}</li><li>Zdobyte monety: ${runStats.coinsEarned}</li><li>Łączne obrażenia: ${runStats.totalDamage}</li><li>Największy cios: ${runStats.bestHandDmg} DMG (${runStats.bestHandName})</li><li>Odrzucone karty: ${runStats.discards}</li><li>Czas: ${duration}</li></ul>`;
+        title.innerText = 'Statystyki gracza';
+        const totals = CalionPlayerStats.get();
+        const last = totals.lastRun;
+        const resultNames = { win: 'Zwycięstwo', defeat: 'Porażka', abandoned: 'Porzucona' };
+        const lastRunHtml = last
+            ? `<p><strong>Ostatni zapisany RUN:</strong> ${resultNames[last.outcome]}</p>
+               <ul><li>Piętro: ${last.floor}</li><li>Pokonani przeciwnicy: ${last.enemiesDefeated}</li>
+               <li>Pokonani bossowie: ${last.bossesDefeated}</li><li>Zdobyte monety: ${last.coinsEarned}</li>
+               <li>Losowe wydarzenia: ${last.mysteryEvents}</li>
+               <li>Czas wyprawy: ${formatDuration(last.durationSeconds * 1000)}</li></ul>`
+            : '<p>Brak zapisanych wypraw. Ukończ walkę porażką lub świadomie porzuć RUN, aby zapisać statystyki.</p>';
+        content.innerHTML = `
+            <p><strong>Wszystkie zapisane wyprawy:</strong></p>
+            <ul>
+                <li>Rozegrane RUN-y: ${totals.totalRuns}</li>
+                <li>Wygrane: ${totals.wonRuns} · Przegrane: ${totals.lostRuns} · Porzucone: ${totals.abandonedRuns}</li>
+                <li>Pokonani przeciwnicy łącznie: ${totals.totalEnemiesDefeated}</li>
+                <li>Rekord przeciwników w jednym RUN-ie: ${totals.maxEnemiesDefeated}</li>
+                <li>Rekord zdobytych monet w jednym RUN-ie: ${totals.maxCoinsEarned}</li>
+                <li>Najwyższe osiągnięte piętro: ${totals.highestFloor}</li>
+                <li>Rekord bossów w jednym RUN-ie: ${totals.maxBossesDefeated}</li>
+                <li>Odwiedzone pola „?” łącznie: ${totals.totalMysteryEvents}</li>
+            </ul>
+            ${lastRunHtml}
+            ${playerStatsSaveFailed ? '<p style="color:#e74c3c">⚠ Nie udało się zapisać ostatniego RUN-u w pamięci przeglądarki.</p>' : ''}
+            <p style="font-size:11px;color:#b9ad92">Postępy trwającej wyprawy nie są zapisywane. Zamykanie karty w trakcie RUN-u nie aktualizuje statystyk.</p>`;
     } else {
         title.innerText = sections[section].title;
         content.innerHTML = sections[section].html;
@@ -1109,8 +1150,8 @@ function gainXp(amount) {
 }
 
 function startDuelRun() {
-    runStartedAt = Date.now(); runFinishedAt = 0;
-    runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0 };
+    runStartedAt = Date.now(); runFinishedAt = 0; runRecorded = false;
+    runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
     const generated = generateActMap(1);
     mapRun = {
         active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
@@ -1295,6 +1336,7 @@ function selectMapNode(nodeId) {
 
 // Pierwsza, prosta pula zdarzeń. Docelowo zastąpi ją rozbudowana baza fabularna.
 function openMysteryMapEvent(node) {
+    runStats.mysteryEvents++;
     const roll = Math.random();
     if (roll < 0.24) {
         node.type = 'shop';
@@ -1402,6 +1444,7 @@ function startDuelFromMapNode(node) {
 }
 
 function leaveDuel() {
+    if (mapRun.active && !runRecorded) recordRunResult('abandoned');
     duel.token++; duel.active = false; mapRun.active = false; duel.phase = 'attack';
     currentEnemyTrait = null; lockedCardId = null; gameOver = true; runFinishedAt = Date.now();
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
@@ -1433,7 +1476,7 @@ function duelEnd(win) {
         if (node) { node.cleared = true; node.type = 'empty'; node.icon = '🪵'; }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
-    } else { runFinishedAt = Date.now(); }
+    } else { recordRunResult('defeat'); }
 
     document.getElementById('duelResultTitle').innerText = win ? (isBossNode ? `👑 Boss Piętra ${mapRun.act} Pokonany!` : 'Zwycięstwo na Szlaku!') : 'Poległeś na Szlaku...';
     document.getElementById('duelResultTitle').style.color = win ? '#2ecc71' : '#e74c3c';
