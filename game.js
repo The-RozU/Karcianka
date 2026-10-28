@@ -767,66 +767,119 @@ function inventoryIcon(item) { return item.id === 'dice' ? `<span>🎲</span><sm
 function makeInventoryItem(item) { return item.id === 'dice' ? { ...item, charges: 3 } : { ...item }; }
 
 function renderRelicsHTML() {
-    const badges = [];
-    if (relics.karwasz) badges.push(`<span class="relic-badge" title="Żelazny Karwasz: +10 🛡 do Tarczy">🛡️+10</span>`);
-    if (relics.lucky_coin) badges.push(`<span class="relic-badge" title="Moneta Szczęścia: 10% szans na mnożnik x2">🪙10%</span>`);
-    return badges.join('');
+    return SHOP_ITEMS.filter(item => item.isRelic && relics[item.id])
+        .map(item => `<span class="relic-badge" title="${item.name}: ${item.desc}">${item.badge || item.icon}</span>`).join('');
+}
+
+function drawShopItems(category, count) {
+    const pool = SHOP_ITEMS.filter(item => item.category === category && (category !== 'relic' || !relics[item.id]));
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return Array.from({ length: count }, (_, index) => ({ id: pool[index] ? pool[index].id : null, sold: false }));
+}
+
+function generateShopOffers() {
+    return [
+        ...drawShopItems('healing', 2),
+        ...drawShopItems('consumable', 2),
+        ...drawShopItems('relic', 1)
+    ];
+}
+
+function currentShopNode() {
+    return mapRun.nodes.find(node => node.id === mapRun.currentNodeId && node.type === 'shop');
+}
+
+function currentShopOffers() {
+    const node = currentShopNode();
+    if (node) {
+        if (!node.shopOffers) node.shopOffers = generateShopOffers();
+        return node.shopOffers;
+    }
+    if (!devShopOffers) devShopOffers = generateShopOffers();
+    return devShopOffers;
+}
+
+function rerollShop() {
+    if (coins < 10) return;
+    coins -= 10;
+    const node = currentShopNode();
+    if (node) node.shopOffers = generateShopOffers();
+    else devShopOffers = generateShopOffers();
+    pendingBuyItemIdx = -1;
+    renderShop(); updateUI();
+}
+
+function markShopOfferSold(idx) {
+    const offer = currentShopOffers()[idx];
+    if (offer) offer.sold = true;
 }
 
 function renderShop() {
     document.getElementById('shopCoins').innerText = coins;
     const hpSpan = document.getElementById('shopHpDisplay');
-    if (mapRun.active) { hpSpan.innerText = `❤️ ${mapRun.playerHp}/${mapRun.playerMaxHp} HP`; } else { hpSpan.innerText = ''; }
+    hpSpan.innerText = mapRun.active ? `❤️ ${mapRun.playerHp}/${mapRun.playerMaxHp} HP` : '';
 
     const shopInv = document.getElementById('shopInventorySlots'); shopInv.innerHTML = '';
     for (let i = 0; i < MAX_INV; i++) {
-        if (i < inventory.length) { shopInv.innerHTML += `<div class="inv-slot" onclick="useItemFromShop(${i})" title="${inventory[i].name} (Kliknij, by użyć)">${inventoryIcon(inventory[i])}</div>`; } 
-        else { shopInv.innerHTML += `<div class="inv-slot"></div>`; }
+        if (i < inventory.length) {
+            const item = inventory[i];
+            const usableHere = !!(item.heal && mapRun.active);
+            shopInv.innerHTML += `<div class="inv-slot" ${usableHere ? `onclick="useItemFromShop(${i})"` : ''} title="${item.name}${usableHere ? ' (Kliknij, aby się uleczyć)' : ' (Użyj podczas walki)'}">${inventoryIcon(item)}</div>`;
+        } else { shopInv.innerHTML += '<div class="inv-slot"></div>'; }
     }
-    document.getElementById('shopRelicsSlots').innerHTML = renderRelicsHTML() || '<span style="font-size:11px;color:#777">Brak reliktów</span>';
+    document.getElementById('shopRelicsSlots').innerHTML = renderRelicsHTML() || '<span style="font-size:11px;color:#777">Brak artefaktów</span>';
 
+    const offers = currentShopOffers();
     const container = document.getElementById('shopItemsContainer'); container.innerHTML = '';
-    SHOP_ITEMS.forEach((item, idx) => {
-        const alreadyOwnedRelic = item.isRelic && relics[item.id];
-        const canAfford = coins >= item.price && !alreadyOwnedRelic;
+    const categoryTitles = { 0: 'Mikstury leczenia (2)', 2: 'Przedmioty jednorazowe (2)', 4: 'Artefakt (1)' };
+    offers.forEach((offer, idx) => {
+        if (categoryTitles[idx]) container.innerHTML += `<div class="shop-category-title">${categoryTitles[idx]}</div>`;
+        const item = SHOP_ITEMS.find(i => i.id === offer.id);
+        if (!item) {
+            container.innerHTML += '<div class="shop-item relic"><div class="shop-info"><span class="shop-name">Brak dostępnych artefaktów</span></div></div>';
+            return;
+        }
+        const canAfford = coins >= item.price && !offer.sold && !(item.isRelic && relics[item.id]);
         container.innerHTML += `
-            <div class="shop-item ${item.isRelic ? 'relic' : ''}">
+            <div class="shop-item ${item.isRelic ? 'relic' : ''} ${offer.sold ? 'sold' : ''}">
                 <div style="font-size:22px;">${item.icon}</div>
                 <div class="shop-info"><span class="shop-name">${item.name}</span><span class="shop-desc">${item.desc}</span></div>
-                <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${alreadyOwnedRelic ? 'Kupiono' : `${item.price} 🪙`}</button>
+                <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${offer.sold ? 'Sprzedano' : item.isRelic && relics[item.id] ? 'Posiadany' : `${item.price} 🪙`}</button>
             </div>
         `;
     });
+    const reroll = document.getElementById('shopRerollBtn');
+    if (reroll) reroll.disabled = coins < 10;
 }
 
 function useItemFromShop(idx) {
     const item = inventory[idx];
-    if (!item) return;
-    if (item.id === 'heal_pot' && mapRun.active) {
-        if (mapRun.playerHp >= mapRun.playerMaxHp) { alert('Masz już pełne punkty życia!'); return; }
-        inventory.splice(idx, 1);
-        const before = mapRun.playerHp;
-        mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL);
-        duel.playerHp = mapRun.playerHp;
-        renderShop(); updateUI();
-        alert(`Wypito Miksturę Leczenia! Odzyskano +${mapRun.playerHp - before} HP.`);
-    }
+    if (!item || !item.heal || !mapRun.active) return;
+    if (mapRun.playerHp >= mapRun.playerMaxHp) { alert('Masz już pełne punkty życia!'); return; }
+    inventory.splice(idx, 1);
+    const healed = healPlayerBy(item.heal);
+    renderShop(); updateUI();
+    alert(`Wypito: ${item.name}. Odzyskano ${healed} HP.`);
 }
 
 function buyItem(idx) {
-    let item = SHOP_ITEMS[idx]; if (!item || coins < item.price) return;
+    const offer = currentShopOffers()[idx];
+    const item = offer && SHOP_ITEMS.find(i => i.id === offer.id);
+    if (!item || offer.sold || coins < item.price || (item.isRelic && relics[item.id])) return;
     if (item.isRelic) {
-        if (relics[item.id]) return;
         coins -= item.price; relics[item.id] = true;
-        renderShop(); updateUI(); return;
+        markShopOfferSold(idx); renderShop(); updateUI(); return;
     }
     const diceStack = item.id === 'dice' ? inventory.find(invItem => invItem.id === 'dice') : null;
     if (diceStack) {
         coins -= item.price; diceStack.charges = (diceStack.charges ?? 3) + 3;
-        renderShop(); updateUI();
+        markShopOfferSold(idx); renderShop(); updateUI();
     } else if (inventory.length < MAX_INV) {
         coins -= item.price; inventory.push(makeInventoryItem(item));
-        renderShop(); updateUI();
+        markShopOfferSold(idx); renderShop(); updateUI();
     } else {
         pendingBuyItemIdx = idx; renderReplaceModal(); toggleModal('replaceModal', true);
     }
@@ -846,10 +899,12 @@ function renderReplaceModal() {
 }
 
 function confirmReplace(invIdx) {
-    if (pendingBuyItemIdx === -1) return;
-    let newItem = SHOP_ITEMS[pendingBuyItemIdx];
-    if (newItem && coins >= newItem.price) {
-        coins -= newItem.price; inventory[invIdx] = makeInventoryItem(newItem); pendingBuyItemIdx = -1;
+    if (pendingBuyItemIdx === -1 || invIdx < 0 || invIdx >= inventory.length) return;
+    const offer = currentShopOffers()[pendingBuyItemIdx];
+    const newItem = offer && SHOP_ITEMS.find(i => i.id === offer.id);
+    if (newItem && !offer.sold && !newItem.isRelic && coins >= newItem.price) {
+        coins -= newItem.price; inventory[invIdx] = makeInventoryItem(newItem);
+        markShopOfferSold(pendingBuyItemIdx); pendingBuyItemIdx = -1;
         toggleModal('replaceModal', false); renderShop(); updateUI();
     }
 }
