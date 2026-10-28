@@ -1093,150 +1093,9 @@ const headerName = document.getElementById('header-enemy-name');
     refreshButtons(); applyDuelView();
 }
 
-// ======================= GENERATOR NIEREGULARNEJ MAPY BEZ KOLIZJI =======================
-function connectNodes(nodes, idA, idB) {
-    const a = nodes.find(n => n.id === idA);
-    const b = nodes.find(n => n.id === idB);
-    if (!a || !b) return;
-    if (!a.targets.includes(idB)) a.targets.push(idB);
-    if (!b.targets.includes(idA)) b.targets.push(idA);
-}
-
-function resolveMapCollisions(nodes) {
-    const MIN_DIST = 16.5;
-    const ASPECT = 2.0;
-
-    for (let iter = 0; iter < 50; iter++) {
-        let moved = false;
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const a = nodes[i];
-                const b = nodes[j];
-
-                const dx = a.x - b.x;
-                const dy = (a.y - b.y) / ASPECT;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist < MIN_DIST) {
-                    moved = true;
-                    const overlap = (MIN_DIST - Math.max(0.1, dist)) / 2;
-                    const ux = dist > 0.1 ? dx / dist : (Math.random() - 0.5);
-                    const uy = dist > 0.1 ? dy / dist : (Math.random() - 0.5);
-
-                    const lockA = (a.type === 'start' || a.type === 'boss');
-                    const lockB = (b.type === 'start' || b.type === 'boss');
-
-                    if (!lockA) {
-                        a.x = Math.max(12, Math.min(86, a.x + ux * overlap));
-                        a.y = Math.max(16, Math.min(84, a.y + uy * overlap * ASPECT));
-                    }
-                    if (!lockB) {
-                        b.x = Math.max(12, Math.min(86, b.x - ux * overlap));
-                        b.y = Math.max(16, Math.min(84, b.y - uy * overlap * ASPECT));
-                    }
-                }
-            }
-        }
-        if (!moved) break;
-    }
-}
-
+// Generator pięter w osobnym pliku map-generator.js.
 function generateActMap(actNumber = 1) {
-    const boss = pickRandomCalionBoss();
-    const bonusHp = (actNumber - 1) * DUEL.ACT_HP_STEP;
-    const zbirHp = DUEL.ZBIR_BASE_HP + bonusHp;
-    const eliteHp = DUEL.ELITE_BASE_HP + bonusHp;
-    const bossHp = DUEL.BOSS_BASE_HP + bonusHp;
-
-    const rEnemies = () => REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
-    const eEnemies = () => pickRandomEnemyTrait();
-
-    const nodes = [];
-    let nextId = 0;
-
-    // 1. Główny szlak w środkowym pasie
-    const spineCols = [8, 24, 41, 58, 75, 92];
-    let prevY = 50;
-    const spineIds = [];
-
-    for (let i = 0; i < spineCols.length; i++) {
-        const isStart = (i === 0);
-        const isBoss = (i === spineCols.length - 1);
-        
-        let y = 50;
-        if (!isStart && !isBoss) {
-            const shift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.floor(Math.random() * 8));
-            y = Math.max(38, Math.min(62, prevY + shift));
-        }
-        prevY = y;
-
-        let type = 'empty', icon = '🪵', title = 'Pusty korytarz', hp = 0, xp = 0, enemy = null;
-
-        if (isStart) {
-            type = 'start'; icon = '🏕️'; title = 'Wejście';
-        } else if (isBoss) {
-            type = 'boss'; icon = '👑'; title = boss.name; hp = bossHp; xp = 250; enemy = boss;
-        } else if (i === 1 || i === 3) {
-            const e = rEnemies();
-            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
-        } else if (i === 4) {
-            type = 'shop'; icon = '🪙'; title = 'Karczemny Kram';
-        } else if (Math.random() < 0.45) {
-            const e = rEnemies();
-            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
-        }
-
-        const id = nextId++;
-        nodes.push({ id, x: spineCols[i], y, type, icon, title, hp, xp, enemy, targets: [], cleared: isStart });
-        spineIds.push(id);
-        if (i > 0) connectNodes(nodes, spineIds[i - 1], id);
-    }
-
-    // 2. Boczne ślepe odnogi: [Strażnik] -> [Skrzynia / Zapasy HP]
-    // Tworzymy odnogę na górze przy kolumnie 1 oraz odnogę na dole przy kolumnie 2 lub 3
-    const branches = [
-        { spineIdx: 1, goUp: true },
-        { spineIdx: 2, goUp: false }
-    ];
-
-    branches.forEach(br => {
-        const parent = nodes[spineIds[br.spineIdx]];
-        const guardY = br.goUp ? 19 : 81;
-        const guardX = parent.x + 3;
-
-        const isEliteGuard = (!br.goUp || Math.random() < 0.45);
-        const gEnemy = isEliteGuard ? eEnemies() : rEnemies();
-        const guardId = nextId++;
-
-        nodes.push({
-            id: guardId, x: guardX, y: guardY,
-            type: isEliteGuard ? 'elite' : 'fight',
-            icon: isEliteGuard ? '💀' : '⚔️',
-            title: gEnemy.name,
-            hp: isEliteGuard ? eliteHp : zbirHp,
-            xp: isEliteGuard ? 110 : 55,
-            enemy: gEnemy, targets: [], cleared: false
-        });
-        connectNodes(nodes, parent.id, guardId);
-
-        const rewardId = nextId++;
-        const rewardX = guardX + 14;
-        const rewardY = br.goUp ? 18 : 82;
-        const isHealSpring = Math.random() < 0.45;
-
-        nodes.push({
-            id: rewardId, x: rewardX, y: rewardY,
-            type: isHealSpring ? 'heal' : 'chest',
-            icon: isHealSpring ? '🧪' : '📦',
-            title: isHealSpring ? 'Zapasy Medyczne' : 'Ukryta Skrzynia',
-            hp: 0, xp: 0, enemy: null, targets: [], cleared: false
-        });
-        connectNodes(nodes, guardId, rewardId);
-    });
-
-    resolveMapCollisions(nodes);
-
-    return { boss, nodes, bossHp };
+    return generateFloorMap(actNumber);
 }
 
 function gainXp(amount) {
@@ -1256,7 +1115,9 @@ function startDuelRun() {
     mapRun = {
         active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
         level: 1, xp: 0, xpNext: 100, boss: generated.boss, nodes: generated.nodes,
-        currentNodeId: 0, visitedNodes: new Set([0])
+        currentNodeId: 0, visitedNodes: new Set([0]),
+        mapWidth: generated.mapWidth, mapHeight: generated.mapHeight,
+        shortestPathFields: generated.shortestPathFields
     };
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
@@ -1278,6 +1139,9 @@ function startNextDuelAct() {
     const generated = generateActMap(mapRun.act);
     mapRun.boss = generated.boss;
     mapRun.nodes = generated.nodes;
+    mapRun.mapWidth = generated.mapWidth;
+    mapRun.mapHeight = generated.mapHeight;
+    mapRun.shortestPathFields = generated.shortestPathFields;
     mapRun.currentNodeId = 0;
     mapRun.visitedNodes = new Set([0]);
     openMapModal(false);
@@ -1292,9 +1156,12 @@ function renderDiceyMap(lockMovement) {
     document.querySelectorAll('.node-plate').forEach(e => e.remove());
     svg.innerHTML = '';
 
-    // Stała przestrzeń 1000x450 zdefiniowana w viewBox SVG gwarantuje rysowanie kresek zawsze
-    const SVG_W = 1000;
-    const SVG_H = 450;
+    // Mapa rośnie poziomo wraz z piętrem. Widok można przewijać bez ściskania pól.
+    const SVG_W = mapRun.mapWidth || 802;
+    const SVG_H = mapRun.mapHeight || 450;
+    board.style.width = SVG_W + 'px';
+    board.style.height = SVG_H + 'px';
+    svg.setAttribute('viewBox', '0 0 ' + SVG_W + ' ' + SVG_H);
 
     const drawnPairs = new Set();
     const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
@@ -1302,8 +1169,8 @@ function renderDiceyMap(lockMovement) {
 
     // 1. Rysowanie linii połączeń między strefami
     mapRun.nodes.forEach(node => {
-        const x1 = (node.x / 100) * SVG_W;
-        const y1 = (node.y / 100) * SVG_H;
+        const x1 = node.x;
+        const y1 = node.y;
 
         node.targets.forEach(tid => {
             const pairKey = [Math.min(node.id, tid), Math.max(node.id, tid)].join('-');
@@ -1311,17 +1178,14 @@ function renderDiceyMap(lockMovement) {
                 drawnPairs.add(pairKey);
                 const target = mapRun.nodes.find(n => n.id === tid);
                 if (!target) return;
-                const x2 = (target.x / 100) * SVG_W;
-                const y2 = (target.y / 100) * SVG_H;
+                const x2 = target.x;
+                const y2 = target.y;
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', x1); line.setAttribute('y1', y1);
                 line.setAttribute('x2', x2); line.setAttribute('y2', y2);
 
-                const isAdjacent = !lockMovement && (
-                    (node.id === mapRun.currentNodeId && cur.targets.includes(tid)) || 
-                    (tid === mapRun.currentNodeId && cur.targets.includes(node.id))
-                );
+                const isAdjacent = !lockMovement && node.id === cur.id && cur.targets.includes(tid);
 
                 if (isAdjacent) {
                     line.classList.add('active-path');
@@ -1337,8 +1201,9 @@ function renderDiceyMap(lockMovement) {
     mapRun.nodes.forEach(node => {
         const div = document.createElement('div');
         div.className = 'node-plate';
-        div.style.left = `${node.x}%`;
-        div.style.top = `${node.y}%`;
+        div.style.left = node.x + 'px';
+        div.style.top = node.y + 'px';
+        if (node.type === 'event') div.classList.add('mystery-node');
         div.title = node.title;
 
         const isCurrent = (node.id === mapRun.currentNodeId);
@@ -1358,6 +1223,8 @@ function renderDiceyMap(lockMovement) {
         }
         board.appendChild(div);
     });
+    const viewport = document.getElementById('mapViewport');
+    if (viewport) viewport.scrollLeft = Math.max(0, cur.x - viewport.clientWidth * 0.40);
 }
 
 function openMapModal(fromTopButton = false) {
@@ -1366,6 +1233,9 @@ function openMapModal(fromTopButton = false) {
         mapRun.active = true;
         mapRun.boss = generated.boss;
         mapRun.nodes = generated.nodes;
+        mapRun.mapWidth = generated.mapWidth;
+        mapRun.mapHeight = generated.mapHeight;
+        mapRun.shortestPathFields = generated.shortestPathFields;
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
     }
@@ -1374,7 +1244,7 @@ function openMapModal(fromTopButton = false) {
     const combatInProgress = !gameOver && duel.active && duel.enemyHp > 0;
     const lockMovement = fromTopButton && combatInProgress;
 
-    document.getElementById('mapTitle').innerText = `Szlak Calionu · Piętro ${mapRun.act}`;
+    document.getElementById('mapTitle').innerText = `Szlak Calionu · Piętro ${mapRun.act} · ${mapRun.shortestPathFields} pól do bossa`;
     document.getElementById('mapPlayerHp').innerText = `${mapRun.playerHp}/${mapRun.playerMaxHp}`;
     document.getElementById('mapPlayerLvl').innerText = mapRun.level;
     document.getElementById('mapPlayerXp').innerText = `${mapRun.xp}/${mapRun.xpNext} EXP`;
@@ -1387,15 +1257,17 @@ function openMapModal(fromTopButton = false) {
     document.getElementById('mapClosePeekBtn').style.display = combatInProgress ? 'block' : 'none';
     document.getElementById('mapHintText').innerText = lockMovement
         ? 'Trwa walka — pokonaj wroga przy stole, aby ruszyć dalej!'
-        : 'Kliknij podświetlone na złoto kółko połączone przerywaną linią, aby tam przejść.';
+        : 'Wybierz złote połączenie. Boczne drogi są dłuższe, ale mogą dawać dodatkowe nagrody. ? = niespodzianka.';
 
     toggleModal('mapModal', true);
     renderDiceyMap(lockMovement);
 }
 
 function selectMapNode(nodeId) {
+    if (!mapRun.active || !gameOver) return;
+    const current = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
     const node = mapRun.nodes.find(n => n.id === nodeId);
-    if (!node) return;
+    if (!current || !node || !current.targets.includes(nodeId)) return;
     mapRun.currentNodeId = nodeId;
     mapRun.visitedNodes.add(nodeId);
     toggleModal('mapModal', false);
@@ -1408,6 +1280,8 @@ function selectMapNode(nodeId) {
         openHealSpringNode();
     } else if (node.type === 'shop') {
         openMapShopNode();
+    } else if (node.type === 'event') {
+        openMysteryMapEvent(node);
     } else if (node.type === 'start' || node.type === 'empty') {
         openMapModal(false);
     } else if (node.type === 'fight' || node.type === 'elite' || node.type === 'boss') {
@@ -1417,6 +1291,53 @@ function selectMapNode(nodeId) {
             openMapModal(false);
         }
     }
+}
+
+// Pierwsza, prosta pula zdarzeń. Docelowo zastąpi ją rozbudowana baza fabularna.
+function openMysteryMapEvent(node) {
+    const roll = Math.random();
+    if (roll < 0.24) {
+        node.type = 'shop';
+        node.icon = '🪙';
+        node.title = 'Wędrowny handlarz';
+        openMapShopNode();
+        return;
+    }
+
+    if (roll < 0.49) {
+        const foundCoins = 15 + Math.floor(Math.random() * 21);
+        coins += foundCoins;
+        runStats.coinsEarned += foundCoins;
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        document.getElementById('chestModalDesc').innerText =
+            'Nieznany podróżnik zostawił na szlaku mieszek monet. Dziś szczęście Ci sprzyja.';
+        document.getElementById('chestLootSummary').innerHTML =
+            '<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+' + foundCoins + ' 🪙</strong></div>';
+        updateUI(); toggleModal('chestModal', true);
+        return;
+    }
+
+    if (roll < 0.74) {
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        const before = mapRun.playerHp;
+        mapRun.playerHp = Math.min(mapRun.playerMaxHp, before + 100);
+        duel.playerHp = mapRun.playerHp;
+        document.getElementById('chestModalDesc').innerText =
+            'W przydrożnej kapliczce odnajdujesz wodę o leczniczych właściwościach.';
+        document.getElementById('chestLootSummary').innerHTML =
+            '<div><span>Odzyskane zdrowie:</span><strong style="color:#2ecc71">+' +
+            (mapRun.playerHp - before) + ' ❤️ HP</strong></div>';
+        updateUI(); toggleModal('chestModal', true);
+        return;
+    }
+
+    node.type = 'fight';
+    node.icon = '⚔️';
+    node.enemy = REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
+    node.title = 'Zasadzka: ' + node.enemy.name;
+    node.hp = DUEL.ZBIR_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
+    node.xp = 50;
+    startDuelFromMapNode(node);
 }
 
 function openHealSpringNode() {
