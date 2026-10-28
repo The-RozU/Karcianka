@@ -397,7 +397,12 @@ html, body {
 .node-plate.cleared { border-color: #2e593f; background: #15251b; opacity: 0.85; }
 @keyframes bounceTarget { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.1); } }
 
-.shop-grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; max-height: 42dvh; overflow-y: auto; padding-right: 4px; }
+.shop-grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; max-height: 42dvh; overflow-y: auto; padding-right: 4px; }
+.shop-category-title { grid-column: 1 / -1; color: #f1c40f; font-weight: bold; font-size: 12px; padding: 4px 0 1px; border-bottom: 1px solid rgba(241,196,15,.25); }
+.shop-item.sold { opacity: .55; }
+.shop-reroll-row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; color:#b9ad92; font-size:11px; }
+.shop-reroll-btn { background:#4a3618; border-color:#b38743; padding:8px 12px; }
+@media(max-width:650px) { .shop-reroll-row { flex-direction:column; align-items:stretch; } .shop-reroll-btn { margin-left:0; } }
 .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.45); border: 1px solid rgba(180,143,92,0.2); padding: 7px 8px; border-radius: 8px; text-align: left; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);}
 .shop-item.danger { border-color: rgba(204, 51, 51, 0.4); }
 .shop-item.relic { border-color: rgba(241, 196, 15, 0.5); background: rgba(45, 35, 15, 0.45); }
