@@ -61,6 +61,7 @@ const HAND_WIN_BONUS = { 'Poker': 5, 'Kareta': 3, 'Full': 3, 'Kolor': 2, 'Strit'
 let deck = [], discardPile = [], hand = [], selectedCards = [];
 let discardsLeft = MAX_DISCARDS, currentDamage = 0, coins = 0;
 let currentFightBonus = 0, pendingDiceRoll = 0;
+let rewardedHandsThisFight = new Set();
 let inventory = [];
 let relics = { karwasz: false, lucky_coin: false };
 let currentEnemyTrait = null;
@@ -1134,7 +1135,7 @@ function startDuelRun() {
         currentNodeId: 0, visitedNodes: new Set([0])
     };
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
-    currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
+    currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     inventory = []; relics = { karwasz: false, lucky_coin: false }; coins = 0;
     gameOver = true; setHandResolutionPending(false);
     
@@ -1344,7 +1345,7 @@ function startDuelFromMapNode(node) {
     toggleModal('shopModal', false); toggleModal('lobbySectionModal', false);
     gameOver = false;
     discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - 2) : MAX_DISCARDS;
-    activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
+    activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     document.getElementById('enemyHand').innerHTML = '';
     document.getElementById('ui-enemy-label').innerText = node.type === 'boss' ? '👑 BOSS HP:' : (node.type === 'elite' ? '💀 ELITA HP:' : 'Wróg HP:');
@@ -1441,7 +1442,11 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     if (gameOver || !duel.active) return; const fm = fatigueMult();
 
     if (attackCards.length) {
-        playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards); currentFightBonus += HAND_WIN_BONUS[handName] || 0;
+        playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards);
+        if (!rewardedHandsThisFight.has(handName)) {
+            currentFightBonus += HAND_WIN_BONUS[handName] || 0;
+            rewardedHandsThisFight.add(handName);
+        }
         let incoming = Math.floor(damage * fm);
 
         if (duel.corvenBlockArmed) { incoming = 0; duel.corvenBlockArmed = false; showFloatingText('🛡️ ZABLOKOWANO 100%', '#5dade2', '30%', '28%', '20px'); }
