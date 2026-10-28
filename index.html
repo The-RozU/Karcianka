@@ -220,13 +220,17 @@
           <span id="shopHpDisplay" style="margin-left:10px;color:#2ecc71;font-weight:bold;font-size:12px"></span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="shop-inventory-title">Plecak (kliknij, by uleczyć):</span>
+          <span class="shop-inventory-title">Plecak (mikstury życia kliknij, by użyć):</span>
           <div class="inv-slots" id="shopInventorySlots"></div>
           <div class="relic-badges" id="shopRelicsSlots"></div>
         </div>
     </div>
 
     <div id="shopItemsContainer" class="shop-grid-list"></div>
+    <div class="shop-reroll-row">
+      <span>Handlarz wystawia 2 mikstury leczenia, 2 jednorazowe przedmioty i 1 artefakt. Każdy przedmiot można kupić tylko raz.</span>
+      <button class="btn-buy shop-reroll-btn" id="shopRerollBtn" onclick="rerollShop()">🎲 Losuj ponownie: 10 🪙</button>
+    </div>
     <div style="display:flex;gap:10px;">
       <button class="btn-action" id="shopProceedBtn" onclick="closeShopToMap()">Wróć na Mapę</button>
       <button class="btn-action lobby-shop" id="shopLeaveDuelBtn" style="display:none" onclick="leaveDuelFromShop()">Wróć do lobby</button>
