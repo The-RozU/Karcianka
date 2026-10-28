@@ -1055,8 +1055,10 @@ const headerName = document.getElementById('header-enemy-name');
         traitBar.style.display = 'none';
     }
 
-    let buffText = activeBuff.turns > 0 ? `(💪 +${activeBuff.dmg} na ${activeBuff.turns} ataki)` : '';
-    document.getElementById('ui-buff').innerText = buffText;
+    const buffParts = [];
+    if (activeBuff.turns > 0) buffParts.push(`💪 +${activeBuff.dmg} DMG na ${activeBuff.turns} ataki`);
+    if (duel.regenTurns > 0) buffParts.push(`❤️ +20 HP przez ${duel.regenTurns} tury`);
+    document.getElementById('ui-buff').innerText = buffParts.join(' · ');
 
     const invSlots = document.getElementById('ui-inventory'); invSlots.innerHTML = '';
     for (let i = 0; i < MAX_INV; i++) {
@@ -1424,7 +1426,7 @@ function openChestNode() {
         extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${healed} ❤️ HP</strong></div>`;
     }
     document.getElementById('chestModalDesc').innerText = 'W ślepym zaułku za pokonanym strażnikiem otwierasz okutą skrzynię!';
-    document.getElementById('chestLootSummary').innerHTML = `<div><span>Znaleziony brąz:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
+    document.getElementById('chestLootSummary').innerHTML = `<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
     updateUI(); toggleModal('chestModal', true);
 }
 
