@@ -140,9 +140,12 @@
     </div>
     <div class="map-boss-banner" id="mapBossBanner"></div>
     
-    <div class="map-board" id="mapBoard">
-      <svg id="svgLayer" viewBox="0 0 1000 450" preserveAspectRatio="none"></svg>
+    <div class="map-viewport" id="mapViewport" aria-label="Mapa wyprawy, przewijaj poziomo aby zobaczyć dalszą trasę" tabindex="0">
+      <div class="map-board" id="mapBoard">
+        <svg id="svgLayer" viewBox="0 0 802 450" preserveAspectRatio="none"></svg>
+      </div>
     </div>
+    <div class="map-scroll-hint">↔ Przewiń mapę, aby zobaczyć kolejne pola</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -259,6 +262,7 @@
   </div>
 </div>
 
+   <script src="map-generator.js"></script>
    <script src="game.js"></script>
    <script src="dev.js"></script>
    </body>
