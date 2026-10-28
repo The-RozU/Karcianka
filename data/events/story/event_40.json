@@ -1,0 +1,24 @@
+{
+  "id": "event_40",
+  "name": "Zgaszona latarnia",
+  "pool": "random",
+  "category": "story",
+  "storyId": "lost_lantern",
+  "weight": 3,
+  "description": "Przy szlaku odnajdujesz starą latarnię.",
+  "image": null,
+  "choices": [
+    {
+      "id": "follow",
+      "text": "Podążaj za śladem",
+      "actions": [
+        {
+          "type": "startStory",
+          "storyId": "lost_lantern",
+          "nextEventId": "event_41",
+          "title": "Zgaszona latarnia"
+        }
+      ]
+    }
+  ]
+}

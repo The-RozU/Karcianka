@@ -1,0 +1,32 @@
+{
+  "id": "event_76",
+  "name": "Dług wdzięczności",
+  "pool": "continuation",
+  "category": "story",
+  "storyId": "merchant_return",
+  "permanence": "global",
+  "description": "Handlarz wręcza ci nagrodę za uratowanie życia.",
+  "image": null,
+  "choices": [
+    {
+      "id": "take",
+      "text": "Przyjmij podarunek",
+      "actions": [
+        {
+          "type": "effect",
+          "effect": {
+            "type": "coins",
+            "amount": 35
+          }
+        },
+        {
+          "type": "finishStory",
+          "storyId": "merchant_return",
+          "permanent": true,
+          "flagKey": "event_76",
+          "flagValue": 1
+        }
+      ]
+    }
+  ]
+}

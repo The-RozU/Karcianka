@@ -1,0 +1,41 @@
+{
+  "id": "event_10",
+  "name": "Porzucona sakiewka",
+  "pool": "random",
+  "category": "random",
+  "repeat": "repeatable",
+  "weight": 20,
+  "description": "Na drodze znajdujesz sakiewkę.",
+  "image": null,
+  "choices": [
+    {
+      "id": "take",
+      "text": "Otwórz sakiewkę",
+      "outcomes": [
+        {
+          "weight": 1,
+          "text": "Znajdujesz kilka monet.",
+          "actions": [
+            {
+              "type": "effect",
+              "effect": {
+                "type": "coins",
+                "amount": 10
+              }
+            }
+          ]
+        },
+        {
+          "weight": 1,
+          "text": "Sakiewka jest pusta.",
+          "actions": []
+        }
+      ]
+    },
+    {
+      "id": "leave",
+      "text": "Zostaw ją",
+      "actions": []
+    }
+  ]
+}
