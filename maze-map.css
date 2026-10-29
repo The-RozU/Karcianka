@@ -197,3 +197,88 @@
     #mapModal .maze-board { --maze-cell: clamp(40px, 11vw, 64px); }
     #mapModal .map-modal-wide > div:last-child { flex: none; }
 }
+
+/* Wygodne dotykanie: powiekszone kafelki i przewijana plansza. */
+#mapModal .maze-viewport {
+    overflow-x: auto;
+    overflow-y: auto;
+    touch-action: pan-x pan-y;
+}
+#mapModal .maze-board {
+    position: relative;
+    --maze-cell: clamp(76px, calc((100dvh - 86px) / 5.6), 110px);
+    margin-inline: auto;
+}
+#mapModal .maze-tile {
+    font-size: clamp(23px, calc(var(--maze-cell) * .38), 36px);
+}
+#mapModal .maze-tile.returnable {
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(119, 202, 139, .45);
+}
+#mapModal .maze-tile.returnable:hover,
+#mapModal .maze-tile.returnable:focus-visible {
+    background: rgba(31, 88, 58, .95);
+}
+#mapModal .maze-avatar {
+    position: absolute;
+    z-index: 8;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    line-height: 1;
+    font-size: calc(var(--maze-cell) * .48);
+    text-shadow: 0 3px 7px #000;
+    filter: drop-shadow(0 0 5px rgba(255,222,152,.6));
+    transition: left 250ms linear, top 250ms linear;
+    will-change: left, top;
+}
+#mapModal .maze-board.maze-walking .maze-tile {
+    pointer-events: none;
+}
+#mapModal .maze-board.maze-walking .maze-tile.available {
+    animation: none;
+}
+
+/* Podsumowanie: powrot na szlak dominuje, wyjscie do lobby to czerwony mniejszy przycisk. */
+#duelResultModal .duel-result-actions {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+#duelResultModal .duel-result-actions .btn-action {
+    width: auto;
+    min-height: 40px;
+}
+#duelResultModal .duel-result-primary {
+    flex: 1 1 58%;
+    min-width: 180px;
+}
+#duelResultModal .duel-result-exit {
+    flex: 0 1 32%;
+    min-width: 116px;
+    max-width: 165px;
+    font-size: clamp(11px, 2vh, 13px);
+    padding: 8px 10px;
+    background: linear-gradient(180deg, #a33732, #651b20);
+    border: 1px solid #db635b;
+    color: #fff2ee;
+}
+#duelResultModal .duel-result-exit:hover {
+    background: linear-gradient(180deg, #bd4940, #82252b);
+}
+
+@media (orientation: landscape) and (max-height: 440px) {
+    #mapModal .maze-board {
+        --maze-cell: clamp(68px, calc((100dvh - 55px) / 4.7), 88px);
+    }
+}
+@media (orientation: portrait) {
+    #mapModal .maze-board {
+        --maze-cell: clamp(48px, 17vw, 84px);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #mapModal .maze-avatar { transition: none; }
+}
