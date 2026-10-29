@@ -1102,6 +1102,7 @@ function startDuelRun() {
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     inventory = []; relics = {}; devShopOffers = null; coins = 0;
+    stopMazeWalk();
     gameOver = true; setHandResolutionPending(false);
     
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('lobbySectionModal', false);
@@ -1114,6 +1115,7 @@ function startDuelRun() {
 }
 
 function startNextDuelAct() {
+    stopMazeWalk();
     toggleModal('duelResultModal', false);
     mapRun.act++;
     const generated = generateActMap(mapRun.act);
@@ -1154,12 +1156,13 @@ function renderMazeMap(lockMovement) {
         const tile = document.createElement('button');
         tile.type = 'button';
         tile.className = 'maze-tile';
+        tile.dataset.nodeId = String(node.id);
         tile.style.gridColumn = node.col + 1;
         tile.style.gridRow = node.row + 1;
         const visited = mapRun.visitedNodes.has(node.id);
         const isCurrent = current.id === node.id;
         const adjacent = current.targets.includes(node.id);
-        const canMove = !lockMovement && gameOver && adjacent;
+        const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
         const known = visited || adjacent || node.type === 'boss';
 
         // Brak ściany tylko tam, gdzie istnieje rzeczywiste przejście.
@@ -1176,16 +1179,25 @@ function renderMazeMap(lockMovement) {
         else if (!known) tile.classList.add('unexplored');
         if (node.type === 'boss') tile.classList.add('boss-tile');
         if (isCurrent) tile.classList.add('player-here');
+        else if (canMove && visited) tile.classList.add('returnable');
         else if (canMove) tile.classList.add('available');
 
-        tile.textContent = isCurrent ? '🧙' : known ? node.icon : '·';
+        tile.textContent = isCurrent ? '' : known ? node.icon : '·';
         tile.disabled = !canMove;
         tile.title = isCurrent ? 'Twoja pozycja' : known ? node.title : 'Nieodkryte pole';
-        tile.setAttribute('aria-label', (canMove ? 'Przejdź: ' : '') + tile.title);
+        tile.setAttribute('aria-label', (canMove ? (visited ? 'Wróć do: ' : 'Przejdź do: ') : '') + tile.title);
         if (canMove) tile.onclick = () => selectMapNode(node.id);
         fragment.appendChild(tile);
     }
     board.appendChild(fragment);
+    // Avatar jest osobnym elementem: animuje sie bez przebudowy kafelkow.
+    const avatar = document.createElement('div');
+    avatar.className = 'maze-avatar';
+    avatar.textContent = '🧙';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.style.left = ((current.col + 0.5) * 20) + '%';
+    avatar.style.top = ((current.row + 0.5) * 12.5) + '%';
+    board.appendChild(avatar);
 
     // Wysokosc kafelka zalezy od ekranu. Przewijamy do widocznej postaci,
     // zamiast uzywac stalych wspolrzednych z generatora (64px).
@@ -1320,21 +1332,127 @@ function openMapModal(fromTopButton = false) {
     document.getElementById('mapClosePeekBtn').style.display = combatInProgress ? 'block' : 'none';
     document.getElementById('mapHintText').innerText = lockMovement
         ? 'Trwa walka — pokonaj wroga przy stole, aby ruszyć dalej!'
-        : 'Wybierz podświetlone sąsiednie pole. Możesz zawracać i odkrywać ślepe zaułki. Sterowanie także strzałkami.';
+        : 'Dotknij sąsiedniego pola lub dowolnego odwiedzonego miejsca, aby automatycznie wrócić znanymi korytarzami.';
 
     toggleModal('mapModal', true);
     renderDiceyMap(lockMovement);
 }
 
+// Przechodzenie po odwiedzonych polach: najkrotsza trasa w poznanych korytarzach.
+let mazeWalkInProgress = false;
+let mazeWalkToken = 0;
+
+function stopMazeWalk() {
+    mazeWalkToken++;
+    mazeWalkInProgress = false;
+}
+
+function findMazeVisitedRoute(startId, targetId) {
+    if (startId === targetId || !mapRun.visitedNodes.has(targetId)) return [];
+    const byId = new Map(mapRun.nodes.map(node => [node.id, node]));
+    const queue = [startId];
+    const previous = new Map([[startId, null]]);
+    for (let i = 0; i < queue.length; i++) {
+        const node = byId.get(queue[i]);
+        if (!node) continue;
+        for (const id of node.targets) {
+            if (!mapRun.visitedNodes.has(id) || previous.has(id)) continue;
+            previous.set(id, node.id);
+            queue.push(id);
+        }
+        if (previous.has(targetId)) break;
+    }
+    if (!previous.has(targetId)) return [];
+    const route = [];
+    for (let id = targetId; id !== startId; id = previous.get(id)) route.push(id);
+    return route.reverse();
+}
+
+async function walkMazeRoute(route) {
+    if (!route.length || mazeWalkInProgress) return;
+    const board = document.getElementById('mapBoard');
+    const viewport = document.getElementById('mapViewport');
+    const avatar = board && board.querySelector('.maze-avatar');
+    if (!board || !viewport || !avatar) return;
+    const byId = new Map(mapRun.nodes.map(node => [node.id, node]));
+    const tiles = new Map(Array.from(board.querySelectorAll('.maze-tile'),
+        tile => [Number(tile.dataset.nodeId), tile]));
+    const destinationId = route[route.length - 1];
+    const previouslyVisited = mapRun.visitedNodes.has(destinationId);
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stepMs = reduceMotion ? 40 : 290;
+    const token = ++mazeWalkToken;
+    mazeWalkInProgress = true;
+    board.classList.add('maze-walking');
+    board.querySelectorAll('.maze-tile').forEach(tile => { tile.disabled = true; });
+
+    for (const id of route) {
+        if (token !== mazeWalkToken || !mapRun.active) return;
+        const node = byId.get(id);
+        const oldNode = byId.get(mapRun.currentNodeId);
+        const tile = tiles.get(id);
+        if (!node || !oldNode || !tile || !oldNode.targets.includes(id)) {
+            stopMazeWalk();
+            renderMazeMap(false);
+            return;
+        }
+        avatar.style.left = ((node.col + 0.5) * 20) + '%';
+        avatar.style.top = ((node.row + 0.5) * 12.5) + '%';
+        const top = Math.max(0, tile.offsetTop + tile.offsetHeight / 2 - viewport.clientHeight * 0.55);
+        if (typeof viewport.scrollTo === 'function') {
+            viewport.scrollTo({ top, behavior: reduceMotion ? 'instant' : 'smooth' });
+        } else viewport.scrollTop = top;
+        await new Promise(resolve => setTimeout(resolve, stepMs));
+        if (token !== mazeWalkToken || !mapRun.active) return;
+
+        const oldTile = tiles.get(oldNode.id);
+        if (oldTile) {
+            oldTile.classList.remove('player-here');
+            oldTile.classList.add('explored');
+            oldTile.textContent = oldNode.icon;
+        }
+        mapRun.currentNodeId = id;
+        mapRun.visitedNodes.add(id);
+        tile.classList.remove('available', 'returnable', 'unexplored');
+        tile.classList.add('player-here', 'explored');
+        tile.textContent = '';
+    }
+
+    mazeWalkInProgress = false;
+    board.classList.remove('maze-walking');
+    resolveMapNodeArrival(byId.get(destinationId), previouslyVisited);
+}
+
 function selectMapNode(nodeId) {
-    if (!mapRun.active || !gameOver) return;
-    const current = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
-    const node = mapRun.nodes.find(n => n.id === nodeId);
-    if (!current || !node || !current.targets.includes(nodeId)) return;
+    if (!mapRun.active || !gameOver || mazeWalkInProgress) return;
+    const current = mapRun.nodes.find(node => node.id === mapRun.currentNodeId);
+    const node = mapRun.nodes.find(candidate => candidate.id === nodeId);
+    if (!current || !node || nodeId === current.id) return;
+
+    // W eksperymencie mozna wybrac dowolne juz odwiedzone pole.
+    if (Number.isInteger(current.row) && Number.isInteger(node.row)) {
+        const route = mapRun.visitedNodes.has(nodeId)
+            ? findMazeVisitedRoute(current.id, nodeId)
+            : (current.targets.includes(nodeId) ? [nodeId] : []);
+        if (!route.length) return;
+        void walkMazeRoute(route);
+        return;
+    }
+
+    if (!current.targets.includes(nodeId)) return;
     mapRun.currentNodeId = nodeId;
     mapRun.visitedNodes.add(nodeId);
-    toggleModal('mapModal', false);
+    resolveMapNodeArrival(node, false);
+}
 
+function resolveMapNodeArrival(node, previouslyVisited = false) {
+    toggleModal('mapModal', false);
+    // Przejscie przez oczyszczony pokoj nie wywoluje ponownie nagrod ani walk.
+    // Powrot do sklepu jest dozwolony, jesli gracz wskazal go jako cel.
+    if (previouslyVisited && node.type !== 'shop') {
+        openMapModal(false);
+        return;
+    }
     if (node.type === 'chest') {
         node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openChestNode();
@@ -1466,6 +1584,7 @@ function startDuelFromMapNode(node) {
 }
 
 function leaveDuel() {
+    stopMazeWalk();
     if (mapRun.active && !runRecorded) recordRunResult('abandoned');
     duel.token++; duel.active = false; mapRun.active = false; duel.phase = 'attack';
     currentEnemyTrait = null; lockedCardId = null; gameOver = true; runFinishedAt = Date.now();
