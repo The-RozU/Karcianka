@@ -282,3 +282,59 @@
 @media (prefers-reduced-motion: reduce) {
     #mapModal .maze-avatar { transition: none; }
 }
+
+/* Widok 7 kolumn bez przewijania poziomego; pion pozostaje przewijany.
+   Rozmiar planszy wynika z dostepnej szerokosci, nie ze stalej wielkosci kafelka. */
+#mapModal .map-modal-wide {
+    width: min(98vw, 1500px);
+    height: min(96dvh, 900px);
+    max-height: 96dvh;
+    grid-template-columns: minmax(0, 1fr) minmax(210px, 30%);
+}
+#mapModal #mapViewport.maze-viewport {
+    overflow-x: hidden;
+    overflow-y: auto;
+    touch-action: pan-y;
+    overscroll-behavior-x: none;
+}
+#mapModal #mapBoard.maze-board {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 7 / 10;
+    min-width: 0;
+    grid-template-columns: repeat(var(--maze-cols, 7), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--maze-rows, 10), minmax(0, 1fr));
+    margin: 0;
+}
+#mapModal .maze-tile {
+    font-size: clamp(17px, 2.5vw, 36px);
+}
+#mapModal .maze-tile.maze-walls-hidden {
+    border-color: transparent !important;
+}
+#mapModal .maze-avatar {
+    font-size: clamp(20px, 2.9vw, 42px);
+}
+@media (orientation: landscape) and (max-height: 440px) {
+    #mapModal .map-modal-wide {
+        width: 99vw;
+        height: 98dvh;
+        max-height: 98dvh;
+        grid-template-columns: minmax(0, 1fr) minmax(185px, 30%);
+    }
+    #mapModal .maze-tile {
+        font-size: clamp(16px, 2.5vw, 27px);
+    }
+    #mapModal .maze-avatar {
+        font-size: clamp(19px, 3vw, 32px);
+    }
+}
+@media (orientation: portrait) {
+    #mapModal .map-modal-wide {
+        width: min(96vw, 560px);
+        height: 95dvh;
+        max-height: 95dvh;
+    }
+}
