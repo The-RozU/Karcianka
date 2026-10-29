@@ -133,8 +133,8 @@
 }
 #mapModal .maze-board {
     --maze-cell: clamp(42px, calc((100dvh - 86px) / 8), 76px);
-    width: calc(5 * var(--maze-cell));
-    height: calc(8 * var(--maze-cell));
+    width: max-content;
+    height: max-content;
     grid-template-columns: repeat(5, var(--maze-cell));
     grid-template-rows: repeat(8, var(--maze-cell));
 }
