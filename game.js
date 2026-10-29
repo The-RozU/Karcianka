@@ -1168,6 +1168,7 @@ function renderMazeMap(lockMovement) {
         const adjacent = current.targets.includes(node.id);
         const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
         const known = visited || adjacent || node.type === 'boss';
+        const completed = visited && node.cleared && node.originalIcon && node.originalIcon !== '·' && node.originalIcon !== '🏕️';
         // Mgla wojny: sciany odkrywaja sie dopiero w poznanych polach
         // oraz w bezposrednio dostepnych pokojach obok postaci.
         const wallsRevealed = visited || adjacent;
@@ -1186,15 +1187,20 @@ function renderMazeMap(lockMovement) {
         }
 
         if (visited) tile.classList.add('explored');
+        if (completed) tile.classList.add('maze-completed');
         else if (!known) tile.classList.add('unexplored');
         if (node.type === 'boss') tile.classList.add('boss-tile');
         if (isCurrent) tile.classList.add('player-here');
         else if (canMove && visited) tile.classList.add('returnable');
         else if (canMove) tile.classList.add('available');
 
-        tile.textContent = isCurrent ? '' : known ? node.icon : '·';
+        // Nawet gdy walka lub nagroda zmienily pokoj na pusty,
+        // zachowujemy ikone i nazwe pierwszego napotkanego zdarzenia.
+        tile.textContent = isCurrent ? '' : known ? (visited ? (node.originalIcon || node.icon) : node.icon) : '·';
         tile.disabled = !canMove;
-        tile.title = isCurrent ? 'Twoja pozycja' : known ? node.title : 'Nieodkryte pole';
+        tile.title = isCurrent ? 'Twoja pozycja'
+            : known ? ((completed ? (node.originalTitle || node.title) + ' (ukończone)' : node.title))
+                : 'Nieodkryte pole';
         tile.setAttribute('aria-label', (canMove ? (visited ? 'Wróć do: ' : 'Przejdź do: ') : '') + tile.title);
         if (canMove) tile.onclick = () => selectMapNode(node.id);
         fragment.appendChild(tile);
@@ -1421,7 +1427,10 @@ async function walkMazeRoute(route) {
         if (oldTile) {
             oldTile.classList.remove('player-here');
             oldTile.classList.add('explored');
-            oldTile.textContent = oldNode.icon;
+            if (oldNode.cleared && oldNode.originalIcon && oldNode.originalIcon !== '·' && oldNode.originalIcon !== '🏕️') {
+                oldTile.classList.add('maze-completed');
+            }
+            oldTile.textContent = oldNode.originalIcon || oldNode.icon;
         }
         mapRun.currentNodeId = id;
         mapRun.visitedNodes.add(id);
@@ -1459,12 +1468,15 @@ function selectMapNode(nodeId) {
 
 function resolveMapNodeArrival(node, previouslyVisited = false) {
     toggleModal('mapModal', false);
-    // Przejscie przez oczyszczony pokoj nie wywoluje ponownie nagrod ani walk.
-    // Powrot do sklepu jest dozwolony, jesli gracz wskazal go jako cel.
-    if (previouslyVisited && node.type !== 'shop') {
+    // Powrot na dowolne odkryte pole to tylko ruch: bez drugiej walki,
+    // leczenia, otwierania skrzyni, wydarzenia ani wizyty w sklepie.
+    if (previouslyVisited) {
         openMapModal(false);
         return;
     }
+    // Zapisujemy pierwotny symbol przed jednorazowa interakcja.
+    node.originalIcon = node.originalIcon || node.icon;
+    node.originalTitle = node.originalTitle || node.title;
     if (node.type === 'chest') {
         node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openChestNode();
@@ -1472,6 +1484,7 @@ function resolveMapNodeArrival(node, previouslyVisited = false) {
         node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openHealSpringNode();
     } else if (node.type === 'shop') {
+        node.cleared = true;
         openMapShopNode();
     } else if (node.type === 'event') {
         openMysteryMapEvent(node);
@@ -1494,6 +1507,7 @@ function openMysteryMapEvent(node) {
         node.type = 'shop';
         node.icon = '🪙';
         node.title = 'Wędrowny handlarz';
+        node.cleared = true;
         openMapShopNode();
         return;
     }
@@ -1641,7 +1655,13 @@ function duelEnd(win) {
 
         xpGained = node ? (node.xp || 50) : 50; levelsGained = gainXp(xpGained);
 
-        if (node) { node.cleared = true; node.type = 'empty'; node.icon = '🪵'; }
+        if (node) {
+            node.originalIcon = node.originalIcon || node.icon;
+            node.originalTitle = node.originalTitle || node.title;
+            node.cleared = true;
+            node.type = 'empty';
+            node.icon = '🪵';
+        }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
     } else { recordRunResult('defeat'); }
