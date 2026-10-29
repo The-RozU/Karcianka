@@ -1,4 +1,4 @@
-/* Eksperymentalna plansza 5x8: ściany korytarzy zamiast liniowych połączeń. */
+/* Eksperymentalna plansza 7x10: ściany korytarzy zamiast liniowych połączeń. */
 #mapViewport.maze-viewport {
     overflow-x: hidden;
     overflow-y: auto;
@@ -8,8 +8,8 @@
 }
 #mapBoard.maze-board {
     display: grid;
-    grid-template-columns: repeat(5, 64px);
-    grid-template-rows: repeat(8, 64px);
+    grid-template-columns: repeat(var(--maze-cols, 7), 64px);
+    grid-template-rows: repeat(var(--maze-rows, 10), 64px);
     gap: 0;
     margin: 0 auto;
     background: linear-gradient(130deg, rgba(20, 27, 21, 0.9), rgba(39, 28, 19, 0.88)),
@@ -135,8 +135,8 @@
     --maze-cell: clamp(42px, calc((100dvh - 86px) / 8), 76px);
     width: max-content;
     height: max-content;
-    grid-template-columns: repeat(5, var(--maze-cell));
-    grid-template-rows: repeat(8, var(--maze-cell));
+    grid-template-columns: repeat(var(--maze-cols, 7), var(--maze-cell));
+    grid-template-rows: repeat(var(--maze-rows, 10), var(--maze-cell));
 }
 #mapModal .maze-tile {
     border-width: clamp(2px, .35vw, 3px);
