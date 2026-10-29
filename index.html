@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Calion - Szulernia · Wyprawa PvE · 0.3.5</title>
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="maze-map.css?v=4">
+<link rel="stylesheet" href="maze-map.css?v=5">
 </head>
 <body>
 
@@ -146,7 +146,7 @@
         <svg id="svgLayer" viewBox="0 0 802 450" preserveAspectRatio="none"></svg>
       </div>
     </div>
-    <div class="map-scroll-hint">↕ Przewijaj labirynt. Dotknij odwiedzonego pola, aby postać sama do niego wróciła.</div>
+    <div class="map-scroll-hint">↕ Przewijaj labirynt. Dotknij odwiedzonego pola, aby postać sama do niego wróciła. Leczenie czeka za przeciwnikiem.</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -263,13 +263,13 @@
   </div>
 </div>
 
-   <script src="maze-generator.js"></script>
+   <script src="maze-generator.js?v=5"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
     <script src="data/enemies/regular.js"></script>
     <script src="data/enemies/elite.js"></script>
     <script src="data/enemies/bosses.js"></script>
-    <script src="game.js?v=3"></script>
+    <script src="game.js?v=5"></script>
    <script src="dev.js"></script>
    </body>
 </html>
