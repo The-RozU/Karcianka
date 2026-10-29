@@ -206,7 +206,7 @@
 }
 #mapModal .maze-board {
     position: relative;
-    --maze-cell: clamp(76px, calc((100dvh - 86px) / 5.6), 110px);
+    --maze-cell: clamp(76px, 13dvh, 110px);
     margin-inline: auto;
 }
 #mapModal .maze-tile {
@@ -271,7 +271,7 @@
 
 @media (orientation: landscape) and (max-height: 440px) {
     #mapModal .maze-board {
-        --maze-cell: clamp(68px, calc((100dvh - 55px) / 4.7), 88px);
+        --maze-cell: clamp(68px, 20dvh, 88px);
     }
 }
 @media (orientation: portrait) {
