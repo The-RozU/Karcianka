@@ -146,7 +146,7 @@
         <svg id="svgLayer" viewBox="0 0 802 450" preserveAspectRatio="none"></svg>
       </div>
     </div>
-    <div class="map-scroll-hint">↕ Przewijaj labirynt pionowo. Złote pole = dostępne przejście, zielone = odwiedzone.</div>
+    <div class="map-scroll-hint">↕ Przewijaj labirynt. Dotknij odwiedzonego pola, aby postać sama do niego wróciła.</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -254,11 +254,11 @@
   <div class="modal-content" style="max-width:520px">
     <div class="modal-title" id="duelResultTitle">Wynik</div>
     <div class="summary-box" id="duelResultText"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn-action" id="duelMapContinueBtn" style="display:none;flex:1" onclick="continueToMapAfterDuel()">Wróć na Szlak</button>
-      <button class="btn-action" id="duelNextActBtn" style="display:none;flex:1;background:linear-gradient(180deg,#2ecc71,#27ae60)" onclick="startNextDuelAct()">Kolejne Piętro (+125 HP wrogów)!</button>
-      <button class="btn-action" id="duelRetryBtn" style="flex:1" onclick="startDuelRun()">Nowa Wyprawa</button>
-      <button class="btn-action lobby-shop" style="flex:1" onclick="leaveDuel()">Wróć do lobby</button>
+    <div class="duel-result-actions">
+      <button class="btn-action duel-result-primary" id="duelMapContinueBtn" style="display:none" onclick="continueToMapAfterDuel()">🗺️ Wróć na szlak</button>
+      <button class="btn-action duel-result-primary" id="duelNextActBtn" style="display:none;background:linear-gradient(180deg,#2ecc71,#27ae60)" onclick="startNextDuelAct()">🏰 Kolejne piętro (+125 HP wrogów)!</button>
+      <button class="btn-action duel-result-primary" id="duelRetryBtn" style="display:none" onclick="startDuelRun()">🔄 Nowa wyprawa</button>
+      <button class="btn-action duel-result-exit" onclick="leaveDuel()">🚪 Wróć do lobby</button>
     </div>
   </div>
 </div>
