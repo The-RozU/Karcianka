@@ -1168,16 +1168,22 @@ function renderMazeMap(lockMovement) {
         const adjacent = current.targets.includes(node.id);
         const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
         const known = visited || adjacent || node.type === 'boss';
+        // Mgla wojny: sciany odkrywaja sie dopiero w poznanych polach
+        // oraz w bezposrednio dostepnych pokojach obok postaci.
+        const wallsRevealed = visited || adjacent;
+        tile.classList.add(wallsRevealed ? 'maze-walls-revealed' : 'maze-walls-hidden');
 
         // Brak ściany tylko tam, gdzie istnieje rzeczywiste przejście.
         const north = byPosition.get((node.row - 1) + ':' + node.col);
         const south = byPosition.get((node.row + 1) + ':' + node.col);
         const west = byPosition.get(node.row + ':' + (node.col - 1));
         const east = byPosition.get(node.row + ':' + (node.col + 1));
-        if (north && node.targets.includes(north.id)) tile.style.borderTopColor = 'transparent';
-        if (south && node.targets.includes(south.id)) tile.style.borderBottomColor = 'transparent';
-        if (west && node.targets.includes(west.id)) tile.style.borderLeftColor = 'transparent';
-        if (east && node.targets.includes(east.id)) tile.style.borderRightColor = 'transparent';
+        if (wallsRevealed) {
+            if (north && node.targets.includes(north.id)) tile.style.borderTopColor = 'transparent';
+            if (south && node.targets.includes(south.id)) tile.style.borderBottomColor = 'transparent';
+            if (west && node.targets.includes(west.id)) tile.style.borderLeftColor = 'transparent';
+            if (east && node.targets.includes(east.id)) tile.style.borderRightColor = 'transparent';
+        }
 
         if (visited) tile.classList.add('explored');
         else if (!known) tile.classList.add('unexplored');
@@ -1338,7 +1344,7 @@ function openMapModal(fromTopButton = false) {
     document.getElementById('mapClosePeekBtn').style.display = combatInProgress ? 'block' : 'none';
     document.getElementById('mapHintText').innerText = lockMovement
         ? 'Trwa walka — pokonaj wroga przy stole, aby ruszyć dalej!'
-        : 'Dotknij sąsiedniego pola lub dowolnego odwiedzonego miejsca, aby automatycznie wrócić znanymi korytarzami.';
+        : 'Odkrywaj ściany krok po kroku. Dotknij sąsiedniego pola lub odwiedzonego miejsca, by automatycznie wrócić.';
 
     toggleModal('mapModal', true);
     renderDiceyMap(lockMovement);
