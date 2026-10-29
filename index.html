@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Calion - Szulernia · Wyprawa PvE · 0.3.5</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css">\n<link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
 
@@ -140,12 +140,12 @@
     </div>
     <div class="map-boss-banner" id="mapBossBanner"></div>
     
-    <div class="map-viewport" id="mapViewport" aria-label="Mapa wyprawy, przewijaj poziomo aby zobaczyć dalszą trasę" tabindex="0">
+    <div class="map-viewport" id="mapViewport" aria-label="Labirynt wyprawy, przewijaj pionowo aby zobaczyć wszystkie pola" tabindex="0">
       <div class="map-board" id="mapBoard">
         <svg id="svgLayer" viewBox="0 0 802 450" preserveAspectRatio="none"></svg>
       </div>
     </div>
-    <div class="map-scroll-hint">↔ Przewiń mapę, aby zobaczyć kolejne pola</div>
+    <div class="map-scroll-hint">↕ Przewijaj labirynt pionowo. Złote pole = dostępne przejście, zielone = odwiedzone.</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -262,7 +262,7 @@
   </div>
 </div>
 
-   <script src="map-generator.js"></script>
+   <script src="maze-generator.js"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
     <script src="data/enemies/regular.js"></script>
