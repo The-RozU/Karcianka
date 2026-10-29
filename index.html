@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Calion - Szulernia · Wyprawa PvE · 0.3.5</title>
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="maze-map.css?v=6">
+<link rel="stylesheet" href="maze-map.css?v=7">
 </head>
 <body>
 
@@ -146,7 +146,7 @@
         <svg id="svgLayer" viewBox="0 0 802 450" preserveAspectRatio="none"></svg>
       </div>
     </div>
-    <div class="map-scroll-hint">↕ Przewijaj tylko w pionie. Ściany odkrywają się podczas eksploracji, a postać może wracać po odwiedzonych polach.</div>
+    <div class="map-scroll-hint">↕ Przewijaj w pionie. Grubsze ściany odkrywają się podczas eksploracji. Zielone pola zachowują ikony ukończonych zdarzeń.</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -269,7 +269,7 @@
     <script src="data/enemies/regular.js"></script>
     <script src="data/enemies/elite.js"></script>
     <script src="data/enemies/bosses.js"></script>
-    <script src="game.js?v=6"></script>
+    <script src="game.js?v=7"></script>
    <script src="dev.js"></script>
    </body>
 </html>
