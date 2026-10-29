@@ -1123,6 +1123,8 @@ function startNextDuelAct() {
     mapRun.nodes = generated.nodes;
     mapRun.mapWidth = generated.mapWidth;
     mapRun.mapHeight = generated.mapHeight;
+    mapRun.mazeColumns = generated.mazeColumns || 7;
+    mapRun.mazeRows = generated.mazeRows || 10;
     mapRun.shortestPathFields = generated.shortestPathFields;
     mapRun.currentNodeId = 0;
     mapRun.visitedNodes = new Set([0]);
@@ -1312,6 +1314,8 @@ function openMapModal(fromTopButton = false) {
         mapRun.nodes = generated.nodes;
         mapRun.mapWidth = generated.mapWidth;
         mapRun.mapHeight = generated.mapHeight;
+    mapRun.mazeColumns = generated.mazeColumns || 7;
+    mapRun.mazeRows = generated.mazeRows || 10;
         mapRun.shortestPathFields = generated.shortestPathFields;
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
