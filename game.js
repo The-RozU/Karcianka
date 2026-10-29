@@ -1133,7 +1133,10 @@ function renderMazeMap(lockMovement) {
     const board = document.getElementById('mapBoard');
     const viewport = document.getElementById('mapViewport');
     if (!board || !viewport) return;
-    const current = mapRun.nodes.find(node => node.id === mapRun.currentNodeId);
+    // Narzędzia dev mogą tymczasowo dodawać wroga bez pozycji na mapie.
+    const mapNodes = mapRun.nodes.filter(node => Number.isInteger(node.row) && Number.isInteger(node.col));
+    const current = mapNodes.find(node => node.id === mapRun.currentNodeId)
+        || mapNodes.find(node => node.id === window.__devPrevNodeId);
     if (!current) return;
 
     board.classList.add('maze-board');
@@ -1144,9 +1147,9 @@ function renderMazeMap(lockMovement) {
     board.style.gridTemplateRows = 'repeat(8, 64px)';
     board.replaceChildren();
 
-    const byPosition = new Map(mapRun.nodes.map(node => [node.row + ':' + node.col, node]));
+    const byPosition = new Map(mapNodes.map(node => [node.row + ':' + node.col, node]));
     const fragment = document.createDocumentFragment();
-    for (const node of mapRun.nodes) {
+    for (const node of mapNodes) {
         const tile = document.createElement('button');
         tile.type = 'button';
         tile.className = 'maze-tile';
