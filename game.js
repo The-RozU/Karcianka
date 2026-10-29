@@ -1142,6 +1142,8 @@ function renderMazeMap(lockMovement) {
     if (!current) return;
 
     board.classList.add('maze-board');
+    board.style.setProperty('--maze-cols', String(mapRun.mazeColumns || 7));
+    board.style.setProperty('--maze-rows', String(mapRun.mazeRows || 10));
     viewport.classList.add('maze-viewport');
     // Rozmiar kafelkow kontroluje CSS, aby caly widok skalowal sie do ekranu.
     board.style.removeProperty('width');
@@ -1195,8 +1197,8 @@ function renderMazeMap(lockMovement) {
     avatar.className = 'maze-avatar';
     avatar.textContent = '🧙';
     avatar.setAttribute('aria-hidden', 'true');
-    avatar.style.left = ((current.col + 0.5) * 20) + '%';
-    avatar.style.top = ((current.row + 0.5) * 12.5) + '%';
+    avatar.style.left = ((current.col + 0.5) / (mapRun.mazeColumns || 7) * 100) + '%';
+    avatar.style.top = ((current.row + 0.5) / (mapRun.mazeRows || 10) * 100) + '%';
     board.appendChild(avatar);
 
     // Wysokosc kafelka zalezy od ekranu. Przewijamy do widocznej postaci,
@@ -1396,8 +1398,8 @@ async function walkMazeRoute(route) {
             renderMazeMap(false);
             return;
         }
-        avatar.style.left = ((node.col + 0.5) * 20) + '%';
-        avatar.style.top = ((node.row + 0.5) * 12.5) + '%';
+        avatar.style.left = ((node.col + 0.5) / (mapRun.mazeColumns || 7) * 100) + '%';
+        avatar.style.top = ((node.row + 0.5) / (mapRun.mazeRows || 10) * 100) + '%';
         const top = Math.max(0, tile.offsetTop + tile.offsetHeight / 2 - viewport.clientHeight * 0.55);
         if (typeof viewport.scrollTo === 'function') {
             viewport.scrollTo({ top, behavior: reduceMotion ? 'instant' : 'smooth' });
@@ -1509,6 +1511,21 @@ function openMysteryMapEvent(node) {
         document.getElementById('chestLootSummary').innerHTML =
             '<div><span>Odzyskane zdrowie:</span><strong style="color:#2ecc71">+' +
             (mapRun.playerHp - before) + ' ❤️ HP</strong></div>';
+        updateUI(); toggleModal('chestModal', true);
+        return;
+    }
+
+    // W labiryncie 7x10 wydarzenia nie moga dokladac walk
+    // ponad limit 10 zwyklych przeciwnikow i 4 elit.
+    if (mapRun.mazeColumns === 7 && mapRun.mazeRows === 10) {
+        const foundCoins = 10 + Math.floor(Math.random() * 16);
+        coins += foundCoins;
+        runStats.coinsEarned += foundCoins;
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        document.getElementById('chestModalDesc').innerText =
+            'W cieniu korytarza znajdujesz sakiewke porzucona przez podroznika.';
+        document.getElementById('chestLootSummary').innerHTML =
+            '<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+' + foundCoins + ' 🪙</strong></div>';
         updateUI(); toggleModal('chestModal', true);
         return;
     }
