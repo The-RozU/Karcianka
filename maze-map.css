@@ -1,0 +1,62 @@
+/* Eksperymentalna plansza 5x8: ściany korytarzy zamiast liniowych połączeń. */
+#mapViewport.maze-viewport {
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: min(57dvh, 540px);
+    overscroll-behavior: contain;
+    background: #0b0c0a;
+}
+#mapBoard.maze-board {
+    display: grid;
+    grid-template-columns: repeat(5, 64px);
+    grid-template-rows: repeat(8, 64px);
+    gap: 0;
+    margin: 0 auto;
+    background: linear-gradient(130deg, rgba(20, 27, 21, 0.9), rgba(39, 28, 19, 0.88)),
+        url('img/map_bg.jpg') center/cover;
+    box-shadow: inset 0 0 18px rgba(0,0,0,.8);
+}
+.maze-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 3px solid #ad8350;
+    border-radius: 0;
+    background: rgba(13, 20, 19, .60);
+    color: #e5dfc9;
+    font: 700 25px/1 system-ui, sans-serif;
+    text-shadow: 0 2px 4px #000;
+    cursor: default;
+    transition: background .15s, box-shadow .15s;
+}
+.maze-tile:disabled { opacity: 1; color: #a29a83; }
+.maze-tile.unexplored { background: rgba(8, 12, 12, .78); color: #746d60; }
+.maze-tile.explored { background: rgba(22, 45, 31, .74); }
+.maze-tile.boss-tile { background: rgba(84, 25, 28, .7); color: #f9bbaa; }
+.maze-tile.available {
+    background: rgba(94, 67, 22, .83);
+    color: #fff1b9;
+    cursor: pointer;
+    box-shadow: inset 0 0 18px rgba(255, 209, 117, .66);
+    animation: mazePulse 1.4s ease-in-out infinite alternate;
+}
+.maze-tile.available:hover { background: rgba(130, 91, 32, .92); }
+.maze-tile.available:active { background: #b38743; }
+.maze-tile.player-here {
+    background: rgba(20, 104, 59, .85);
+    color: #fff;
+    box-shadow: inset 0 0 17px rgba(73, 232, 129, .75);
+    font-size: 30px;
+}
+.maze-tile:focus-visible { outline: 3px solid #ffdd85; outline-offset: -5px; z-index: 2; }
+@keyframes mazePulse {
+    from { filter: brightness(.9); }
+    to { filter: brightness(1.16); }
+}
+#mapModal .map-scroll-hint { margin-top: 5px; }
+@media (prefers-reduced-motion: reduce) {
+    .maze-tile.available { animation: none; }
+}
