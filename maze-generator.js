@@ -1,7 +1,7 @@
-// Eksperymentalna mapa Calionu: labirynt 5 x 8 zamiast liniowych tras.
+// Eksperymentalna mapa Calionu: labirynt 7 x 10 zamiast liniowych tras.
 // Każde pole ma co najwyżej cztery przejścia. Połączenia są dwukierunkowe.
-const MAZE_COLUMNS = 5;
-const MAZE_ROWS = 8;
+const MAZE_COLUMNS = 7;
+const MAZE_ROWS = 10;
 const MAZE_TILE_SIZE = 64;
 
 function mazeShuffle(values) {
@@ -91,26 +91,61 @@ function generateFloorMap(floor = 1) {
         corridors = candidate;
         path = candidatePath;
         const steps = path.length - 1;
-        if (steps >= 10 && steps <= 22) break;
+        if (steps >= 14 && steps <= 32) break;
     }
 
     const boss = pickRandomCalionBoss();
     const hpBonus = (number - 1) * DUEL.ACT_HP_STEP;
-    const pool = mazeShuffle([
-        ...Array(12).fill('empty'), ...Array(11).fill('fight'),
-        ...Array(3).fill('elite'), ...Array(5).fill('event'),
-        ...Array(3).fill('chest'), ...Array(2).fill('heal'),
-        ...Array(2).fill('shop')
-    ]);
+    // Stale limity na 70 pol: 10 zwyklych, 4 elity, 2 sklepy,
+    // 3 skrzynie, 2 leczenia, 3 wydarzenia, 44 puste.
     const types = new Map();
     const otherCells = Array.from({ length: MAZE_COLUMNS * MAZE_ROWS }, (_, i) => i)
         .filter(i => i !== startCell && i !== bossCell);
-    otherCells.forEach((cell, i) => types.set(cell, pool[i]));
-    // Pierwszy krok uczy starcia, a tuż przed bossem czeka zaopatrzenie.
-    if (path.length > 3) {
-        types.set(path[1], 'fight');
-        types.set(path[path.length - 2], 'shop');
+
+    // Leczenie znajduje sie zawsze ZA przeciwnikiem: w slepym zaulku,
+    // do ktorego prowadzi tylko jedno wejscie przez pole walki.
+    // Rezerwujemy dwa rozne pola walki, aby nie kumulowac nagrod.
+    const mainFirst = path[1];
+    const preBoss = path[path.length - 2];
+    const healingCandidates = mazeShuffle(otherCells.filter(cell => {
+        if (cell === mainFirst || cell === preBoss || path.includes(cell)) return false;
+        if (corridors[cell].length !== 1) return false;
+        const guardian = corridors[cell][0];
+        return guardian !== startCell && guardian !== bossCell
+            && guardian !== mainFirst && guardian !== preBoss;
+    }));
+    const healRooms = [];
+    const guardianRooms = new Set();
+    for (const cell of healingCandidates) {
+        const guardian = corridors[cell][0];
+        if (guardianRooms.has(guardian) || healRooms.includes(guardian)) continue;
+        if (healRooms.length && guardian === healRooms[0]) continue;
+        healRooms.push(cell);
+        guardianRooms.add(guardian);
+        if (healRooms.length === 2) break;
     }
+    // Przy wyjatkowo rzadkim ukladzie bez dwoch odpowiednich slepych
+    // zaulkow generujemy labirynt ponownie (patrz warunek w petli wyzej).
+    if (healRooms.length !== 2) {
+        throw new Error('Labirynt nie ma dwoch odrebnych zaulkow z leczeniem');
+    }
+
+    types.set(mainFirst, 'fight');
+    types.set(preBoss, 'shop');
+    for (const cell of healRooms) types.set(cell, 'heal');
+    for (const cell of guardianRooms) types.set(cell, 'fight');
+
+    const pool = mazeShuffle([
+        ...Array(10 - 1 - guardianRooms.size).fill('fight'),
+        ...Array(4).fill('elite'),
+        ...Array(1).fill('shop'),
+        ...Array(3).fill('chest'),
+        ...Array(3).fill('event'),
+        ...Array(44).fill('empty')
+    ]);
+    const remaining = otherCells.filter(cell => !types.has(cell));
+    if (remaining.length !== pool.length) throw new Error('Niepoprawna pula pol labiryntu');
+    remaining.forEach((cell, i) => types.set(cell, pool[i]));
 
     const nodes = [];
     const byCell = new Map();
