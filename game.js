@@ -1141,10 +1141,11 @@ function renderMazeMap(lockMovement) {
 
     board.classList.add('maze-board');
     viewport.classList.add('maze-viewport');
-    board.style.width = mapRun.mapWidth + 'px';
-    board.style.height = mapRun.mapHeight + 'px';
-    board.style.gridTemplateColumns = 'repeat(5, 64px)';
-    board.style.gridTemplateRows = 'repeat(8, 64px)';
+    // Rozmiar kafelkow kontroluje CSS, aby caly widok skalowal sie do ekranu.
+    board.style.removeProperty('width');
+    board.style.removeProperty('height');
+    board.style.removeProperty('grid-template-columns');
+    board.style.removeProperty('grid-template-rows');
     board.replaceChildren();
 
     const byPosition = new Map(mapNodes.map(node => [node.row + ':' + node.col, node]));
@@ -1186,8 +1187,13 @@ function renderMazeMap(lockMovement) {
     }
     board.appendChild(fragment);
 
-    // Po ponownym otwarciu mapy pokazujemy bieżącą pozycję.
-    viewport.scrollTop = Math.max(0, current.y - viewport.clientHeight * 0.65);
+    // Wysokosc kafelka zalezy od ekranu. Przewijamy do widocznej postaci,
+    // zamiast uzywac stalych wspolrzednych z generatora (64px).
+    const playerTile = board.querySelector('.player-here');
+    if (playerTile) {
+        viewport.scrollTop = Math.max(0, playerTile.offsetTop + playerTile.offsetHeight / 2
+            - viewport.clientHeight * 0.65);
+    }
     viewport.onkeydown = event => {
         if (lockMovement || !gameOver || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
         const offset = {
