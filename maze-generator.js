@@ -66,15 +66,28 @@ function mazeCreateCorridors(start, boss) {
         stack.push(to);
     }
 
-    // Dwa dodatkowe przejścia tworzą wybór trasy, bez usuwania ślepych zaułków.
+    // Start zawsze ma co najmniej dwa wyjscia, wiec gracz moze wybrac droge.
+    for (const next of mazeShuffle(mazeNeighbors(start))) {
+        if (corridors[start].length >= 2) break;
+        mazeConnect(corridors, start, next);
+    }
+
+    // Dodatkowe petle pozwalaja wracac roznymi drogami. Nie usuwamy
+    // slepych zaulkow, poniewaz dwa z nich skrywaja leczenie za walka.
     const possibleDoors = [];
     for (let cell = 0; cell < count; cell++) {
         for (const next of mazeNeighbors(cell)) {
-            if (next <= cell || cell === boss || next === boss) continue;
+            if (next <= cell || cell === boss || next === boss || cell === start || next === start) continue;
             if (!corridors[cell].includes(next)) possibleDoors.push([cell, next]);
         }
     }
-    mazeShuffle(possibleDoors).slice(0, 2).forEach(([a, b]) => mazeConnect(corridors, a, b));
+    let added = 0;
+    for (const [a, b] of mazeShuffle(possibleDoors)) {
+        if (added >= 9) break;
+        if (corridors[a].length <= 1 || corridors[b].length <= 1) continue;
+        mazeConnect(corridors, a, b);
+        added++;
+    }
     return corridors;
 }
 
