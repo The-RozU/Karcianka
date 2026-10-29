@@ -1128,7 +1128,81 @@ function startNextDuelAct() {
     updateUI();
 }
 
+// Eksperymentalny widok: 5 kolumn, 8 rzędów, ściany i ruch w czterech kierunkach.
+function renderMazeMap(lockMovement) {
+    const board = document.getElementById('mapBoard');
+    const viewport = document.getElementById('mapViewport');
+    if (!board || !viewport) return;
+    const current = mapRun.nodes.find(node => node.id === mapRun.currentNodeId);
+    if (!current) return;
+
+    board.classList.add('maze-board');
+    viewport.classList.add('maze-viewport');
+    board.style.width = mapRun.mapWidth + 'px';
+    board.style.height = mapRun.mapHeight + 'px';
+    board.style.gridTemplateColumns = 'repeat(5, 64px)';
+    board.style.gridTemplateRows = 'repeat(8, 64px)';
+    board.replaceChildren();
+
+    const byPosition = new Map(mapRun.nodes.map(node => [node.row + ':' + node.col, node]));
+    const fragment = document.createDocumentFragment();
+    for (const node of mapRun.nodes) {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'maze-tile';
+        tile.style.gridColumn = node.col + 1;
+        tile.style.gridRow = node.row + 1;
+        const visited = mapRun.visitedNodes.has(node.id);
+        const isCurrent = current.id === node.id;
+        const adjacent = current.targets.includes(node.id);
+        const canMove = !lockMovement && gameOver && adjacent;
+        const known = visited || adjacent || node.type === 'boss';
+
+        // Brak ściany tylko tam, gdzie istnieje rzeczywiste przejście.
+        const north = byPosition.get((node.row - 1) + ':' + node.col);
+        const south = byPosition.get((node.row + 1) + ':' + node.col);
+        const west = byPosition.get(node.row + ':' + (node.col - 1));
+        const east = byPosition.get(node.row + ':' + (node.col + 1));
+        if (north && node.targets.includes(north.id)) tile.style.borderTopColor = 'transparent';
+        if (south && node.targets.includes(south.id)) tile.style.borderBottomColor = 'transparent';
+        if (west && node.targets.includes(west.id)) tile.style.borderLeftColor = 'transparent';
+        if (east && node.targets.includes(east.id)) tile.style.borderRightColor = 'transparent';
+
+        if (visited) tile.classList.add('explored');
+        else if (!known) tile.classList.add('unexplored');
+        if (node.type === 'boss') tile.classList.add('boss-tile');
+        if (isCurrent) tile.classList.add('player-here');
+        else if (canMove) tile.classList.add('available');
+
+        tile.textContent = isCurrent ? '🧙' : known ? node.icon : '·';
+        tile.disabled = !canMove;
+        tile.title = isCurrent ? 'Twoja pozycja' : known ? node.title : 'Nieodkryte pole';
+        tile.setAttribute('aria-label', (canMove ? 'Przejdź: ' : '') + tile.title);
+        if (canMove) tile.onclick = () => selectMapNode(node.id);
+        fragment.appendChild(tile);
+    }
+    board.appendChild(fragment);
+
+    // Po ponownym otwarciu mapy pokazujemy bieżącą pozycję.
+    viewport.scrollTop = Math.max(0, current.y - viewport.clientHeight * 0.65);
+    viewport.onkeydown = event => {
+        if (lockMovement || !gameOver || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        const offset = {
+            ArrowUp: [-1, 0], ArrowDown: [1, 0],
+            ArrowLeft: [0, -1], ArrowRight: [0, 1]
+        }[event.key];
+        const destination = byPosition.get((current.row + offset[0]) + ':' + (current.col + offset[1]));
+        if (!destination || !current.targets.includes(destination.id)) return;
+        event.preventDefault();
+        selectMapNode(destination.id);
+    };
+}
+
 function renderDiceyMap(lockMovement) {
+    if (mapRun.nodes.some(node => Number.isInteger(node.row) && Number.isInteger(node.col))) {
+        renderMazeMap(lockMovement);
+        return;
+    }
     const board = document.getElementById('mapBoard');
     const svg = document.getElementById('svgLayer');
     if (!board || !svg) return;
@@ -1224,7 +1298,7 @@ function openMapModal(fromTopButton = false) {
     const combatInProgress = !gameOver && duel.active && duel.enemyHp > 0;
     const lockMovement = fromTopButton && combatInProgress;
 
-    document.getElementById('mapTitle').innerText = `Szlak Calionu · Piętro ${mapRun.act} · ${mapRun.shortestPathFields} pól do bossa`;
+    document.getElementById('mapTitle').innerText = `Labirynt Calionu · Piętro ${mapRun.act} · ${mapRun.shortestPathFields} kroków do bossa`;
     document.getElementById('mapPlayerHp').innerText = `${mapRun.playerHp}/${mapRun.playerMaxHp}`;
     document.getElementById('mapPlayerLvl').innerText = mapRun.level;
     document.getElementById('mapPlayerXp').innerText = `${mapRun.xp}/${mapRun.xpNext} EXP`;
@@ -1237,7 +1311,7 @@ function openMapModal(fromTopButton = false) {
     document.getElementById('mapClosePeekBtn').style.display = combatInProgress ? 'block' : 'none';
     document.getElementById('mapHintText').innerText = lockMovement
         ? 'Trwa walka — pokonaj wroga przy stole, aby ruszyć dalej!'
-        : 'Wybierz złote połączenie. Boczne drogi są dłuższe, ale mogą dawać dodatkowe nagrody. ? = niespodzianka.';
+        : 'Wybierz podświetlone sąsiednie pole. Możesz zawracać i odkrywać ślepe zaułki. Sterowanie także strzałkami.';
 
     toggleModal('mapModal', true);
     renderDiceyMap(lockMovement);
