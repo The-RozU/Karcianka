@@ -367,3 +367,9 @@
     box-shadow: inset 0 0 0 2px rgba(217, 223, 225, .75), inset 0 0 15px rgba(214, 221, 225, .15);
 }
 #mapModal .maze-tile.maze-frontier:disabled { opacity: 1; }
+
+/* W zasiegu jednego kroku widzimy zawartosc szarego pola, ale nie jego sciany. */
+#mapModal .maze-tile.maze-frontier.maze-frontier-adjacent {
+    color: #f5e8c8;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .85);
+}
