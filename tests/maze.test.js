@@ -420,3 +420,17 @@ test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', ()
         assert.ok(row.includes('<td>x ' + mult + '</td>'), label + ': tabela != obrażenia');
     }
 });
+
+test('Kalon v0.4.0: nazwa, wersja i czytelny panel informacji o walce', () => {
+    const layout = source('style.css');
+    assert.match(html, /<title>Kalon[^<]*v0\.4\.0<\/title>/);
+    assert.match(html, /<h2 class="lobby-title">Kalon<\/h2>/);
+    assert.match(html, /aria-label="Wersja 0\.4\.0">v0\.4\.0<\/span>/);
+    assert.match(html, /href="style\.css\?v=0\.4\.0"/);
+    assert.match(html, /src="game\.js\?v=0\.4\.0"/);
+    assert.doesNotMatch(html, /0\.3\.5/);
+    assert.match(gameSource, /headerName\.innerText = '⚓ Kalon'/);
+    assert.match(layout, /height:\s*min\(41%,\s*305px\)/);
+    assert.match(layout, /\.enemy-board \.duel-panel\s*\{[^}]*overflow-y:\s*auto/s);
+    assert.match(layout, /\.enemy-board \.duel-preview\s*\{[^}]*max-height:\s*none/s);
+});
