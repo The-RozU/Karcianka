@@ -114,7 +114,7 @@ function createNavigationHarness(map) {
 test('składnia gry, generatora i podstawowe podłączenie', () => {
     new vm.Script(gameSource, { filename: 'game.js' });
     new vm.Script(generatorSource, { filename: 'maze-generator.js' });
-    assert.match(html, /src="maze-generator\.js"/);
+    assert.match(html, /src="maze-generator\.js(?:\?v=[^"]+)?"/);
     assert.match(html, /src="game\.js(?:\?v=[^"]+)?"/);
     assert.match(html, /href="maze-map\.css"/);
     assert.doesNotMatch(html, /svgLayer|src="map-generator\.js"/);
@@ -203,7 +203,13 @@ test('szare przejścia pokazują ikony obok postaci, ukrywają je po odejściu i
     assert.ok(tiles.get(missedExit).classList.contains('maze-walls-hidden'));
     assert.ok(tiles.get(first).classList.contains('maze-walls-revealed'));
     assert.equal(tiles.get(missedExit).disabled, true);
-    assert.ok(!tiles.get(harness.mapRun.nodes.at(-1).id).classList.contains('boss-tile'));
+    // Boss pozostaje widoczny mimo oddalenia, bez odslaniania scian ani trasy.
+    const boss = harness.mapRun.nodes.find(node => node.type === 'boss');
+    const bossTile = tiles.get(boss.id);
+    assert.ok(bossTile.classList.contains('boss-tile'));
+    assert.ok(bossTile.classList.contains('maze-walls-hidden'));
+    assert.equal(bossTile.textContent, boss.icon);
+    assert.equal(bossTile.disabled, true);
 });
 
 test('ukończone pokoje zachowują pierwotne ikony na zielonym tle', () => {
@@ -421,16 +427,115 @@ test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', ()
     }
 });
 
-test('Kalon v0.4.0: nazwa, wersja i czytelny panel informacji o walce', () => {
+test('Kalon v0.4.1: nazwa, wersja i czytelny panel informacji o walce', () => {
     const layout = source('style.css');
-    assert.match(html, /<title>Kalon[^<]*v0\.4\.0<\/title>/);
+    assert.match(html, /<title>Kalon[^<]*v0\.4\.1<\/title>/);
     assert.match(html, /<h2 class="lobby-title">Kalon<\/h2>/);
-    assert.match(html, /aria-label="Wersja 0\.4\.0">v0\.4\.0<\/span>/);
-    assert.match(html, /href="style\.css\?v=0\.4\.0"/);
-    assert.match(html, /src="game\.js\?v=0\.4\.0"/);
+    assert.match(html, /aria-label="Wersja 0\.4\.1">v0\.4\.1<\/span>/);
+    assert.match(html, /href="style\.css\?v=0\.4\.1"/);
+    assert.match(html, /src="game\.js\?v=0\.4\.1"/);
     assert.doesNotMatch(html, /0\.3\.5/);
     assert.match(gameSource, /headerName\.innerText = '⚓ Kalon'/);
     assert.match(layout, /height:\s*min\(41%,\s*305px\)/);
     assert.match(layout, /\.enemy-board \.duel-panel\s*\{[^}]*overflow-y:\s*auto/s);
     assert.match(layout, /\.enemy-board \.duel-preview\s*\{[^}]*max-height:\s*none/s);
+});
+
+test('boss widoczny od startu i po oddaleniu, bez odkrywania scian ani mozliwosci teleportacji', () => {
+    const harness = createNavigationHarness(createGenerator()());
+    const boss = harness.mapRun.nodes.find(node => node.type === 'boss');
+    const first = harness.mapRun.nodes[0].targets[0];
+    for (const position of [0, first]) {
+        harness.mapRun.currentNodeId = position;
+        harness.mapRun.visitedNodes.add(position);
+        harness.render();
+        const tile = harness.tiles().get(boss.id);
+        assert.equal(tile.textContent, '👑');
+        assert.equal(tile.title, boss.title);
+        assert.ok(tile.classList.contains('boss-tile'));
+        assert.ok(tile.classList.contains('maze-walls-hidden'));
+        assert.equal(tile.disabled, true);
+    }
+});
+
+test('powrot do odwiedzonego sklepu otwiera ponownie sklep z ta sama oferta', () => {
+    const mapRun = { active: true };
+    const calls = [];
+    const offers = [{ id: 'heal_small', sold: true }, { id: 'glove', sold: false }];
+    const shop = { type: 'shop', originalIcon: '🪙', cleared: true, shopOffers: offers };
+    const eventMerchant = { type: 'shop', originalIcon: '?', cleared: true, shopOffers: offers };
+    const visitedChest = { type: 'empty', cleared: true, originalIcon: '📦' };
+    const context = vm.createContext({
+        mapRun, toggleModal(id, show) { calls.push(['modal', id, show]); },
+        openMapModal() { calls.push(['map']); },
+        openMapShopNode() { calls.push(['shop']); },
+        openChestNode() { throw Error('Skrzyni nie mozna otworzyc ponownie'); },
+        openHealSpringNode() { throw Error('Leczenia nie mozna powtarzac'); },
+        openMysteryMapEvent() { throw Error('Wydarzenie nie moze odpalic ponownie'); },
+        startDuelFromMapNode() { throw Error('Walka nie moze sie powtarzac'); }
+    });
+    vm.runInContext(snippetBetween('function resolveMapNodeArrival(', '// Pierwsza, prosta pula zdarzeń.'), context);
+    for (const node of [shop, eventMerchant]) {
+        calls.length = 0;
+        context.resolveMapNodeArrival(node, true);
+        assert.deepEqual(calls.at(-1), ['shop']);
+        assert.strictEqual(node.shopOffers, offers);
+        assert.equal(node.shopOffers[0].sold, true);
+        assert.equal(node.cleared, true);
+    }
+    calls.length = 0;
+    context.resolveMapNodeArrival(visitedChest, true);
+    assert.deepEqual(calls.at(-1), ['map']);
+});
+
+test('skrzynia przyznaje tylko monety albo jeden przedmiot jednorazowy, nigdy oba', () => {
+    const sourceCode = snippetBetween('function openChestNode(', 'function closeChestToMap(');
+    const itemCatalog = [
+        { id: 'heal_small', name: 'Mikstura Zycia', category: 'healing', heal: 40 },
+        { id: 'glove', name: 'Rekawica', category: 'consumable' },
+        { id: 'dice', name: 'Kosci', category: 'consumable' },
+        { id: 'relic', name: 'Artefakt', category: 'relic', isRelic: true }
+    ];
+    function runChest(roll, startingInventory = []) {
+        const inventory = [...startingInventory];
+        const runStats = { coinsEarned: 0 };
+        const modal = { chestModalDesc: { innerText: '' }, chestLootSummary: { innerHTML: '' } };
+        const math = Object.create(Math);
+        math.random = () => roll;
+        let updates = 0;
+        const context = vm.createContext({
+            Math: math, SHOP_ITEMS: itemCatalog, inventory, runStats,
+            MAX_INV: 3, coins: 10,
+            makeInventoryItem: item => ({ ...item }),
+            mapRun: { playerHp: 600, playerMaxHp: 750 },
+            document: { getElementById: id => modal[id] },
+            updateUI() { updates++; },
+            toggleModal(id, visible) {
+                assert.equal(id, 'chestModal');
+                assert.equal(visible, true);
+            }
+        });
+        vm.runInContext(sourceCode, context);
+        context.openChestNode();
+        assert.equal(updates, 1);
+        return { context, inventory, runStats, summary: modal.chestLootSummary.innerHTML };
+    }
+    const item = runChest(0.1);
+    assert.equal(item.inventory.length, 1);
+    assert.equal(item.context.coins, 10);
+    assert.equal(item.runStats.coinsEarned, 0);
+    assert.match(item.summary, /Znaleziony przedmiot/);
+    assert.doesNotMatch(item.summary, /Znalezione monety/);
+    assert.notEqual(item.inventory[0].id, 'dice');
+    const gold = runChest(0.8);
+    assert.equal(gold.inventory.length, 0);
+    assert.ok(gold.context.coins > 10);
+    assert.equal(gold.runStats.coinsEarned, gold.context.coins - 10);
+    assert.match(gold.summary, /Znalezione monety/);
+    assert.doesNotMatch(gold.summary, /Znaleziony przedmiot/);
+    const full = runChest(0.1, [{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
+    assert.equal(full.inventory.length, 3);
+    assert.ok(full.context.coins > 10);
+    assert.equal(full.runStats.coinsEarned, full.context.coins - 10);
+    assert.match(full.summary, /Znalezione monety/);
 });

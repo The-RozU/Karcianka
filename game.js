@@ -1182,7 +1182,10 @@ function renderMazeMap(lockMovement) {
         const adjacent = current.targets.includes(node.id);
         const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
         const frontier = !visited && mapRun.discoveredNodes.has(node.id);
-        const known = visited || frontier;
+        // Boss jest stale widocznym punktem orientacyjnym, nawet za mgla wojny.
+        // Samo wskazanie jego polozenia nie odslania scian ani drogi do niego.
+        const bossLandmark = node.type === 'boss';
+        const known = visited || frontier || bossLandmark;
         const completed = visited && node.cleared && node.originalIcon && node.originalIcon !== '·' && node.originalIcon !== '🏕️';
         // Sciany odslaniaja sie dopiero po wejsciu na pole.
         const wallsRevealed = visited;
@@ -1205,7 +1208,7 @@ function renderMazeMap(lockMovement) {
         if (frontier && adjacent) tile.classList.add('maze-frontier-adjacent');
         if (completed) tile.classList.add('maze-completed');
         else if (!known) tile.classList.add('unexplored');
-        if (node.type === 'boss' && visited) tile.classList.add('boss-tile');
+        if (bossLandmark) tile.classList.add('boss-tile');
         if (isCurrent) tile.classList.add('player-here');
         else if (canMove && visited) tile.classList.add('returnable');
         else if (canMove) tile.classList.add('available');
@@ -1213,9 +1216,10 @@ function renderMazeMap(lockMovement) {
         // Nawet gdy walka lub nagroda zmienily pokoj na pusty,
         // zachowujemy ikone i nazwe pierwszego napotkanego zdarzenia.
         tile.textContent = isCurrent ? '' : visited ? (node.originalIcon || node.icon)
-            : frontier && adjacent ? node.icon : frontier ? '' : '·';
+            : bossLandmark ? node.icon : frontier && adjacent ? node.icon : frontier ? '' : '·';
         tile.disabled = !canMove;
-        tile.title = isCurrent ? 'Twoja pozycja' : frontier && adjacent ? node.title
+        tile.title = isCurrent ? 'Twoja pozycja' : bossLandmark ? node.title
+            : frontier && adjacent ? node.title
             : frontier ? 'Odkryte przejście (niezbadane)'
             : visited ? ((completed ? (node.originalTitle || node.title) + ' (ukończone)' : node.title))
                 : 'Nieodkryte pole';
@@ -1407,10 +1411,11 @@ function selectMapNode(nodeId) {
 
 function resolveMapNodeArrival(node, previouslyVisited = false) {
     toggleModal('mapModal', false);
-    // Powrot na dowolne odkryte pole to tylko ruch: bez drugiej walki,
-    // leczenia, otwierania skrzyni, wydarzenia ani wizyty w sklepie.
+    // Sklepy (takze kupcy odkryci w wydarzeniach) sa dostepne ponownie.
+    // Oferta i wykupione przedmioty pozostaja zapisane na konkretnym polu.
     if (previouslyVisited) {
-        openMapModal(false);
+        if (node.type === 'shop') openMapShopNode();
+        else openMapModal(false);
         return;
     }
     // Zapisujemy pierwotny symbol przed jednorazowa interakcja.
@@ -1517,22 +1522,24 @@ function openHealSpringNode() {
 }
 
 function openChestNode() {
-    const foundCoins = 18 + Math.floor(Math.random() * 15);
-    coins += foundCoins; runStats.coinsEarned += foundCoins;
-
-    let extraRewardHtml = '';
-    // Zamiast wycofanej mikstury +100 HP losujemy jedną z trzech nowych mikstur natychmiastowych.
-    const chestPotions = SHOP_ITEMS.filter(item => item.category === 'healing' && item.heal);
-    const healItem = chestPotions[Math.floor(Math.random() * chestPotions.length)];
-    if (inventory.length < MAX_INV) {
-        inventory.push(makeInventoryItem(healItem));
-        extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 ${healItem.name} (+${healItem.heal} HP w plecaku)</strong></div>`;
+    // Jedna skrzynia = dokladnie jedna nagroda: monety ALBO jednorazowy przedmiot.
+    // Przy pelnym plecaku dajemy monety, bez automatycznego uzywania mikstur.
+    const chestItems = SHOP_ITEMS.filter(item => !item.isRelic && item.id !== 'dice' &&
+        (item.category === 'healing' || item.category === 'consumable'));
+    const giveItem = inventory.length < MAX_INV && chestItems.length > 0 && Math.random() < 0.5;
+    let rewardHtml;
+    if (giveItem) {
+        const item = chestItems[Math.floor(Math.random() * chestItems.length)];
+        inventory.push(makeInventoryItem(item));
+        rewardHtml = `<div><span>Znaleziony przedmiot:</span><strong style="color:#2ecc71">${item.name}</strong></div>`;
     } else {
-        const healed = healPlayerBy(healItem.heal);
-        extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${healed} ❤️ HP</strong></div>`;
+        const foundCoins = 18 + Math.floor(Math.random() * 15);
+        coins += foundCoins;
+        runStats.coinsEarned += foundCoins;
+        rewardHtml = `<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>`;
     }
     document.getElementById('chestModalDesc').innerText = 'W ślepym zaułku za pokonanym strażnikiem otwierasz okutą skrzynię!';
-    document.getElementById('chestLootSummary').innerHTML = `<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
+    document.getElementById('chestLootSummary').innerHTML = rewardHtml;
     updateUI(); toggleModal('chestModal', true);
 }
 
