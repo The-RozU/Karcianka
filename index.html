@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Calion - Szulernia · Wyprawa PvE · 0.3.5</title>
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="maze-map.css?v=8">
+<link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
 
@@ -117,7 +117,7 @@
     <div class="lobby-right">
       <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
       <button class="btn-action hub-main-action" style="background:linear-gradient(180deg,#2c6b4f,#194230);border-color:#58b889" onclick="startDuelRun()">
-        <span>🗺️ Wyprawa PvE (Mapa)<small>Zbir 500 HP · Elita 750 HP · Boss 900 HP · Skrzynie i EXP</small></span><span>›</span>
+        <span>🗺️ Wyprawa PvE (Labirynt 7×10)<small>Zbir 500 HP · Elita 750 HP · Boss 900 HP · Skrzynie i EXP</small></span><span>›</span>
       </button>
       <div class="hub-grid">
         <button class="hub-tile" onclick="openLobbySection('quests')">📜 Zadania</button>
@@ -132,21 +132,19 @@
 <!-- Modal Mapy Wyprawy PvE -->
 <div class="modal-overlay" id="mapModal">
   <div class="modal-content map-modal-wide">
-    <div class="modal-title" id="mapTitle">Szlak Calionu · Piętro 1</div>
+    <div class="modal-title" id="mapTitle">Labirynt Calionu · Piętro 1</div>
     <div class="map-status-header">
       <span style="color:var(--heal);font-weight:bold">❤️ HP: <span id="mapPlayerHp">750/750</span></span>
       <span style="color:#f1c40f;font-weight:bold">⭐ Poz. <span id="mapPlayerLvl">1</span> (<span id="mapPlayerXp">0/100</span>)</span>
       <span style="color:#f1c40f;font-weight:bold">🪙 <span id="mapPlayerCoins">0</span></span>
-      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Kliknij podświetlone żółtą linią kółko, aby przejść.</span>
+      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Dotknij sąsiedniego pola albo wybierz poznane przejście.</span>
     </div>
     <div class="map-boss-banner" id="mapBossBanner"></div>
     
     <div class="map-viewport" id="mapViewport" aria-label="Labirynt wyprawy, przewijaj pionowo aby zobaczyć wszystkie pola" tabindex="0">
-      <div class="map-board" id="mapBoard">
-        <svg id="svgLayer" viewBox="0 0 802 450" preserveAspectRatio="none"></svg>
-      </div>
+      <div class="map-board" id="mapBoard"></div>
     </div>
-    <div class="map-scroll-hint">↕ Przewijaj w pionie. Grubsze ściany odkrywają się podczas eksploracji. Zielone pola zachowują ikony ukończonych zdarzeń.</div>
+    <div class="map-scroll-hint">↕ Przewijaj w pionie. Zielone: odwiedzone · Szare: poznane przejście · Ciemne: nieodkryte. Ściany ujawniają się po wejściu na pole.</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -263,13 +261,13 @@
   </div>
 </div>
 
-   <script src="maze-generator.js?v=6"></script>
+   <script src="maze-generator.js"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
     <script src="data/enemies/regular.js"></script>
     <script src="data/enemies/elite.js"></script>
     <script src="data/enemies/bosses.js"></script>
-    <script src="game.js?v=8"></script>
+    <script src="game.js"></script>
    <script src="dev.js"></script>
    </body>
 </html>
