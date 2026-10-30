@@ -3,9 +3,11 @@ name: Testy regresyjne Calionu
 on:
   pull_request:
     branches:
+      - main
       - dev-mode
   push:
     branches:
+      - main
       - dev-mode
       - integration/labirynt-dev-mode-20261030
   workflow_dispatch:
