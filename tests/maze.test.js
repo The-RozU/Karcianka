@@ -174,7 +174,7 @@ test('1000 map 7x10: spójność, limity i leczenie za przeciwnikiem', () => {
     }
 });
 
-test('szare przejścia zachowują się po odejściu, nie zdradzają ikony i ścian', () => {
+test('szare przejścia pokazują ikony obok postaci, ukrywają je po odejściu i nie pokazują ścian', () => {
     const harness = createNavigationHarness(createGenerator()());
     harness.render();
     let tiles = harness.tiles();
@@ -185,7 +185,8 @@ test('szare przejścia zachowują się po odejściu, nie zdradzają ikony i ści
         const tile = tiles.get(exit);
         assert.ok(tile.classList.contains('maze-frontier'));
         assert.ok(tile.classList.contains('maze-walls-hidden'));
-        assert.equal(tile.textContent, '');
+        assert.equal(tile.textContent, harness.mapRun.nodes.find(node => node.id === exit).icon);
+        assert.ok(tile.classList.contains('maze-frontier-adjacent'));
         assert.equal(tile.disabled, false);
     }
     assert.ok(tiles.get(0).classList.contains('maze-walls-revealed'));
@@ -198,6 +199,7 @@ test('szare przejścia zachowują się po odejściu, nie zdradzają ikony i ści
     const missedExit = exits[1];
     assert.ok(tiles.get(missedExit).classList.contains('maze-frontier'));
     assert.equal(tiles.get(missedExit).textContent, '');
+    assert.ok(!tiles.get(missedExit).classList.contains('maze-frontier-adjacent'));
     assert.ok(tiles.get(missedExit).classList.contains('maze-walls-hidden'));
     assert.ok(tiles.get(first).classList.contains('maze-walls-revealed'));
     assert.equal(tiles.get(missedExit).disabled, true);
