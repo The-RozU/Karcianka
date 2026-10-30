@@ -1,6 +1,6 @@
 # Silnik wydarzeń Calion (prototyp, NIE PODŁĄCZONY DO GRY)
 
-**Stan:** oddzielna biblioteka CommonJS w `src/events/` + przykładowe dane JSON. Nic z tej biblioteki nie jest ładowane przez `index.html`, `game.js` ani `map-generator.js`. Nie istnieje jeszcze UI wydarzeń.
+**Stan:** oddzielna biblioteka CommonJS w `src/events/` + przykładowe dane JSON. Nic z tej biblioteki nie jest ładowane przez `index.html`, `game.js` ani `maze-generator.js`. Nie istnieje jeszcze UI wydarzeń.
 
 ## Podstawowe reguły
 

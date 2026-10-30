@@ -10,8 +10,8 @@ Stan na 2026-10-28. Aplikacja działa na klasycznych skryptach JS, w kolejności
 - data/events/random/, story/, special/: przykładowe definicje JSON; silnik istnieje osobno, ale nie jest podłączony do gry.
 
 ## Kod
-- game.js: mechanika gry i przebieg wyprawy.
-- map-generator.js: losowanie mapy, w tym pól ?.
+- game.js: mechanika gry i przebieg wyprawy, w tym ruch po labiryncie, odkrywanie pól i animacja postaci.
+- maze-generator.js: jedyny generator mapy (labirynt 7×10, rozgałęzienia, pętle, pola ?, limity wrogów i osłonięte leczenie).
 - player-stats.js: localStorage statystyk ukończonych wypraw; NIE zapisuje aktywnego RUN-u, flag fabularnych ani osiągnięć.
 - dev.js: narzędzia dla dewelopera.
 - src/events/: samodzielny prototyp silnika wydarzeń (CommonJS), niezaładowany przez index.html.

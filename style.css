@@ -334,7 +334,7 @@ html, body {
 .modal-text { font-size: 12px; color: #ccc; margin-bottom: 12px; line-height: 1.4; }
 .btn-action { background: linear-gradient(180deg, var(--gold), #7a5825); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 13px; box-shadow: 0 4px 8px rgba(0,0,0,0.6);}
 
-/* MAPA DICEY DUNGEONS */
+/* Mapa wyprawy: jedyny system nawigacji to labirynt 7x10. */
 .map-modal-wide { width: min(96vw, 820px); }
 .map-status-header {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;
@@ -351,8 +351,8 @@ html, body {
 .map-viewport {
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid rgba(179,135,67,0.3);
   border-radius: 8px;
   margin-bottom: 4px;
@@ -364,51 +364,13 @@ html, body {
 .map-scroll-hint { color: #b9ad92; font-size: 11px; margin-bottom: 10px; }
 .map-board {
   position: relative;
-  width: 802px;
-  height: 450px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 7 / 10;
   background: url('img/map_bg.jpg') center/cover no-repeat;
   overflow: hidden;
   box-shadow: inset 0 0 30px rgba(0,0,0,0.85);
 }
-
-#svgLayer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-#svgLayer line { stroke: #3e5668; stroke-width: 8; stroke-linecap: round; }
-#svgLayer line.active-path { stroke: #ffd175; stroke-width: 10; stroke-dasharray: 14 10; animation: dashMove 1s linear infinite; }
-#svgLayer line.walked-path { stroke: #2ecc71; stroke-width: 7; opacity: 0.65; }
-@keyframes dashMove { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
-
-.node-plate {
-  position: absolute;
-  width: clamp(36px, 5.8vw, 48px);
-  height: clamp(36px, 5.8vw, 48px);
-  border-radius: 50%;
-  background: #1e2830;
-  border: 2px solid #485e6f;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  display: flex; align-items: center; justify-content: center;
-  font-size: clamp(16px, 2.8vw, 22px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.65);
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-.node-plate.available {
-  opacity: 1; cursor: pointer; border: 3px solid #ffd175;
-  background: #2b3945;
-  box-shadow: 0 0 16px rgba(255, 209, 117, 0.85);
-  animation: bounceTarget 1.2s infinite alternate;
-  z-index: 6;
-}
-.node-plate.available:active { transform: translate(-50%, -50%) scale(1.12); }
-.node-plate.player-here {
-  opacity: 1; border: 3px solid #2ecc71; background: #1b3d26;
-  box-shadow: 0 0 18px rgba(46, 204, 113, 0.9); z-index: 10;
-}
-.node-plate.cleared { border-color: #2e593f; background: #15251b; opacity: 0.85; }
-.node-plate.mystery-node { color: #e1c2ff; border-color: #8a66ad; background: #30243e; font-weight: 900; font-family: Georgia,serif; font-size: 28px; }
-.node-plate.mystery-node.available { border-color: #ffd175; box-shadow: 0 0 18px rgba(207,158,255,.85); }
-@keyframes bounceTarget { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.1); } }
 
 .shop-grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; max-height: 42dvh; overflow-y: auto; padding-right: 4px; }
 .shop-category-title { grid-column: 1 / -1; color: #f1c40f; font-weight: bold; font-size: 12px; padding: 4px 0 1px; border-bottom: 1px solid rgba(241,196,15,.25); }

@@ -1,0 +1,28 @@
+name: Testy regresyjne Calionu
+
+on:
+  pull_request:
+    branches:
+      - dev-mode
+  push:
+    branches:
+      - dev-mode
+      - integration/labirynt-dev-mode-20261030
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Wydarzenia i labirynt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v4
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Przetestuj mechaniki
+        run: node --test tests/*.test.js
