@@ -402,3 +402,21 @@ test('balans mnożników pokerowych: progresja co 0,5', () => {
     }
     assert.match(gameSource, /let finalMultiplier = rule\.mult/);
 });
+
+test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', () => {
+    const section = html.split('<div class="modal-overlay" id="scoreModal">')[1]
+        .split('<div class="modal-overlay" id="shopModal">')[0];
+    const names = [
+        ['poker', 'Poker'], ['fourKind', 'Kareta'], ['fullHouse', 'Full'],
+        ['flush', 'Kolor'], ['straight', 'Strit'], ['threeKind', 'Trójka'],
+        ['twoPair', 'Dwie Pary'], ['pair', 'Para'], ['highCard', 'Wysoka Karta']
+    ];
+    for (const [key, label] of names) {
+        const rule = gameSource.split('\\n').find(line => line.trim().startsWith(key + ':'));
+        assert.ok(rule, key);
+        const mult = Number(rule.match(/mult: ([\\d.]+)/)[1]);
+        const row = section.split('\\n').find(line => line.includes('<tr><td>' + label));
+        assert.ok(row, label);
+        assert.ok(row.includes('<td>x ' + mult + '</td>'), label + ': tabela != obrażenia');
+    }
+});
