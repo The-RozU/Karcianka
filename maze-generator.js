@@ -94,54 +94,56 @@ function generateFloorMap(floor = 1) {
     const number = Math.max(1, Math.floor(Number(floor) || 1));
     const startCell = (MAZE_ROWS - 1) * MAZE_COLUMNS + Math.floor(MAZE_COLUMNS / 2);
     const bossCell = Math.floor(MAZE_COLUMNS / 2);
-    let corridors, path;
+    let corridors, path, mainFirst, preBoss, healRooms, guardianRooms;
+    const otherCells = Array.from({ length: MAZE_COLUMNS * MAZE_ROWS }, (_, i) => i)
+        .filter(i => i !== startCell && i !== bossCell);
 
-    // Ograniczamy długość obowiązkowego odcinka, by labirynt był grywalny.
-    for (let attempt = 0; attempt < 120; attempt++) {
+    // Losujemy ponownie takze wtedy, gdy topologia nie zawiera
+    // dwoch roznych slepych zaulkow nadajacych sie na leczenie.
+    // Wczesniej rzadka mapa rzucala wyjatek juz podczas wyprawy.
+    for (let attempt = 0; attempt < 240; attempt++) {
         const candidate = mazeCreateCorridors(startCell, bossCell);
         const candidatePath = mazeFindPath(candidate, startCell, bossCell);
+        if (candidatePath.length < 3) continue;
+
+        const first = candidatePath[1];
+        const beforeBoss = candidatePath[candidatePath.length - 2];
+        const candidates = mazeShuffle(otherCells.filter(cell => {
+            if (cell === first || cell === beforeBoss || candidatePath.includes(cell)) return false;
+            if (candidate[cell].length !== 1) return false;
+            const guardian = candidate[cell][0];
+            return guardian !== startCell && guardian !== bossCell
+                && guardian !== first && guardian !== beforeBoss;
+        }));
+        const rooms = [];
+        const guardians = new Set();
+        for (const cell of candidates) {
+            const guardian = candidate[cell][0];
+            if (guardians.has(guardian)) continue;
+            rooms.push(cell);
+            guardians.add(guardian);
+            if (rooms.length === 2) break;
+        }
+        if (rooms.length !== 2) continue;
+
         corridors = candidate;
         path = candidatePath;
+        mainFirst = first;
+        preBoss = beforeBoss;
+        healRooms = rooms;
+        guardianRooms = guardians;
         const steps = path.length - 1;
         if (steps >= 14 && steps <= 32) break;
     }
+    if (!healRooms) throw new Error('Nie mozna wygenerowac poprawnego labiryntu');
 
     const boss = pickRandomCalionBoss();
     const hpBonus = (number - 1) * DUEL.ACT_HP_STEP;
     // Stale limity na 70 pol: 10 zwyklych, 4 elity, 2 sklepy,
     // 3 skrzynie, 2 leczenia, 3 wydarzenia, 44 puste.
     const types = new Map();
-    const otherCells = Array.from({ length: MAZE_COLUMNS * MAZE_ROWS }, (_, i) => i)
-        .filter(i => i !== startCell && i !== bossCell);
 
-    // Leczenie znajduje sie zawsze ZA przeciwnikiem: w slepym zaulku,
-    // do ktorego prowadzi tylko jedno wejscie przez pole walki.
-    // Rezerwujemy dwa rozne pola walki, aby nie kumulowac nagrod.
-    const mainFirst = path[1];
-    const preBoss = path[path.length - 2];
-    const healingCandidates = mazeShuffle(otherCells.filter(cell => {
-        if (cell === mainFirst || cell === preBoss || path.includes(cell)) return false;
-        if (corridors[cell].length !== 1) return false;
-        const guardian = corridors[cell][0];
-        return guardian !== startCell && guardian !== bossCell
-            && guardian !== mainFirst && guardian !== preBoss;
-    }));
-    const healRooms = [];
-    const guardianRooms = new Set();
-    for (const cell of healingCandidates) {
-        const guardian = corridors[cell][0];
-        if (guardianRooms.has(guardian) || healRooms.includes(guardian)) continue;
-        if (healRooms.length && guardian === healRooms[0]) continue;
-        healRooms.push(cell);
-        guardianRooms.add(guardian);
-        if (healRooms.length === 2) break;
-    }
-    // Przy wyjatkowo rzadkim ukladzie bez dwoch odpowiednich slepych
-    // zaulkow generujemy labirynt ponownie (patrz warunek w petli wyzej).
-    if (healRooms.length !== 2) {
-        throw new Error('Labirynt nie ma dwoch odrebnych zaulkow z leczeniem');
-    }
-
+    // Odrebni straznicy blokuja dostep do dwoch leczniczych slepych zaulkow.
     types.set(mainFirst, 'fight');
     types.set(preBoss, 'shop');
     for (const cell of healRooms) types.set(cell, 'heal');
