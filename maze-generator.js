@@ -2,7 +2,6 @@
 // Każde pole ma co najwyżej cztery przejścia. Połączenia są dwukierunkowe.
 const MAZE_COLUMNS = 7;
 const MAZE_ROWS = 10;
-const MAZE_TILE_SIZE = 64;
 
 function mazeShuffle(values) {
     for (let i = values.length - 1; i > 0; i--) {
@@ -183,8 +182,6 @@ function generateFloorMap(floor = 1) {
         const visual = descriptions[type];
         const node = {
             id: nodes.length, row, col,
-            x: (col + 0.5) * MAZE_TILE_SIZE,
-            y: (row + 0.5) * MAZE_TILE_SIZE,
             type, icon: visual[0], title: visual[1],
             hp: type === 'fight' ? DUEL.ZBIR_BASE_HP + hpBonus
                 : type === 'elite' ? DUEL.ELITE_BASE_HP + hpBonus
@@ -206,8 +203,6 @@ function generateFloorMap(floor = 1) {
 
     return {
         boss, nodes, bossHp: DUEL.BOSS_BASE_HP + hpBonus,
-        mapWidth: MAZE_COLUMNS * MAZE_TILE_SIZE,
-        mapHeight: MAZE_ROWS * MAZE_TILE_SIZE,
         shortestPathFields: path.length - 1,
         mazeColumns: MAZE_COLUMNS, mazeRows: MAZE_ROWS
     };
