@@ -60,7 +60,10 @@ let mapRun = {
     boss: null,
     nodes: [],
     currentNodeId: 0,
-    visitedNodes: new Set()
+    visitedNodes: new Set(),
+    discoveredNodes: new Set(),
+    mazeColumns: 7,
+    mazeRows: 10
 };
 
 function newDuelState() {
@@ -1097,6 +1100,7 @@ function startDuelRun() {
         level: 1, xp: 0, xpNext: 100, boss: generated.boss, nodes: generated.nodes,
         currentNodeId: 0, visitedNodes: new Set([0]), discoveredNodes: new Set(),
         mapWidth: generated.mapWidth, mapHeight: generated.mapHeight,
+        mazeColumns: generated.mazeColumns, mazeRows: generated.mazeRows,
         shortestPathFields: generated.shortestPathFields
     };
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
@@ -1123,8 +1127,8 @@ function startNextDuelAct() {
     mapRun.nodes = generated.nodes;
     mapRun.mapWidth = generated.mapWidth;
     mapRun.mapHeight = generated.mapHeight;
-    mapRun.mazeColumns = generated.mazeColumns || 7;
-    mapRun.mazeRows = generated.mazeRows || 10;
+    mapRun.mazeColumns = generated.mazeColumns;
+    mapRun.mazeRows = generated.mazeRows;
     mapRun.shortestPathFields = generated.shortestPathFields;
     mapRun.currentNodeId = 0;
     mapRun.visitedNodes = new Set([0]);
@@ -1133,7 +1137,7 @@ function startNextDuelAct() {
     updateUI();
 }
 
-// Eksperymentalny widok: 5 kolumn, 8 rzędów, ściany i ruch w czterech kierunkach.
+// Jedyny widok mapy: labirynt 7x10 z odkrywaniem pol i ruchem w czterech kierunkach.
 function renderMazeMap(lockMovement) {
     const board = document.getElementById('mapBoard');
     const viewport = document.getElementById('mapViewport');
@@ -1181,7 +1185,7 @@ function renderMazeMap(lockMovement) {
         const adjacent = current.targets.includes(node.id);
         const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
         const frontier = !visited && mapRun.discoveredNodes.has(node.id);
-        const known = visited || frontier || node.type === 'boss';
+        const known = visited || frontier;
         const completed = visited && node.cleared && node.originalIcon && node.originalIcon !== '·' && node.originalIcon !== '🏕️';
         // Sciany odslaniaja sie dopiero po wejsciu na pole.
         const wallsRevealed = visited;
@@ -1203,7 +1207,7 @@ function renderMazeMap(lockMovement) {
         else if (frontier) tile.classList.add('maze-frontier');
         if (completed) tile.classList.add('maze-completed');
         else if (!known) tile.classList.add('unexplored');
-        if (node.type === 'boss') tile.classList.add('boss-tile');
+        if (node.type === 'boss' && visited) tile.classList.add('boss-tile');
         if (isCurrent) tile.classList.add('player-here');
         else if (canMove && visited) tile.classList.add('returnable');
         else if (canMove) tile.classList.add('available');
@@ -1250,89 +1254,6 @@ function renderMazeMap(lockMovement) {
     };
 }
 
-function renderDiceyMap(lockMovement) {
-    if (mapRun.nodes.some(node => Number.isInteger(node.row) && Number.isInteger(node.col))) {
-        renderMazeMap(lockMovement);
-        return;
-    }
-    const board = document.getElementById('mapBoard');
-    const svg = document.getElementById('svgLayer');
-    if (!board || !svg) return;
-    
-    document.querySelectorAll('.node-plate').forEach(e => e.remove());
-    svg.innerHTML = '';
-
-    // Mapa rośnie poziomo wraz z piętrem. Widok można przewijać bez ściskania pól.
-    const SVG_W = mapRun.mapWidth || 802;
-    const SVG_H = mapRun.mapHeight || 450;
-    board.style.width = SVG_W + 'px';
-    board.style.height = SVG_H + 'px';
-    svg.setAttribute('viewBox', '0 0 ' + SVG_W + ' ' + SVG_H);
-
-    const drawnPairs = new Set();
-    const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
-    if (!cur) return;
-
-    // 1. Rysowanie linii połączeń między strefami
-    mapRun.nodes.forEach(node => {
-        const x1 = node.x;
-        const y1 = node.y;
-
-        node.targets.forEach(tid => {
-            const pairKey = [Math.min(node.id, tid), Math.max(node.id, tid)].join('-');
-            if (!drawnPairs.has(pairKey)) {
-                drawnPairs.add(pairKey);
-                const target = mapRun.nodes.find(n => n.id === tid);
-                if (!target) return;
-                const x2 = target.x;
-                const y2 = target.y;
-
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-                line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-
-                const isAdjacent = !lockMovement && node.id === cur.id && cur.targets.includes(tid);
-
-                if (isAdjacent) {
-                    line.classList.add('active-path');
-                } else if (mapRun.visitedNodes.has(node.id) && mapRun.visitedNodes.has(tid)) {
-                    line.classList.add('walked-path');
-                }
-                svg.appendChild(line);
-            }
-        });
-    });
-
-    // 2. Rysowanie okrągłych stref
-    mapRun.nodes.forEach(node => {
-        const div = document.createElement('div');
-        div.className = 'node-plate';
-        div.style.left = node.x + 'px';
-        div.style.top = node.y + 'px';
-        if (node.type === 'event') div.classList.add('mystery-node');
-        div.title = node.title;
-
-        const isCurrent = (node.id === mapRun.currentNodeId);
-        const isAdjacent = !lockMovement && cur.targets.includes(node.id);
-
-        if (isCurrent) {
-            div.classList.add('player-here');
-            div.innerHTML = '🧙';
-        } else {
-            if (mapRun.visitedNodes.has(node.id) || node.cleared) div.classList.add('cleared');
-            div.innerHTML = node.icon;
-
-            if (isAdjacent) {
-                div.classList.add('available');
-                div.onclick = () => selectMapNode(node.id);
-            }
-        }
-        board.appendChild(div);
-    });
-    const viewport = document.getElementById('mapViewport');
-    if (viewport) viewport.scrollLeft = Math.max(0, cur.x - viewport.clientWidth * 0.40);
-}
-
 function openMapModal(fromTopButton = false) {
     if (!mapRun.active || !mapRun.nodes || mapRun.nodes.length === 0) {
         const generated = generateActMap(1);
@@ -1341,12 +1262,12 @@ function openMapModal(fromTopButton = false) {
         mapRun.nodes = generated.nodes;
         mapRun.mapWidth = generated.mapWidth;
         mapRun.mapHeight = generated.mapHeight;
-    mapRun.mazeColumns = generated.mazeColumns || 7;
-    mapRun.mazeRows = generated.mazeRows || 10;
+        mapRun.mazeColumns = generated.mazeColumns;
+        mapRun.mazeRows = generated.mazeRows;
         mapRun.shortestPathFields = generated.shortestPathFields;
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
-    mapRun.discoveredNodes = new Set();
+        mapRun.discoveredNodes = new Set();
     }
 
     // Blokujemy ruch na mapie TYLKO wtedy, gdy trwa nierozstrzygnięta walka przy stole
@@ -1369,7 +1290,7 @@ function openMapModal(fromTopButton = false) {
         : 'Odkrywaj ściany krok po kroku. Dotknij sąsiedniego pola lub odwiedzonego miejsca, by automatycznie wrócić.';
 
     toggleModal('mapModal', true);
-    renderDiceyMap(lockMovement);
+    renderMazeMap(lockMovement);
 }
 
 // Przechodzenie po odwiedzonych polach: najkrotsza trasa w poznanych korytarzach.
