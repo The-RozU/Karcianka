@@ -6,50 +6,6 @@ function toggleFullScreen() {
     }
 }
 
-// --- GRAFIKI WEKTOROWE SVG DLA MIKSTUR ---
-const buildSVG = (color, path, size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="vertical-align:middle; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.8));"><rect x="10" y="2" width="4" height="2" fill="#8d6e63" rx="1"/><rect x="10.5" y="4" width="3" height="3" fill="#555"/><path d="${path}" fill="${color}" stroke="#fff" stroke-width="0.5"/><path d="M8 18 L9 13" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/></svg>`;
-const hourglassSVG = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.8));"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>`;
-
-const pathFlask = "M9 7 L15 7 L19 19 C19.5 20.5 18 21.5 17 21.5 L7 21.5 C6 21.5 4.5 20.5 5 19 Z";
-const pathRound = "M10 7 L14 7 L18 13 C20 17 18 21.5 12 21.5 C6 21.5 4 17 6 13 Z";
-
-const SHOP_ITEMS = [
-    { id: 'heal_pot', name: 'Mikstura Leczenia', icon: buildSVG('#2ecc71', pathRound, 22), desc: 'Przywraca +100 HP (w walce lub w Kramie)', price: 22 },
-    { id: 'discard', name: 'Miks. Odrzucenia', icon: buildSVG('#3498db', pathFlask, 20), desc: 'Odnawia 1 wymianę kart', price: 15 },
-    { id: 'shield_pot', name: 'Eliksir Pancerza', icon: buildSVG('#5dade2', pathRound, 20), desc: 'Natychmiast daje +25 🛡 Tarczy w tej rundzie', price: 22 },
-    { id: 'time', name: 'Złoty Zegar', icon: hourglassSVG, desc: 'Opóźnia Zmęczenie o 1 rundę', price: 35 },
-    { id: 'pow1', name: 'Mała Miks. Mocy', icon: buildSVG('#e67e22', pathRound, 18), desc: '+10 DMG (3 ataki)', price: 20 },
-    { id: 'pow2', name: 'Średnia Miks. Mocy', icon: buildSVG('#e74c3c', pathRound, 22), desc: '+15 DMG (3 ataki)', price: 30 },
-    { id: 'pow3', name: 'Duża Miks. Mocy', icon: buildSVG('#9b59b6', pathRound, 26), desc: '+20 DMG (3 ataki)', price: 42 },
-    { id: 'dice', name: 'Rzut Kością', icon: '🎲', desc: 'Zakup daje 3 użycia. Rzut 1 = 0 DMG; 2–6 dodaje wynik × 0,5 do mnożnika.', price: 40 },
-    { id: 'karwasz', name: 'Żelazny Karwasz', icon: '🛡️', desc: 'Relikt stały: dodaje +10 🛡 do każdej wystawionej Tarczy.', price: 65, isRelic: true },
-    { id: 'lucky_coin', name: 'Moneta Szczęścia', icon: '🪙', desc: 'Relikt stały: 10% szans przy każdym ataku na podwojenie mnożnika (x2).', price: 60, isRelic: true }
-];
-
-const REGULAR_ENEMIES = [
-    { id: 'thug', name: 'Nożownik z Zaułka', traitName: 'Brak cechy', desc: 'Zwykły portowy zabijaka' },
-    { id: 'sailor', name: 'Pijany Marynarz', traitName: 'Brak cechy', desc: 'Szuka zaczepki przy kuflu' },
-    { id: 'smuggler', name: 'Przemytnik z Doków', traitName: 'Brak cechy', desc: 'Pilnuje trefnego towaru' }
-];
-
-const ELITE_ENEMIES = [
-    { id: 'shield_15', name: 'Tarczownik z Portu', traitName: 'Tarcza', desc: 'Blokuje 15% otrzymywanych obrażeń z ataku' },
-    { id: 'block_high', name: 'Szuler z Doków', traitName: 'Blok', desc: 'Co 3. rundę blokuje Twoją najwyższą kartę na ręce (🔒)' },
-    { id: 'weaken_10', name: 'Rębajło Karczemny', traitName: 'Osłabienie', desc: 'Zmniejsza zadawane przez Ciebie obrażenia o 10%' },
-    { id: 'insistent', name: 'Zbir z Zaułka', traitName: 'Natarczywy', desc: 'Obniża startową liczbę odrzuceń o 2' },
-    { id: 'iron_guard', name: 'Strażnik Popiołów', traitName: 'Żelazna Garda', desc: 'Zaczyna każdą rundę z tarczą +15 🛡' }
-];
-
-const CALION_BOSSES = [
-    { id: 'boss_kael', name: 'Kael Dravos „Barbarzyńca”', traitName: 'Szał', desc: 'Po utracie >150 HP wpada w Szał i zadaje +10% obrażeń do końca walki' },
-    { id: 'boss_corven', name: 'Matthew Corven „Żelazny Dowódca”', traitName: 'Żelazna Obrona', desc: 'Redukuje otrzymywane obrażenia o 15%. Poniżej 50% HP jednorazowo blokuje 100% Twojego następnego ataku' },
-    { id: 'boss_varek', name: 'Varek Czysty', traitName: 'Igiełkowy Paraliż', desc: 'W każdej rundzie paraliżuje 1 losową kartę w Twojej ręce (🔒)' },
-    { id: 'boss_riwi', name: 'Riven Wistlow „Riwi”', traitName: 'Obcięcie Palca', desc: 'Po Twoim pierwszym ataku odcina Ci palec — limit kart na ręce spada z 8 do 7 do końca walki' },
-    { id: 'boss_flinch', name: 'Dorian Flinch „Mr. Fox”', traitName: 'Pijawka Krwi', desc: 'Co 2. rundę po ataku leczy się o 50% zadanych Ci w HP obrażeń (pełny blok tarczą zapobiega leczeniu)' },
-    { id: 'boss_farron', name: 'Farron Lockhide „Fogborn”', traitName: 'Błyskawiczna Kontra', desc: 'Gdy zagrasz Wysoką Kartę lub Parę w ataku, natychmiast strzela z pistoletu za 15 DMG' },
-    { id: 'boss_daren', name: 'Daren Velk', traitName: 'Zatruty Sztylet', desc: 'Każdy jego atak nakłada +1 ładunek Trucizny (5 DMG co rundę za każdy ładunek, omija tarczę)' },
-    { id: 'boss_lokar', name: 'Lokar', traitName: 'Szał Bojowy', desc: 'Gdy jego HP spadnie poniżej 30%, wyprowadza podwójny atak w swojej turze' }
-];
 
 const suits = [{ s: '♠', c: 'black' }, { s: '♥', c: 'red' }, { s: '♦', c: 'red' }, { s: '♣', c: 'black' }];
 const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
@@ -61,16 +17,18 @@ const HAND_WIN_BONUS = { 'Poker': 5, 'Kareta': 3, 'Full': 3, 'Kolor': 2, 'Strit'
 let deck = [], discardPile = [], hand = [], selectedCards = [];
 let discardsLeft = MAX_DISCARDS, currentDamage = 0, coins = 0;
 let currentFightBonus = 0, pendingDiceRoll = 0;
+let rewardedHandsThisFight = new Set();
 let inventory = [];
-let relics = { karwasz: false, lucky_coin: false };
+let relics = {};
+let devShopOffers = null;
 let currentEnemyTrait = null;
 let lockedCardId = null;
 let activeBuff = { dmg: 0, turns: 0 };
 let gameOver = true, animateNextRender = true, shopReturnsToMenu = false, handResolutionPending = false;
 let confirmItemIdx = -1, pendingBuyItemIdx = -1;
-let runStartedAt = 0, runFinishedAt = 0;
+let runStartedAt = 0, runFinishedAt = 0, runRecorded = false;
 
-let runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0 };
+let runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
 
 const DUEL = {
     START_HP: 750,
@@ -78,7 +36,6 @@ const DUEL = {
     ELITE_BASE_HP: 750,
     BOSS_BASE_HP: 900,
     ACT_HP_STEP: 125,
-    HEAL_POTION_VAL: 100,
     POST_FIGHT_HEAL: 150,
     LEVEL_UP_HP: 100,
     ENEMY_HAND: 8,
@@ -103,7 +60,10 @@ let mapRun = {
     boss: null,
     nodes: [],
     currentNodeId: 0,
-    visitedNodes: new Set()
+    visitedNodes: new Set(),
+    discoveredNodes: new Set(),
+    mazeColumns: 7,
+    mazeRows: 10
 };
 
 function newDuelState() {
@@ -112,7 +72,7 @@ function newDuelState() {
         playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
         enemyHp: DUEL.ZBIR_BASE_HP, enemyMaxHp: DUEL.ZBIR_BASE_HP,
         playerShield: 0, enemyShield: 0, fatigueRound: DUEL.FATIGUE_ROUND, fatigueShown: false,
-        handLimit: HAND_SIZE, poisonStacks: 0,
+        handLimit: HAND_SIZE, poisonStacks: 0, regenTurns: 0, phoenixUsed: false,
         corvenBlockArmed: false, corvenBlockTriggered: false, lokarFrenzyUsed: false, kaelEnraged: false,
         enemyCards: [], stats: { dealt: 0, taken: 0, blocked: 0, bestName: '-', bestDmg: 0 }
     };
@@ -120,14 +80,14 @@ function newDuelState() {
 let duel = newDuelState();
 
 const HAND_RULES = {
-    poker: { name: 'Poker', baseChips: 100, mult: 8 },
-    fourKind: { name: 'Kareta', baseChips: 60, mult: 7 },
-    fullHouse: { name: 'Full', baseChips: 40, mult: 4 },
-    flush: { name: 'Kolor', baseChips: 35, mult: 4 },
-    straight: { name: 'Strit', baseChips: 30, mult: 4 },
-    threeKind: { name: 'Trójka', baseChips: 30, mult: 3 },
-    twoPair: { name: 'Dwie Pary', baseChips: 20, mult: 2 },
-    pair: { name: 'Para', baseChips: 10, mult: 2 },
+    poker: { name: 'Poker', baseChips: 100, mult: 4.5 },
+    fourKind: { name: 'Kareta', baseChips: 60, mult: 4 },
+    fullHouse: { name: 'Full', baseChips: 40, mult: 3.5 },
+    flush: { name: 'Kolor', baseChips: 35, mult: 3 },
+    straight: { name: 'Strit', baseChips: 30, mult: 2.5 },
+    threeKind: { name: 'Trójka', baseChips: 30, mult: 2 },
+    twoPair: { name: 'Dwie Pary', baseChips: 20, mult: 1.5 },
+    pair: { name: 'Para', baseChips: 10, mult: 1.5 },
     highCard: { name: 'Wysoka Karta', baseChips: 5, mult: 1 }
 };
 
@@ -192,6 +152,24 @@ function updateLockedCard(reroll = false) {
     }
 }
 
+// Only a finished/abandoned RUN is persisted. Exiting the browser never invokes this.
+let playerStatsSaveFailed = false;
+function recordRunResult(outcome) {
+    if (!runStartedAt || runRecorded) return;
+    runRecorded = true; // prevents duplicate counting after defeat + return to lobby
+    runFinishedAt = Date.now();
+    playerStatsSaveFailed = !CalionPlayerStats.record({
+        outcome,
+        floor: mapRun.act,
+        enemiesDefeated: runStats.enemiesDefeated,
+        bossesDefeated: runStats.bossesDefeated,
+        coinsEarned: runStats.coinsEarned,
+        mysteryEvents: runStats.mysteryEvents,
+        durationSeconds: Math.floor((runFinishedAt - runStartedAt) / 1000),
+        finishedAt: new Date(runFinishedAt).toISOString()
+    });
+}
+
 function openLobbySection(section) {
     const sections = {
         quests: {
@@ -210,9 +188,32 @@ function openLobbySection(section) {
     const title = document.getElementById('lobbySectionTitle');
     const content = document.getElementById('lobbySectionContent');
     if (section === 'stats') {
-        title.innerText = 'Statystyki wyprawy';
-        const duration = runStartedAt ? formatDuration((runFinishedAt || Date.now()) - runStartedAt) : '—';
-        content.innerHTML = `<p>Wyniki ostatniej wyprawy w tej sesji:</p><ul><li>Poziom postaci (Mapa): ${mapRun.level} (${mapRun.xp}/${mapRun.xpNext} EXP)</li><li>Pokonani przeciwnicy: ${runStats.enemiesDefeated}</li><li>Pokonani bossowie: ${runStats.bossesDefeated}</li><li>Zdobyte monety: ${runStats.coinsEarned}</li><li>Łączne obrażenia: ${runStats.totalDamage}</li><li>Największy cios: ${runStats.bestHandDmg} DMG (${runStats.bestHandName})</li><li>Odrzucone karty: ${runStats.discards}</li><li>Czas: ${duration}</li></ul>`;
+        title.innerText = 'Statystyki gracza';
+        const totals = CalionPlayerStats.get();
+        const last = totals.lastRun;
+        const resultNames = { win: 'Zwycięstwo', defeat: 'Porażka', abandoned: 'Porzucona' };
+        const lastRunHtml = last
+            ? `<p><strong>Ostatni zapisany RUN:</strong> ${resultNames[last.outcome]}</p>
+               <ul><li>Piętro: ${last.floor}</li><li>Pokonani przeciwnicy: ${last.enemiesDefeated}</li>
+               <li>Pokonani bossowie: ${last.bossesDefeated}</li><li>Zdobyte monety: ${last.coinsEarned}</li>
+               <li>Losowe wydarzenia: ${last.mysteryEvents}</li>
+               <li>Czas wyprawy: ${formatDuration(last.durationSeconds * 1000)}</li></ul>`
+            : '<p>Brak zapisanych wypraw. Ukończ walkę porażką lub świadomie porzuć RUN, aby zapisać statystyki.</p>';
+        content.innerHTML = `
+            <p><strong>Wszystkie zapisane wyprawy:</strong></p>
+            <ul>
+                <li>Rozegrane RUN-y: ${totals.totalRuns}</li>
+                <li>Wygrane: ${totals.wonRuns} · Przegrane: ${totals.lostRuns} · Porzucone: ${totals.abandonedRuns}</li>
+                <li>Pokonani przeciwnicy łącznie: ${totals.totalEnemiesDefeated}</li>
+                <li>Rekord przeciwników w jednym RUN-ie: ${totals.maxEnemiesDefeated}</li>
+                <li>Rekord zdobytych monet w jednym RUN-ie: ${totals.maxCoinsEarned}</li>
+                <li>Najwyższe osiągnięte piętro: ${totals.highestFloor}</li>
+                <li>Rekord bossów w jednym RUN-ie: ${totals.maxBossesDefeated}</li>
+                <li>Odwiedzone pola „?” łącznie: ${totals.totalMysteryEvents}</li>
+            </ul>
+            ${lastRunHtml}
+            ${playerStatsSaveFailed ? '<p style="color:#e74c3c">⚠ Nie udało się zapisać ostatniego RUN-u w pamięci przeglądarki.</p>' : ''}
+            <p style="font-size:11px;color:#b9ad92">Postępy trwającej wyprawy nie są zapisywane. Zamykanie karty w trakcie RUN-u nie aktualizuje statystyk.</p>`;
     } else {
         title.innerText = sections[section].title;
         content.innerHTML = sections[section].html;
@@ -328,6 +329,29 @@ function evaluateShieldCards(cards, includePlayerRelics = true) {
     return { total, name: 'Tarcza (Wysokie Karty)', formula: `${rawSum} x ${DUEL.SHIELD_MULT}${karwaszText} = +${total} 🛡` };
 }
 
+function playerRelicDamageMultiplier(handName) {
+    let bonus = 0;
+    if (handName === 'Wysoka Karta' && relics.gambler_blade) bonus += 0.30;
+    if ((handName === 'Strit' || handName === 'Kolor') && relics.fortune_crystal) bonus += 0.10;
+    if (handName === 'Trójka' && relics.triple_seal) bonus += 0.20;
+    return 1 + bonus;
+}
+
+function healPlayerBy(amount) {
+    const before = duel.playerHp;
+    duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + amount);
+    if (mapRun.active) mapRun.playerHp = duel.playerHp;
+    return duel.playerHp - before;
+}
+
+function triggerPhoenixIfNeeded() {
+    if (!relics.phoenix_ash || duel.phoenixUsed || !duel.active) return;
+    if (duel.playerHp <= 0 || duel.playerHp >= duel.playerMaxHp * 0.25) return;
+    duel.phoenixUsed = true;
+    const healed = healPlayerBy(50);
+    showFloatingText(`🔥 Feniks +${healed} HP`, '#2ecc71', '17%', '72%', '21px');
+}
+
 function computeAttackDamage(rule, sum, opts = {}) {
     const potionBonus = opts.potionBonus || 0;
     const dice = opts.dice || 0;
@@ -337,13 +361,14 @@ function computeAttackDamage(rule, sum, opts = {}) {
     else if (dice > 1) finalMultiplier += dice * 0.5;
     finalMultiplier *= luckyMult;
 
-    let damage = dice === 1 ? 0 : (rule.baseChips + sum) * finalMultiplier + potionBonus;
+    const relicMult = opts.applyPlayerRelics ? playerRelicDamageMultiplier(rule.name) : 1;
+    let damage = dice === 1 ? 0 : ((rule.baseChips + sum) * finalMultiplier + potionBonus) * relicMult;
 
     if (opts.applyEnemyTrait && currentEnemyTrait) {
         if (currentEnemyTrait.id === 'weaken_10') { damage = Math.floor(damage * 0.90); }
         else if (currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven') { damage = Math.floor(damage * 0.85); }
     }
-    return { damage, finalMultiplier, potionBonus };
+    return { damage, finalMultiplier, potionBonus, relicMult };
 }
 
 function evaluateHand() {
@@ -354,7 +379,7 @@ function evaluateHand() {
     } else {
         const { rule, sum } = scoreCards(active);
         attackRule = rule;
-        const calc = computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true });
+        const calc = computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, applyPlayerRelics: true });
         currentDamage = calc.damage;
 
         if (duel.phase === 'attack') {
@@ -368,10 +393,11 @@ function evaluateHand() {
                 return;
             }
             const potionText = calc.potionBonus > 0 ? ` + <span class="color-buff">${calc.potionBonus}</span>` : '';
+            const relicText = calc.relicMult > 1 ? ` <span class="color-buff">× ${calc.relicMult.toFixed(2)} (artefakt)</span>` : '';
             const diceText = pendingDiceRoll > 1 ? ` <span class="color-buff">(+${(pendingDiceRoll * 0.5).toFixed(1)} za 🎲 ${pendingDiceRoll})</span>` : '';
             const hasReduction = currentEnemyTrait && (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven');
             const traitModText = hasReduction ? ` <span style="color:#f39c12">(${currentEnemyTrait.id === 'weaken_10' ? '-10%' : '-15%'} ${currentEnemyTrait.traitName})</span>` : '';
-            document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${traitModText} = ${currentDamage} DMG`;
+            document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${relicText}${traitModText} = ${currentDamage} DMG`;
             return;
         }
     }
@@ -749,66 +775,142 @@ function inventoryIcon(item) { return item.id === 'dice' ? `<span>🎲</span><sm
 function makeInventoryItem(item) { return item.id === 'dice' ? { ...item, charges: 3 } : { ...item }; }
 
 function renderRelicsHTML() {
-    const badges = [];
-    if (relics.karwasz) badges.push(`<span class="relic-badge" title="Żelazny Karwasz: +10 🛡 do Tarczy">🛡️+10</span>`);
-    if (relics.lucky_coin) badges.push(`<span class="relic-badge" title="Moneta Szczęścia: 10% szans na mnożnik x2">🪙10%</span>`);
-    return badges.join('');
+    return SHOP_ITEMS.filter(item => item.isRelic && relics[item.id])
+        .map(item => `<span class="relic-badge" title="${item.name}: ${item.desc}">${item.badge || item.icon}</span>`).join('');
+}
+
+function drawShopItems(category, count) {
+    const pool = SHOP_ITEMS.filter(item => item.category === category && (category !== 'relic' || !relics[item.id]));
+    if (category !== 'relic') {
+        // Każdy slot jest losowany niezależnie. Dwie takie same mikstury / jednorazówki są dozwolone.
+        // Zakup nie usuwa przedmiotu z puli następnych losowań.
+        return Array.from({ length: count }, () => ({
+            id: pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null,
+            sold: false
+        }));
+    }
+    // Artefakty są unikatowe podczas całej wyprawy.
+    return Array.from({ length: count }, () => ({
+        id: pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null,
+        sold: false
+    }));
+}
+
+function generateShopOffers() {
+    return [
+        ...drawShopItems('healing', 2),
+        ...drawShopItems('consumable', 2),
+        ...drawShopItems('relic', 1)
+    ];
+}
+
+function currentShopNode() {
+    return mapRun.nodes.find(node => node.id === mapRun.currentNodeId && node.type === 'shop');
+}
+
+function currentShopOffers() {
+    const node = currentShopNode();
+    if (node) {
+        if (!node.shopOffers) node.shopOffers = generateShopOffers();
+        return node.shopOffers;
+    }
+    if (!devShopOffers) devShopOffers = generateShopOffers();
+    return devShopOffers;
+}
+
+function rerollShop() {
+    if (coins < 10) return;
+    coins -= 10;
+    const node = currentShopNode();
+    if (node) node.shopOffers = generateShopOffers();
+    else devShopOffers = generateShopOffers();
+    pendingBuyItemIdx = -1;
+    renderShop(); updateUI();
+}
+
+function markShopOfferSold(idx) {
+    const offer = currentShopOffers()[idx];
+    if (offer) offer.sold = true;
 }
 
 function renderShop() {
     document.getElementById('shopCoins').innerText = coins;
     const hpSpan = document.getElementById('shopHpDisplay');
-    if (mapRun.active) { hpSpan.innerText = `❤️ ${mapRun.playerHp}/${mapRun.playerMaxHp} HP`; } else { hpSpan.innerText = ''; }
+    hpSpan.innerText = mapRun.active ? `❤️ ${mapRun.playerHp}/${mapRun.playerMaxHp} HP` : '';
 
     const shopInv = document.getElementById('shopInventorySlots'); shopInv.innerHTML = '';
     for (let i = 0; i < MAX_INV; i++) {
-        if (i < inventory.length) { shopInv.innerHTML += `<div class="inv-slot" onclick="useItemFromShop(${i})" title="${inventory[i].name} (Kliknij, by użyć)">${inventoryIcon(inventory[i])}</div>`; } 
-        else { shopInv.innerHTML += `<div class="inv-slot"></div>`; }
+        if (i < inventory.length) {
+            const item = inventory[i];
+            const usableHere = !!(item.heal && mapRun.active);
+            shopInv.innerHTML += `<div class="inv-slot" ${usableHere ? `onclick="useItemFromShop(${i})"` : ''} title="${item.name}${usableHere ? ' (Kliknij, aby się uleczyć)' : ' (Użyj podczas walki)'}">${inventoryIcon(item)}</div>`;
+        } else { shopInv.innerHTML += '<div class="inv-slot"></div>'; }
     }
-    document.getElementById('shopRelicsSlots').innerHTML = renderRelicsHTML() || '<span style="font-size:11px;color:#777">Brak reliktów</span>';
+    document.getElementById('shopRelicsSlots').innerHTML = renderRelicsHTML() || '<span style="font-size:11px;color:#777">Brak artefaktów</span>';
 
+    const offers = currentShopOffers();
     const container = document.getElementById('shopItemsContainer'); container.innerHTML = '';
-    SHOP_ITEMS.forEach((item, idx) => {
-        const alreadyOwnedRelic = item.isRelic && relics[item.id];
-        const canAfford = coins >= item.price && !alreadyOwnedRelic;
-        container.innerHTML += `
-            <div class="shop-item ${item.isRelic ? 'relic' : ''}">
-                <div style="font-size:22px;">${item.icon}</div>
-                <div class="shop-info"><span class="shop-name">${item.name}</span><span class="shop-desc">${item.desc}</span></div>
-                <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${alreadyOwnedRelic ? 'Kupiono' : `${item.price} 🪙`}</button>
-            </div>
-        `;
+    const groups = [
+        { title: 'Mikstury leczenia', from: 0, to: 2 },
+        { title: 'Przedmioty jednorazowe', from: 2, to: 4 },
+        { title: 'Artefakt', from: 4, to: 5 }
+    ];
+    let visibleCount = 0;
+    groups.forEach(group => {
+        const visible = [];
+        for (let idx = group.from; idx < group.to; idx++) {
+            const offer = offers[idx];
+            const item = offer && SHOP_ITEMS.find(i => i.id === offer.id);
+            // Kupiony przedmiot znika z aktualnej oferty, a posiadany artefakt nie wraca do sklepu.
+            if (!offer || offer.sold || !item || (item.isRelic && relics[item.id])) continue;
+            visible.push({ item, idx });
+        }
+        if (!visible.length) return;
+        container.innerHTML += `<div class="shop-category-title">${group.title} (${visible.length})</div>`;
+        visible.forEach(({ item, idx }) => {
+            const canAfford = coins >= item.price;
+            container.innerHTML += `
+                <div class="shop-item ${item.isRelic ? 'relic' : ''}">
+                    <div style="font-size:22px;">${item.icon}</div>
+                    <div class="shop-info"><span class="shop-name">${item.name}</span><span class="shop-desc">${item.desc}</span></div>
+                    <button class="btn-buy" onclick="buyItem(${idx})" ${canAfford ? '' : 'disabled'}>${item.price} 🪙</button>
+                </div>
+            `;
+            visibleCount++;
+        });
     });
+    if (!visibleCount) {
+        container.innerHTML = '<div class="shop-category-title">Wykupiono całą ofertę. Możesz losować ponownie za 10 🪙.</div>';
+    }
+    const reroll = document.getElementById('shopRerollBtn');
+    if (reroll) reroll.disabled = coins < 10;
 }
 
 function useItemFromShop(idx) {
     const item = inventory[idx];
-    if (!item) return;
-    if (item.id === 'heal_pot' && mapRun.active) {
-        if (mapRun.playerHp >= mapRun.playerMaxHp) { alert('Masz już pełne punkty życia!'); return; }
-        inventory.splice(idx, 1);
-        const before = mapRun.playerHp;
-        mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL);
-        duel.playerHp = mapRun.playerHp;
-        renderShop(); updateUI();
-        alert(`Wypito Miksturę Leczenia! Odzyskano +${mapRun.playerHp - before} HP.`);
-    }
+    if (!item || !item.heal || !mapRun.active) return;
+    if (mapRun.playerHp >= mapRun.playerMaxHp) { alert('Masz już pełne punkty życia!'); return; }
+    inventory.splice(idx, 1);
+    const healed = healPlayerBy(item.heal);
+    renderShop(); updateUI();
+    alert(`Wypito: ${item.name}. Odzyskano ${healed} HP.`);
 }
 
 function buyItem(idx) {
-    let item = SHOP_ITEMS[idx]; if (!item || coins < item.price) return;
+    const offer = currentShopOffers()[idx];
+    const item = offer && SHOP_ITEMS.find(i => i.id === offer.id);
+    if (!item || offer.sold || coins < item.price || (item.isRelic && relics[item.id])) return;
     if (item.isRelic) {
-        if (relics[item.id]) return;
         coins -= item.price; relics[item.id] = true;
-        renderShop(); updateUI(); return;
+        markShopOfferSold(idx); renderShop(); updateUI(); return;
     }
     const diceStack = item.id === 'dice' ? inventory.find(invItem => invItem.id === 'dice') : null;
     if (diceStack) {
         coins -= item.price; diceStack.charges = (diceStack.charges ?? 3) + 3;
-        renderShop(); updateUI();
+        markShopOfferSold(idx); renderShop(); updateUI();
     } else if (inventory.length < MAX_INV) {
         coins -= item.price; inventory.push(makeInventoryItem(item));
-        renderShop(); updateUI();
+        markShopOfferSold(idx); renderShop(); updateUI();
     } else {
         pendingBuyItemIdx = idx; renderReplaceModal(); toggleModal('replaceModal', true);
     }
@@ -828,10 +930,12 @@ function renderReplaceModal() {
 }
 
 function confirmReplace(invIdx) {
-    if (pendingBuyItemIdx === -1) return;
-    let newItem = SHOP_ITEMS[pendingBuyItemIdx];
-    if (newItem && coins >= newItem.price) {
-        coins -= newItem.price; inventory[invIdx] = makeInventoryItem(newItem); pendingBuyItemIdx = -1;
+    if (pendingBuyItemIdx === -1 || invIdx < 0 || invIdx >= inventory.length) return;
+    const offer = currentShopOffers()[pendingBuyItemIdx];
+    const newItem = offer && SHOP_ITEMS.find(i => i.id === offer.id);
+    if (newItem && !offer.sold && !newItem.isRelic && coins >= newItem.price) {
+        coins -= newItem.price; inventory[invIdx] = makeInventoryItem(newItem);
+        markShopOfferSold(pendingBuyItemIdx); pendingBuyItemIdx = -1;
         toggleModal('replaceModal', false); renderShop(); updateUI();
     }
 }
@@ -839,9 +943,10 @@ function confirmReplace(invIdx) {
 function useItem(idx) {
     if (gameOver || handResolutionPending || idx >= inventory.length) return;
     let item = inventory[idx];
-    if ((item.id === 'shield_pot' || item.id === 'heal_pot') && !duel.active) { document.getElementById('log').innerText = `${item.name} działa wyłącznie w trakcie wyprawy!`; return; }
-    if (item.id === 'heal_pot' && duel.active && duel.playerHp >= duel.playerMaxHp) { document.getElementById('log').innerText = 'Masz już pełne HP — nie potrzebujesz leczenia.'; return; }
+    if ((item.id === 'shield_pot' || item.category === 'healing') && !duel.active) { document.getElementById('log').innerText = `${item.name} działa wyłącznie w trakcie wyprawy!`; return; }
+    if (item.heal && duel.active && duel.playerHp >= duel.playerMaxHp) { document.getElementById('log').innerText = 'Masz już pełne HP — nie potrzebujesz leczenia.'; return; }
     if (duel.active && item.id === 'time' && isFatigued()) { document.getElementById('log').innerText = 'Zmęczenie już trwa — Złoty Zegar nic by nie dał.'; return; }
+    if (item.id === 'heal_regen' && duel.regenTurns > 0) { document.getElementById('log').innerText = 'Regeneracja jest już aktywna.'; return; }
     if (item.id === 'dice' && pendingDiceRoll > 0) { document.getElementById('log').innerText = 'Kość jest już przygotowana — najpierw zagraj atak.'; return; }
     confirmItemIdx = idx;
 
@@ -872,11 +977,12 @@ function executeItem(idx) {
     if (item.id !== 'dice') inventory.splice(idx, 1);
 
     if (item.id === 'discard') { discardsLeft++; showFloatingText('+1 Odrzut', '#3498db', '65%', '35%', '20px'); }
-    else if (item.id === 'heal_pot') {
-        const before = duel.playerHp; duel.playerHp = Math.min(duel.playerMaxHp, duel.playerHp + DUEL.HEAL_POTION_VAL);
-        if (mapRun.active) mapRun.playerHp = duel.playerHp;
-        const healed = duel.playerHp - before; showFloatingText(`+${healed} ❤️`, '#2ecc71', '17%', '72%', '22px');
+    else if (item.id === 'glove') { discardsLeft += 2; showFloatingText('+2 Odrzuty', '#3498db', '65%', '35%', '20px'); }
+    else if (item.heal) {
+        const healed = healPlayerBy(item.heal);
+        showFloatingText(`+${healed} ❤️`, '#2ecc71', '17%', '72%', '22px');
     }
+    else if (item.id === 'heal_regen') { duel.regenTurns = 3; showFloatingText('❤️ Regeneracja ×3', '#2ecc71', '17%', '72%', '20px'); }
     else if (item.id === 'shield_pot') { duel.playerShield += 25; showFloatingText('+25 🛡', '#5dade2', '15%', '35%', '22px'); }
     else if (item.id === 'time') { duel.fatigueRound++; showFloatingText('Zmęczenie +1 runda', '#f1c40f', '25%', '22%', '16px'); }
     else if (item.id === 'pow1') { activeBuff = { dmg: 10, turns: 3 }; showFloatingText('+10 Bazy', '#e74c3c', '65%', '35%', '20px'); }
@@ -950,13 +1056,15 @@ const headerName = document.getElementById('header-enemy-name');
             }
         }
     } else {
-        headerName.innerText = '⚓ Pod Złamaną Kotwicą';
+        headerName.innerText = '⚓ Kalon';
         bossSkillBox.style.display = 'none';
         traitBar.style.display = 'none';
     }
 
-    let buffText = activeBuff.turns > 0 ? `(💪 +${activeBuff.dmg} na ${activeBuff.turns} ataki)` : '';
-    document.getElementById('ui-buff').innerText = buffText;
+    const buffParts = [];
+    if (activeBuff.turns > 0) buffParts.push(`💪 +${activeBuff.dmg} DMG na ${activeBuff.turns} ataki`);
+    if (duel.regenTurns > 0) buffParts.push(`❤️ +20 HP przez ${duel.regenTurns} tury`);
+    document.getElementById('ui-buff').innerText = buffParts.join(' · ');
 
     const invSlots = document.getElementById('ui-inventory'); invSlots.innerHTML = '';
     for (let i = 0; i < MAX_INV; i++) {
@@ -968,150 +1076,9 @@ const headerName = document.getElementById('header-enemy-name');
     refreshButtons(); applyDuelView();
 }
 
-// ======================= GENERATOR NIEREGULARNEJ MAPY BEZ KOLIZJI =======================
-function connectNodes(nodes, idA, idB) {
-    const a = nodes.find(n => n.id === idA);
-    const b = nodes.find(n => n.id === idB);
-    if (!a || !b) return;
-    if (!a.targets.includes(idB)) a.targets.push(idB);
-    if (!b.targets.includes(idA)) b.targets.push(idA);
-}
-
-function resolveMapCollisions(nodes) {
-    const MIN_DIST = 16.5;
-    const ASPECT = 2.0;
-
-    for (let iter = 0; iter < 50; iter++) {
-        let moved = false;
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const a = nodes[i];
-                const b = nodes[j];
-
-                const dx = a.x - b.x;
-                const dy = (a.y - b.y) / ASPECT;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist < MIN_DIST) {
-                    moved = true;
-                    const overlap = (MIN_DIST - Math.max(0.1, dist)) / 2;
-                    const ux = dist > 0.1 ? dx / dist : (Math.random() - 0.5);
-                    const uy = dist > 0.1 ? dy / dist : (Math.random() - 0.5);
-
-                    const lockA = (a.type === 'start' || a.type === 'boss');
-                    const lockB = (b.type === 'start' || b.type === 'boss');
-
-                    if (!lockA) {
-                        a.x = Math.max(12, Math.min(86, a.x + ux * overlap));
-                        a.y = Math.max(16, Math.min(84, a.y + uy * overlap * ASPECT));
-                    }
-                    if (!lockB) {
-                        b.x = Math.max(12, Math.min(86, b.x - ux * overlap));
-                        b.y = Math.max(16, Math.min(84, b.y - uy * overlap * ASPECT));
-                    }
-                }
-            }
-        }
-        if (!moved) break;
-    }
-}
-
+// Generator pięter w osobnym pliku map-generator.js.
 function generateActMap(actNumber = 1) {
-    const boss = pickRandomCalionBoss();
-    const bonusHp = (actNumber - 1) * DUEL.ACT_HP_STEP;
-    const zbirHp = DUEL.ZBIR_BASE_HP + bonusHp;
-    const eliteHp = DUEL.ELITE_BASE_HP + bonusHp;
-    const bossHp = DUEL.BOSS_BASE_HP + bonusHp;
-
-    const rEnemies = () => REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
-    const eEnemies = () => pickRandomEnemyTrait();
-
-    const nodes = [];
-    let nextId = 0;
-
-    // 1. Główny szlak w środkowym pasie
-    const spineCols = [8, 24, 41, 58, 75, 92];
-    let prevY = 50;
-    const spineIds = [];
-
-    for (let i = 0; i < spineCols.length; i++) {
-        const isStart = (i === 0);
-        const isBoss = (i === spineCols.length - 1);
-        
-        let y = 50;
-        if (!isStart && !isBoss) {
-            const shift = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.floor(Math.random() * 8));
-            y = Math.max(38, Math.min(62, prevY + shift));
-        }
-        prevY = y;
-
-        let type = 'empty', icon = '🪵', title = 'Pusty korytarz', hp = 0, xp = 0, enemy = null;
-
-        if (isStart) {
-            type = 'start'; icon = '🏕️'; title = 'Wejście';
-        } else if (isBoss) {
-            type = 'boss'; icon = '👑'; title = boss.name; hp = bossHp; xp = 250; enemy = boss;
-        } else if (i === 1 || i === 3) {
-            const e = rEnemies();
-            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
-        } else if (i === 4) {
-            type = 'shop'; icon = '🪙'; title = 'Karczemny Kram';
-        } else if (Math.random() < 0.45) {
-            const e = rEnemies();
-            type = 'fight'; icon = '⚔️'; title = e.name; hp = zbirHp; xp = 50; enemy = e;
-        }
-
-        const id = nextId++;
-        nodes.push({ id, x: spineCols[i], y, type, icon, title, hp, xp, enemy, targets: [], cleared: isStart });
-        spineIds.push(id);
-        if (i > 0) connectNodes(nodes, spineIds[i - 1], id);
-    }
-
-    // 2. Boczne ślepe odnogi: [Strażnik] -> [Skrzynia / Zapasy HP]
-    // Tworzymy odnogę na górze przy kolumnie 1 oraz odnogę na dole przy kolumnie 2 lub 3
-    const branches = [
-        { spineIdx: 1, goUp: true },
-        { spineIdx: 2, goUp: false }
-    ];
-
-    branches.forEach(br => {
-        const parent = nodes[spineIds[br.spineIdx]];
-        const guardY = br.goUp ? 19 : 81;
-        const guardX = parent.x + 3;
-
-        const isEliteGuard = (!br.goUp || Math.random() < 0.45);
-        const gEnemy = isEliteGuard ? eEnemies() : rEnemies();
-        const guardId = nextId++;
-
-        nodes.push({
-            id: guardId, x: guardX, y: guardY,
-            type: isEliteGuard ? 'elite' : 'fight',
-            icon: isEliteGuard ? '💀' : '⚔️',
-            title: gEnemy.name,
-            hp: isEliteGuard ? eliteHp : zbirHp,
-            xp: isEliteGuard ? 110 : 55,
-            enemy: gEnemy, targets: [], cleared: false
-        });
-        connectNodes(nodes, parent.id, guardId);
-
-        const rewardId = nextId++;
-        const rewardX = guardX + 14;
-        const rewardY = br.goUp ? 18 : 82;
-        const isHealSpring = Math.random() < 0.45;
-
-        nodes.push({
-            id: rewardId, x: rewardX, y: rewardY,
-            type: isHealSpring ? 'heal' : 'chest',
-            icon: isHealSpring ? '🧪' : '📦',
-            title: isHealSpring ? 'Zapasy Medyczne' : 'Ukryta Skrzynia',
-            hp: 0, xp: 0, enemy: null, targets: [], cleared: false
-        });
-        connectNodes(nodes, guardId, rewardId);
-    });
-
-    resolveMapCollisions(nodes);
-
-    return { boss, nodes, bossHp };
+    return generateFloorMap(actNumber);
 }
 
 function gainXp(amount) {
@@ -1125,17 +1092,20 @@ function gainXp(amount) {
 }
 
 function startDuelRun() {
-    runStartedAt = Date.now(); runFinishedAt = 0;
-    runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0 };
+    runStartedAt = Date.now(); runFinishedAt = 0; runRecorded = false;
+    runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
     const generated = generateActMap(1);
     mapRun = {
         active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
         level: 1, xp: 0, xpNext: 100, boss: generated.boss, nodes: generated.nodes,
-        currentNodeId: 0, visitedNodes: new Set([0])
+        currentNodeId: 0, visitedNodes: new Set([0]), discoveredNodes: new Set(),
+        mazeColumns: generated.mazeColumns, mazeRows: generated.mazeRows,
+        shortestPathFields: generated.shortestPathFields
     };
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
-    currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
-    inventory = []; relics = { karwasz: false, lucky_coin: false }; coins = 0;
+    currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
+    inventory = []; relics = {}; devShopOffers = null; coins = 0;
+    stopMazeWalk();
     gameOver = true; setHandResolutionPending(false);
     
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('lobbySectionModal', false);
@@ -1148,91 +1118,139 @@ function startDuelRun() {
 }
 
 function startNextDuelAct() {
+    stopMazeWalk();
     toggleModal('duelResultModal', false);
     mapRun.act++;
     const generated = generateActMap(mapRun.act);
     mapRun.boss = generated.boss;
     mapRun.nodes = generated.nodes;
+    mapRun.mazeColumns = generated.mazeColumns;
+    mapRun.mazeRows = generated.mazeRows;
+    mapRun.shortestPathFields = generated.shortestPathFields;
     mapRun.currentNodeId = 0;
     mapRun.visitedNodes = new Set([0]);
+    mapRun.discoveredNodes = new Set();
     openMapModal(false);
     updateUI();
 }
 
-function renderDiceyMap(lockMovement) {
+// Jedyny widok mapy: labirynt 7x10 z odkrywaniem pol i ruchem w czterech kierunkach.
+function renderMazeMap(lockMovement) {
     const board = document.getElementById('mapBoard');
-    const svg = document.getElementById('svgLayer');
-    if (!board || !svg) return;
-    
-    document.querySelectorAll('.node-plate').forEach(e => e.remove());
-    svg.innerHTML = '';
+    const viewport = document.getElementById('mapViewport');
+    if (!board || !viewport) return;
+    // Narzędzia dev mogą tymczasowo dodawać wroga bez pozycji na mapie.
+    const mapNodes = mapRun.nodes.filter(node => Number.isInteger(node.row) && Number.isInteger(node.col));
+    const current = mapNodes.find(node => node.id === mapRun.currentNodeId)
+        || mapNodes.find(node => node.id === window.__devPrevNodeId);
+    if (!current) return;
 
-    // Stała przestrzeń 1000x450 zdefiniowana w viewBox SVG gwarantuje rysowanie kresek zawsze
-    const SVG_W = 1000;
-    const SVG_H = 450;
+    board.classList.add('maze-board');
+    board.style.setProperty('--maze-cols', String(mapRun.mazeColumns || 7));
+    board.style.setProperty('--maze-rows', String(mapRun.mazeRows || 10));
+    viewport.classList.add('maze-viewport');
+    // Rozmiar kafelkow kontroluje CSS, aby caly widok skalowal sie do ekranu.
+    board.style.removeProperty('width');
+    board.style.removeProperty('height');
+    board.style.removeProperty('grid-template-columns');
+    board.style.removeProperty('grid-template-rows');
+    board.replaceChildren();
 
-    const drawnPairs = new Set();
-    const cur = mapRun.nodes.find(n => n.id === mapRun.currentNodeId);
-    if (!cur) return;
-
-    // 1. Rysowanie linii połączeń między strefami
-    mapRun.nodes.forEach(node => {
-        const x1 = (node.x / 100) * SVG_W;
-        const y1 = (node.y / 100) * SVG_H;
-
-        node.targets.forEach(tid => {
-            const pairKey = [Math.min(node.id, tid), Math.max(node.id, tid)].join('-');
-            if (!drawnPairs.has(pairKey)) {
-                drawnPairs.add(pairKey);
-                const target = mapRun.nodes.find(n => n.id === tid);
-                if (!target) return;
-                const x2 = (target.x / 100) * SVG_W;
-                const y2 = (target.y / 100) * SVG_H;
-
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-                line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-
-                const isAdjacent = !lockMovement && (
-                    (node.id === mapRun.currentNodeId && cur.targets.includes(tid)) || 
-                    (tid === mapRun.currentNodeId && cur.targets.includes(node.id))
-                );
-
-                if (isAdjacent) {
-                    line.classList.add('active-path');
-                } else if (mapRun.visitedNodes.has(node.id) && mapRun.visitedNodes.has(tid)) {
-                    line.classList.add('walked-path');
-                }
-                svg.appendChild(line);
-            }
-        });
-    });
-
-    // 2. Rysowanie okrągłych stref
-    mapRun.nodes.forEach(node => {
-        const div = document.createElement('div');
-        div.className = 'node-plate';
-        div.style.left = `${node.x}%`;
-        div.style.top = `${node.y}%`;
-        div.title = node.title;
-
-        const isCurrent = (node.id === mapRun.currentNodeId);
-        const isAdjacent = !lockMovement && cur.targets.includes(node.id);
-
-        if (isCurrent) {
-            div.classList.add('player-here');
-            div.innerHTML = '🧙';
-        } else {
-            if (mapRun.visitedNodes.has(node.id) || node.cleared) div.classList.add('cleared');
-            div.innerHTML = node.icon;
-
-            if (isAdjacent) {
-                div.classList.add('available');
-                div.onclick = () => selectMapNode(node.id);
-            }
+    // Pamietamy zobaczone wyjscia, ale nie ujawniamy zawartosci ani scian.
+    if (!(mapRun.discoveredNodes instanceof Set)) mapRun.discoveredNodes = new Set();
+    const byId = new Map(mapNodes.map(node => [node.id, node]));
+    for (const visitedId of mapRun.visitedNodes) {
+        const room = byId.get(visitedId);
+        if (!room) continue;
+        for (const targetId of room.targets) {
+            if (!mapRun.visitedNodes.has(targetId)) mapRun.discoveredNodes.add(targetId);
         }
-        board.appendChild(div);
-    });
+    }
+    for (const visitedId of mapRun.visitedNodes) mapRun.discoveredNodes.delete(visitedId);
+
+    const byPosition = new Map(mapNodes.map(node => [node.row + ':' + node.col, node]));
+    const fragment = document.createDocumentFragment();
+    for (const node of mapNodes) {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'maze-tile';
+        tile.dataset.nodeId = String(node.id);
+        tile.style.gridColumn = node.col + 1;
+        tile.style.gridRow = node.row + 1;
+        const visited = mapRun.visitedNodes.has(node.id);
+        const isCurrent = current.id === node.id;
+        const adjacent = current.targets.includes(node.id);
+        const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
+        const frontier = !visited && mapRun.discoveredNodes.has(node.id);
+        const known = visited || frontier;
+        const completed = visited && node.cleared && node.originalIcon && node.originalIcon !== '·' && node.originalIcon !== '🏕️';
+        // Sciany odslaniaja sie dopiero po wejsciu na pole.
+        const wallsRevealed = visited;
+        tile.classList.add(wallsRevealed ? 'maze-walls-revealed' : 'maze-walls-hidden');
+
+        // Brak ściany tylko tam, gdzie istnieje rzeczywiste przejście.
+        const north = byPosition.get((node.row - 1) + ':' + node.col);
+        const south = byPosition.get((node.row + 1) + ':' + node.col);
+        const west = byPosition.get(node.row + ':' + (node.col - 1));
+        const east = byPosition.get(node.row + ':' + (node.col + 1));
+        if (wallsRevealed) {
+            if (north && node.targets.includes(north.id)) tile.style.borderTopColor = 'transparent';
+            if (south && node.targets.includes(south.id)) tile.style.borderBottomColor = 'transparent';
+            if (west && node.targets.includes(west.id)) tile.style.borderLeftColor = 'transparent';
+            if (east && node.targets.includes(east.id)) tile.style.borderRightColor = 'transparent';
+        }
+
+        if (visited) tile.classList.add('explored');
+        else if (frontier) tile.classList.add('maze-frontier');
+        if (frontier && adjacent) tile.classList.add('maze-frontier-adjacent');
+        if (completed) tile.classList.add('maze-completed');
+        else if (!known) tile.classList.add('unexplored');
+        if (node.type === 'boss' && visited) tile.classList.add('boss-tile');
+        if (isCurrent) tile.classList.add('player-here');
+        else if (canMove && visited) tile.classList.add('returnable');
+        else if (canMove) tile.classList.add('available');
+
+        // Nawet gdy walka lub nagroda zmienily pokoj na pusty,
+        // zachowujemy ikone i nazwe pierwszego napotkanego zdarzenia.
+        tile.textContent = isCurrent ? '' : visited ? (node.originalIcon || node.icon)
+            : frontier && adjacent ? node.icon : frontier ? '' : '·';
+        tile.disabled = !canMove;
+        tile.title = isCurrent ? 'Twoja pozycja' : frontier && adjacent ? node.title
+            : frontier ? 'Odkryte przejście (niezbadane)'
+            : visited ? ((completed ? (node.originalTitle || node.title) + ' (ukończone)' : node.title))
+                : 'Nieodkryte pole';
+        tile.setAttribute('aria-label', (canMove ? (visited ? 'Wróć do: ' : 'Przejdź do: ') : '') + tile.title);
+        if (canMove) tile.onclick = () => selectMapNode(node.id);
+        fragment.appendChild(tile);
+    }
+    board.appendChild(fragment);
+    // Avatar jest osobnym elementem: animuje sie bez przebudowy kafelkow.
+    const avatar = document.createElement('div');
+    avatar.className = 'maze-avatar';
+    avatar.textContent = '🧙';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.style.left = ((current.col + 0.5) / (mapRun.mazeColumns || 7) * 100) + '%';
+    avatar.style.top = ((current.row + 0.5) / (mapRun.mazeRows || 10) * 100) + '%';
+    board.appendChild(avatar);
+
+    // Wysokosc kafelka zalezy od ekranu. Przewijamy do widocznej postaci,
+    // zamiast uzywac stalych wspolrzednych z generatora (64px).
+    const playerTile = board.querySelector('.player-here');
+    if (playerTile) {
+        viewport.scrollTop = Math.max(0, playerTile.offsetTop + playerTile.offsetHeight / 2
+            - viewport.clientHeight * 0.65);
+    }
+    viewport.onkeydown = event => {
+        if (lockMovement || !gameOver || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        const offset = {
+            ArrowUp: [-1, 0], ArrowDown: [1, 0],
+            ArrowLeft: [0, -1], ArrowRight: [0, 1]
+        }[event.key];
+        const destination = byPosition.get((current.row + offset[0]) + ':' + (current.col + offset[1]));
+        if (!destination || !current.targets.includes(destination.id)) return;
+        event.preventDefault();
+        selectMapNode(destination.id);
+    };
 }
 
 function openMapModal(fromTopButton = false) {
@@ -1241,15 +1259,19 @@ function openMapModal(fromTopButton = false) {
         mapRun.active = true;
         mapRun.boss = generated.boss;
         mapRun.nodes = generated.nodes;
+        mapRun.mazeColumns = generated.mazeColumns;
+        mapRun.mazeRows = generated.mazeRows;
+        mapRun.shortestPathFields = generated.shortestPathFields;
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
+        mapRun.discoveredNodes = new Set();
     }
 
     // Blokujemy ruch na mapie TYLKO wtedy, gdy trwa nierozstrzygnięta walka przy stole
     const combatInProgress = !gameOver && duel.active && duel.enemyHp > 0;
     const lockMovement = fromTopButton && combatInProgress;
 
-    document.getElementById('mapTitle').innerText = `Szlak Calionu · Piętro ${mapRun.act}`;
+    document.getElementById('mapTitle').innerText = `Labirynt Calionu · Piętro ${mapRun.act} · ${mapRun.shortestPathFields} kroków do bossa`;
     document.getElementById('mapPlayerHp').innerText = `${mapRun.playerHp}/${mapRun.playerMaxHp}`;
     document.getElementById('mapPlayerLvl').innerText = mapRun.level;
     document.getElementById('mapPlayerXp').innerText = `${mapRun.xp}/${mapRun.xpNext} EXP`;
@@ -1262,19 +1284,138 @@ function openMapModal(fromTopButton = false) {
     document.getElementById('mapClosePeekBtn').style.display = combatInProgress ? 'block' : 'none';
     document.getElementById('mapHintText').innerText = lockMovement
         ? 'Trwa walka — pokonaj wroga przy stole, aby ruszyć dalej!'
-        : 'Kliknij podświetlone na złoto kółko połączone przerywaną linią, aby tam przejść.';
+        : 'Odkrywaj ściany krok po kroku. Dotknij sąsiedniego pola lub odwiedzonego miejsca, by automatycznie wrócić.';
 
     toggleModal('mapModal', true);
-    renderDiceyMap(lockMovement);
+    renderMazeMap(lockMovement);
+}
+
+// Przechodzenie po odwiedzonych polach: najkrotsza trasa w poznanych korytarzach.
+let mazeWalkInProgress = false;
+let mazeWalkToken = 0;
+
+function stopMazeWalk() {
+    mazeWalkToken++;
+    mazeWalkInProgress = false;
+}
+
+function findMazeVisitedRoute(startId, targetId) {
+    if (startId === targetId || !mapRun.visitedNodes.has(targetId)) return [];
+    const byId = new Map(mapRun.nodes.map(node => [node.id, node]));
+    const queue = [startId];
+    const previous = new Map([[startId, null]]);
+    for (let i = 0; i < queue.length; i++) {
+        const node = byId.get(queue[i]);
+        if (!node) continue;
+        for (const id of node.targets) {
+            if (!mapRun.visitedNodes.has(id) || previous.has(id)) continue;
+            previous.set(id, node.id);
+            queue.push(id);
+        }
+        if (previous.has(targetId)) break;
+    }
+    if (!previous.has(targetId)) return [];
+    const route = [];
+    for (let id = targetId; id !== startId; id = previous.get(id)) route.push(id);
+    return route.reverse();
+}
+
+async function walkMazeRoute(route) {
+    if (!route.length || mazeWalkInProgress) return;
+    const board = document.getElementById('mapBoard');
+    const viewport = document.getElementById('mapViewport');
+    const avatar = board && board.querySelector('.maze-avatar');
+    if (!board || !viewport || !avatar) return;
+    const byId = new Map(mapRun.nodes.map(node => [node.id, node]));
+    const tiles = new Map(Array.from(board.querySelectorAll('.maze-tile'),
+        tile => [Number(tile.dataset.nodeId), tile]));
+    const destinationId = route[route.length - 1];
+    const previouslyVisited = mapRun.visitedNodes.has(destinationId);
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stepMs = reduceMotion ? 40 : 290;
+    const token = ++mazeWalkToken;
+    mazeWalkInProgress = true;
+    board.classList.add('maze-walking');
+    board.querySelectorAll('.maze-tile').forEach(tile => { tile.disabled = true; });
+
+    for (const id of route) {
+        if (token !== mazeWalkToken || !mapRun.active) return;
+        const node = byId.get(id);
+        const oldNode = byId.get(mapRun.currentNodeId);
+        const tile = tiles.get(id);
+        if (!node || !oldNode || !tile || !oldNode.targets.includes(id)) {
+            stopMazeWalk();
+            renderMazeMap(false);
+            return;
+        }
+        avatar.style.left = ((node.col + 0.5) / (mapRun.mazeColumns || 7) * 100) + '%';
+        avatar.style.top = ((node.row + 0.5) / (mapRun.mazeRows || 10) * 100) + '%';
+        const top = Math.max(0, tile.offsetTop + tile.offsetHeight / 2 - viewport.clientHeight * 0.55);
+        if (typeof viewport.scrollTo === 'function') {
+            viewport.scrollTo({ top, behavior: reduceMotion ? 'instant' : 'smooth' });
+        } else viewport.scrollTop = top;
+        await new Promise(resolve => setTimeout(resolve, stepMs));
+        if (token !== mazeWalkToken || !mapRun.active) return;
+
+        const oldTile = tiles.get(oldNode.id);
+        if (oldTile) {
+            oldTile.classList.remove('player-here');
+            oldTile.classList.add('explored');
+            if (oldNode.cleared && oldNode.originalIcon && oldNode.originalIcon !== '·' && oldNode.originalIcon !== '🏕️') {
+                oldTile.classList.add('maze-completed');
+            }
+            oldTile.textContent = oldNode.originalIcon || oldNode.icon;
+        }
+        mapRun.currentNodeId = id;
+        mapRun.visitedNodes.add(id);
+        if (!(mapRun.discoveredNodes instanceof Set)) mapRun.discoveredNodes = new Set();
+        mapRun.discoveredNodes.delete(id);
+        for (const neighborId of node.targets) {
+            if (!mapRun.visitedNodes.has(neighborId)) mapRun.discoveredNodes.add(neighborId);
+        }
+        tile.classList.remove('available', 'returnable', 'unexplored', 'maze-frontier');
+        tile.classList.add('player-here', 'explored');
+        tile.textContent = '';
+    }
+
+    mazeWalkInProgress = false;
+    board.classList.remove('maze-walking');
+    resolveMapNodeArrival(byId.get(destinationId), previouslyVisited);
 }
 
 function selectMapNode(nodeId) {
-    const node = mapRun.nodes.find(n => n.id === nodeId);
-    if (!node) return;
+    if (!mapRun.active || !gameOver || mazeWalkInProgress) return;
+    const current = mapRun.nodes.find(node => node.id === mapRun.currentNodeId);
+    const node = mapRun.nodes.find(candidate => candidate.id === nodeId);
+    if (!current || !node || nodeId === current.id) return;
+
+    // W eksperymencie mozna wybrac dowolne juz odwiedzone pole.
+    if (Number.isInteger(current.row) && Number.isInteger(node.row)) {
+        const route = mapRun.visitedNodes.has(nodeId)
+            ? findMazeVisitedRoute(current.id, nodeId)
+            : (current.targets.includes(nodeId) ? [nodeId] : []);
+        if (!route.length) return;
+        void walkMazeRoute(route);
+        return;
+    }
+
+    if (!current.targets.includes(nodeId)) return;
     mapRun.currentNodeId = nodeId;
     mapRun.visitedNodes.add(nodeId);
-    toggleModal('mapModal', false);
+    resolveMapNodeArrival(node, false);
+}
 
+function resolveMapNodeArrival(node, previouslyVisited = false) {
+    toggleModal('mapModal', false);
+    // Powrot na dowolne odkryte pole to tylko ruch: bez drugiej walki,
+    // leczenia, otwierania skrzyni, wydarzenia ani wizyty w sklepie.
+    if (previouslyVisited) {
+        openMapModal(false);
+        return;
+    }
+    // Zapisujemy pierwotny symbol przed jednorazowa interakcja.
+    node.originalIcon = node.originalIcon || node.icon;
+    node.originalTitle = node.originalTitle || node.title;
     if (node.type === 'chest') {
         node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openChestNode();
@@ -1282,7 +1423,10 @@ function selectMapNode(nodeId) {
         node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
         openHealSpringNode();
     } else if (node.type === 'shop') {
+        node.cleared = true;
         openMapShopNode();
+    } else if (node.type === 'event') {
+        openMysteryMapEvent(node);
     } else if (node.type === 'start' || node.type === 'empty') {
         openMapModal(false);
     } else if (node.type === 'fight' || node.type === 'elite' || node.type === 'boss') {
@@ -1292,6 +1436,70 @@ function selectMapNode(nodeId) {
             openMapModal(false);
         }
     }
+}
+
+// Pierwsza, prosta pula zdarzeń. Docelowo zastąpi ją rozbudowana baza fabularna.
+function openMysteryMapEvent(node) {
+    runStats.mysteryEvents++;
+    const roll = Math.random();
+    if (roll < 0.24) {
+        node.type = 'shop';
+        node.icon = '🪙';
+        node.title = 'Wędrowny handlarz';
+        node.cleared = true;
+        openMapShopNode();
+        return;
+    }
+
+    if (roll < 0.49) {
+        const foundCoins = 15 + Math.floor(Math.random() * 21);
+        coins += foundCoins;
+        runStats.coinsEarned += foundCoins;
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        document.getElementById('chestModalDesc').innerText =
+            'Nieznany podróżnik zostawił na szlaku mieszek monet. Dziś szczęście Ci sprzyja.';
+        document.getElementById('chestLootSummary').innerHTML =
+            '<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+' + foundCoins + ' 🪙</strong></div>';
+        updateUI(); toggleModal('chestModal', true);
+        return;
+    }
+
+    if (roll < 0.74) {
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        const before = mapRun.playerHp;
+        mapRun.playerHp = Math.min(mapRun.playerMaxHp, before + 100);
+        duel.playerHp = mapRun.playerHp;
+        document.getElementById('chestModalDesc').innerText =
+            'W przydrożnej kapliczce odnajdujesz wodę o leczniczych właściwościach.';
+        document.getElementById('chestLootSummary').innerHTML =
+            '<div><span>Odzyskane zdrowie:</span><strong style="color:#2ecc71">+' +
+            (mapRun.playerHp - before) + ' ❤️ HP</strong></div>';
+        updateUI(); toggleModal('chestModal', true);
+        return;
+    }
+
+    // W labiryncie 7x10 wydarzenia nie moga dokladac walk
+    // ponad limit 10 zwyklych przeciwnikow i 4 elit.
+    if (mapRun.mazeColumns === 7 && mapRun.mazeRows === 10) {
+        const foundCoins = 10 + Math.floor(Math.random() * 16);
+        coins += foundCoins;
+        runStats.coinsEarned += foundCoins;
+        node.type = 'empty'; node.icon = '🪵'; node.cleared = true;
+        document.getElementById('chestModalDesc').innerText =
+            'W cieniu korytarza znajdujesz sakiewke porzucona przez podroznika.';
+        document.getElementById('chestLootSummary').innerHTML =
+            '<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+' + foundCoins + ' 🪙</strong></div>';
+        updateUI(); toggleModal('chestModal', true);
+        return;
+    }
+
+    node.type = 'fight';
+    node.icon = '⚔️';
+    node.enemy = REGULAR_ENEMIES[Math.floor(Math.random() * REGULAR_ENEMIES.length)];
+    node.title = 'Zasadzka: ' + node.enemy.name;
+    node.hp = DUEL.ZBIR_BASE_HP + (mapRun.act - 1) * DUEL.ACT_HP_STEP;
+    node.xp = 50;
+    startDuelFromMapNode(node);
 }
 
 function openHealSpringNode() {
@@ -1313,16 +1521,18 @@ function openChestNode() {
     coins += foundCoins; runStats.coinsEarned += foundCoins;
 
     let extraRewardHtml = '';
-    const healItem = SHOP_ITEMS.find(i => i.id === 'heal_pot');
-    if (inventory.length < MAX_INV && healItem) {
+    // Zamiast wycofanej mikstury +100 HP losujemy jedną z trzech nowych mikstur natychmiastowych.
+    const chestPotions = SHOP_ITEMS.filter(item => item.category === 'healing' && item.heal);
+    const healItem = chestPotions[Math.floor(Math.random() * chestPotions.length)];
+    if (inventory.length < MAX_INV) {
         inventory.push(makeInventoryItem(healItem));
-        extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 Mikstura Leczenia (+100 HP w plecaku)</strong></div>`;
+        extraRewardHtml = `<div><span>Dodatkowy przedmiot:</span><strong style="color:#2ecc71">🧪 ${healItem.name} (+${healItem.heal} HP w plecaku)</strong></div>`;
     } else {
-        const before = mapRun.playerHp; mapRun.playerHp = Math.min(mapRun.playerMaxHp, mapRun.playerHp + DUEL.HEAL_POTION_VAL); duel.playerHp = mapRun.playerHp;
-        extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${mapRun.playerHp - before} ❤️ HP</strong></div>`;
+        const healed = healPlayerBy(healItem.heal);
+        extraRewardHtml = `<div><span>Plecak pełny (natychmiastowe użycie):</span><strong style="color:#2ecc71">+${healed} ❤️ HP</strong></div>`;
     }
     document.getElementById('chestModalDesc').innerText = 'W ślepym zaułku za pokonanym strażnikiem otwierasz okutą skrzynię!';
-    document.getElementById('chestLootSummary').innerHTML = `<div><span>Znaleziony brąz:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
+    document.getElementById('chestLootSummary').innerHTML = `<div><span>Znalezione monety:</span><strong style="color:#f1c40f">+${foundCoins} 🪙</strong></div>` + extraRewardHtml + `<div><span>Twoje aktualne HP:</span><strong style="color:#2ecc71">${mapRun.playerHp} / ${mapRun.playerMaxHp} HP</strong></div>`;
     updateUI(); toggleModal('chestModal', true);
 }
 
@@ -1335,6 +1545,7 @@ function abandonMapRun() {
 function startDuelFromMapNode(node) {
     const token = duel.token + 1; const prevStreak = duel.streak;
     duel = newDuelState(); duel.token = token; duel.active = true; duel.phase = 'attack'; duel.streak = prevStreak;
+    if (relics.guardian_heart) duel.playerShield = 20;
     duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     duel.enemyMaxHp = node.hp; duel.enemyHp = node.hp;
     currentEnemyTrait = node.enemy;
@@ -1344,7 +1555,7 @@ function startDuelFromMapNode(node) {
     toggleModal('shopModal', false); toggleModal('lobbySectionModal', false);
     gameOver = false;
     discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - 2) : MAX_DISCARDS;
-    activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0;
+    activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     document.getElementById('enemyHand').innerHTML = '';
     document.getElementById('ui-enemy-label').innerText = node.type === 'boss' ? '👑 BOSS HP:' : (node.type === 'elite' ? '💀 ELITA HP:' : 'Wróg HP:');
@@ -1353,6 +1564,8 @@ function startDuelFromMapNode(node) {
 }
 
 function leaveDuel() {
+    stopMazeWalk();
+    if (mapRun.active && !runRecorded) recordRunResult('abandoned');
     duel.token++; duel.active = false; mapRun.active = false; duel.phase = 'attack';
     currentEnemyTrait = null; lockedCardId = null; gameOver = true; runFinishedAt = Date.now();
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
@@ -1381,10 +1594,16 @@ function duelEnd(win) {
 
         xpGained = node ? (node.xp || 50) : 50; levelsGained = gainXp(xpGained);
 
-        if (node) { node.cleared = true; node.type = 'empty'; node.icon = '🪵'; }
+        if (node) {
+            node.originalIcon = node.originalIcon || node.icon;
+            node.originalTitle = node.originalTitle || node.title;
+            node.cleared = true;
+            node.type = 'empty';
+            node.icon = '🪵';
+        }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
-    } else { runFinishedAt = Date.now(); }
+    } else { recordRunResult('defeat'); }
 
     document.getElementById('duelResultTitle').innerText = win ? (isBossNode ? `👑 Boss Piętra ${mapRun.act} Pokonany!` : 'Zwycięstwo na Szlaku!') : 'Poległeś na Szlaku...';
     document.getElementById('duelResultTitle').style.color = win ? '#2ecc71' : '#e74c3c';
@@ -1423,7 +1642,7 @@ function duelPlay() {
         const { rule, sum } = scoreCards(attackCards); handName = rule.name;
         const luckyProc = relics.lucky_coin && Math.random() < 0.10;
         if (luckyProc) showFloatingText('🪙 Szczęście x2!', '#f1c40f', '65%', '35%', '20px');
-        damage = Math.floor(computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, luckyProc }).damage);
+        damage = Math.floor(computeAttackDamage(rule, sum, { potionBonus: activeBuff.turns > 0 ? activeBuff.dmg : 0, dice: pendingDiceRoll, applyEnemyTrait: true, applyPlayerRelics: true, luckyProc }).damage);
     }
 
     const go = () => resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand);
@@ -1441,7 +1660,19 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     if (gameOver || !duel.active) return; const fm = fatigueMult();
 
     if (attackCards.length) {
-        playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards); currentFightBonus += HAND_WIN_BONUS[handName] || 0;
+        playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards);
+        if (!rewardedHandsThisFight.has(handName)) {
+            currentFightBonus += HAND_WIN_BONUS[handName] || 0;
+            rewardedHandsThisFight.add(handName);
+        }
+        if (relics.iron_signet && (handName === 'Para' || handName === 'Dwie Pary')) {
+            duel.playerShield += 5;
+            showFloatingText('💍 +5 🛡', '#5dade2', '17%', '80%', '18px');
+        }
+        if (relics.blood_amulet && handName === 'Full') {
+            const healed = healPlayerBy(15);
+            if (healed) showFloatingText(`🩸 +${healed} HP`, '#2ecc71', '17%', '72%', '18px');
+        }
         let incoming = Math.floor(damage * fm);
 
         if (duel.corvenBlockArmed) { incoming = 0; duel.corvenBlockArmed = false; showFloatingText('🛡️ ZABLOKOWANO 100%', '#5dade2', '30%', '28%', '20px'); }
@@ -1462,7 +1693,7 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
             if (currentEnemyTrait.id === 'boss_corven' && !duel.corvenBlockTriggered && duel.enemyHp <= duel.enemyMaxHp * 0.5) { duel.corvenBlockTriggered = true; duel.corvenBlockArmed = true; showFloatingText('🛡️ TARCZA CORVENA!', '#5dade2', '30%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_riwi' && duel.handLimit === 8) { duel.handLimit = 7; showFloatingText('🩸 OBCIĘCIE PALCA!', '#e74c3c', '65%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_farron' && (handName === 'Wysoka Karta' || handName === 'Para')) {
-                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px');
+                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px'); triggerPhoenixIfNeeded();
             }
         }
     } else { duel.enemyShield = 0; }
@@ -1538,6 +1769,7 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     duel.playerShield = Math.max(0, duel.playerShield - incoming); duel.playerHp = Math.max(0, duel.playerHp - dealt);
     if (mapRun.active) mapRun.playerHp = duel.playerHp;
     duel.stats.taken += dealt; duel.stats.blocked += absorbed;
+    triggerPhoenixIfNeeded();
 
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
@@ -1572,10 +1804,15 @@ async function duelEnemyTurn(token) {
     if (duel.poisonStacks > 0 && duel.playerHp > 0) {
         const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
         if (mapRun.active) mapRun.playerHp = duel.playerHp; duel.stats.taken += poisonDmg;
-        showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); updateUI();
+        showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); triggerPhoenixIfNeeded(); updateUI();
         if (duel.playerHp === 0) { duelEnd(false); return; } await wait(450 * k); if (!alive()) return;
     }
 
+    if (duel.regenTurns > 0) {
+        duel.regenTurns--;
+        const healed = healPlayerBy(20);
+        if (healed) showFloatingText(`❤️ +${healed} HP (regeneracja)`, '#2ecc71', '17%', '72%', '18px');
+    }
     duel.playerShield = 0; duel.round++; duel.phase = 'attack'; duel.enemyCards = [];
     document.getElementById('enemyHand').innerHTML = ''; setEnemyNote('Wróg losuje karty na początku swojego ruchu.');
 

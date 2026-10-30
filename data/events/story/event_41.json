@@ -1,0 +1,33 @@
+{
+  "id": "event_41",
+  "name": "Zgaszona latarnia: finał",
+  "pool": "continuation",
+  "category": "story",
+  "storyId": "lost_lantern",
+  "description": "Docierasz do opuszczonej chaty.",
+  "image": null,
+  "choices": [
+    {
+      "id": "finish",
+      "text": "Zakończ poszukiwania",
+      "actions": [
+        {
+          "type": "finishStory",
+          "storyId": "lost_lantern",
+          "permanent": false
+        }
+      ]
+    },
+    {
+      "id": "extend",
+      "text": "Poszukaj dalej",
+      "actions": [
+        {
+          "type": "advanceStory",
+          "storyId": "lost_lantern",
+          "nextEventId": "event_42"
+        }
+      ]
+    }
+  ]
+}

@@ -96,7 +96,7 @@ html, body {
   background: rgba(0,0,0,.58); border: 1px solid rgba(179,135,67,.38);
   border-radius: 9px; box-shadow: inset 0 2px 7px rgba(0,0,0,.4);
 }
-.enemy-board { grid-area: 1 / 1; display:flex; flex-direction:column; justify-content:center; }
+.enemy-board { grid-area: 1 / 1; display:flex; flex-direction:column; justify-content:flex-start; }
 .enemy-hud { grid-area: 1 / 2; display:flex; flex-direction:column; justify-content:center; gap:clamp(4px,.8vh,8px); }
 .battle-center {
   grid-area: 2 / 1 / 3 / 3; min-width:0; display:grid;
@@ -334,7 +334,7 @@ html, body {
 .modal-text { font-size: 12px; color: #ccc; margin-bottom: 12px; line-height: 1.4; }
 .btn-action { background: linear-gradient(180deg, var(--gold), #7a5825); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 13px; box-shadow: 0 4px 8px rgba(0,0,0,0.6);}
 
-/* MAPA DICEY DUNGEONS */
+/* Mapa wyprawy: jedyny system nawigacji to labirynt 7x10. */
 .map-modal-wide { width: min(96vw, 820px); }
 .map-status-header {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;
@@ -348,56 +348,36 @@ html, body {
 }
 .map-boss-banner strong { color: #ff8b7e; font-size: 12px; }
 
+.map-viewport {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid rgba(179,135,67,0.3);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  scrollbar-color: #b38743 #19130e;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.map-viewport:focus-visible { outline: 2px solid #ffd175; outline-offset: 2px; }
+.map-scroll-hint { color: #b9ad92; font-size: 11px; margin-bottom: 10px; }
 .map-board {
   position: relative;
   width: 100%;
-  aspect-ratio: 20 / 9; 
+  height: auto;
+  aspect-ratio: 7 / 10;
   background: url('img/map_bg.jpg') center/cover no-repeat;
-  border: 1px solid rgba(179,135,67,0.3);
-  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 10px;
   box-shadow: inset 0 0 30px rgba(0,0,0,0.85);
 }
 
-#svgLayer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-#svgLayer line { stroke: #3e5668; stroke-width: 8; stroke-linecap: round; }
-#svgLayer line.active-path { stroke: #ffd175; stroke-width: 10; stroke-dasharray: 14 10; animation: dashMove 1s linear infinite; }
-#svgLayer line.walked-path { stroke: #2ecc71; stroke-width: 7; opacity: 0.65; }
-@keyframes dashMove { from { stroke-dashoffset: 48; } to { stroke-dashoffset: 0; } }
-
-.node-plate {
-  position: absolute;
-  width: clamp(36px, 5.8vw, 48px);
-  height: clamp(36px, 5.8vw, 48px);
-  border-radius: 50%;
-  background: #1e2830;
-  border: 2px solid #485e6f;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  display: flex; align-items: center; justify-content: center;
-  font-size: clamp(16px, 2.8vw, 22px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.65);
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-  cursor: not-allowed;
-  opacity: 0.72;
-}
-.node-plate.available {
-  opacity: 1; cursor: pointer; border: 3px solid #ffd175;
-  background: #2b3945;
-  box-shadow: 0 0 16px rgba(255, 209, 117, 0.85);
-  animation: bounceTarget 1.2s infinite alternate;
-  z-index: 6;
-}
-.node-plate.available:active { transform: translate(-50%, -50%) scale(1.12); }
-.node-plate.player-here {
-  opacity: 1; border: 3px solid #2ecc71; background: #1b3d26;
-  box-shadow: 0 0 18px rgba(46, 204, 113, 0.9); z-index: 10;
-}
-.node-plate.cleared { border-color: #2e593f; background: #15251b; opacity: 0.85; }
-@keyframes bounceTarget { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.1); } }
-
-.shop-grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; max-height: 42dvh; overflow-y: auto; padding-right: 4px; }
+.shop-grid-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; max-height: 42dvh; overflow-y: auto; padding-right: 4px; }
+.shop-category-title { grid-column: 1 / -1; color: #f1c40f; font-weight: bold; font-size: 12px; padding: 4px 0 1px; border-bottom: 1px solid rgba(241,196,15,.25); }
+.shop-item.sold { opacity: .55; }
+.shop-reroll-row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; color:#b9ad92; font-size:11px; }
+.shop-reroll-btn { background:#4a3618; border-color:#b38743; padding:8px 12px; }
+@media(max-width:650px) { .shop-reroll-row { flex-direction:column; align-items:stretch; } .shop-reroll-btn { margin-left:0; } }
 .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.45); border: 1px solid rgba(180,143,92,0.2); padding: 7px 8px; border-radius: 8px; text-align: left; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);}
 .shop-item.danger { border-color: rgba(204, 51, 51, 0.4); }
 .shop-item.relic { border-color: rgba(241, 196, 15, 0.5); background: rgba(45, 35, 15, 0.45); }
@@ -483,9 +463,26 @@ body.duel-mode .card.spent::before {
 .player-hud .inv-slots { gap:clamp(3px,.45vw,5px); }
 .player-hud .inv-slot { width:clamp(25px,4.4vh,32px); height:clamp(25px,4.4vh,32px); }
 .player-hud .relic-badges { flex:1; min-width:25px; }
-.duel-panel { min-width:0; }
+/* The combat log lives inside a flex item. Scroll the whole panel when the
+   viewport is short instead of clipping only the final lines of the preview. */
+.enemy-board .duel-panel {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  touch-action: pan-y;
+}
 .duel-panel .duel-top { justify-content:flex-start; }
-.duel-preview { max-height:6vh; overflow-y:auto; }
+.enemy-board .duel-preview {
+  max-height: none;
+  overflow: visible;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
 .play-area { margin-top:0; gap:clamp(5px,.9vh,10px); }
 .hand-zone { min-height:clamp(94px,15vh,120px); gap:clamp(6px,.65vw,10px); }
 .card { max-width:clamp(62px,5.2vw,88px); height:clamp(78px,11vh,102px); font-size:clamp(14px,1.9vh,18px); }
@@ -500,7 +497,8 @@ body.duel-mode .card.spent::before {
   .top-bar { padding-bottom:4px; margin-bottom:5px; }
   .board-grid { grid-template-rows:minmax(115px,23%) minmax(0,1fr) minmax(165px,32%); gap:5px 8px; }
   .battle-panel { padding:5px 7px; }
-  .duel-preview { max-height:5vh; }
+  .enemy-board .duel-preview { max-height:none; }
+  .board-grid > .enemy-board { min-height:145px; }
   .hand-zone { min-height:76px; gap:clamp(4px,.6vw,7px); }
   .card { max-width:clamp(48px,5.8vw,66px); height:clamp(62px,13vh,82px); font-size:clamp(13px,1.8vh,16px); }
 }
@@ -579,9 +577,11 @@ body.duel-mode .card.spent::before {
   }
   .board-grid > .enemy-board {
     left: 3.6%; top: 1.6%;
-    width: 34.6%; height: 19%;
+    width: 34.6%; height: min(41%, 305px);
     min-height: 0;
   }
+  .board-grid > .enemy-board .panel-kicker { flex: 0 0 auto; }
+  .board-grid > .enemy-board .duel-panel { height: auto; }
   .board-grid > .enemy-hud {
     left: 59.5%; top: 1.6%;
     width: 24.8%; height: auto;
@@ -624,4 +624,9 @@ body.duel-mode .card.spent::before {
   .enemy-hud .top-enemy-header { align-items: center; text-align: center; }
   .enemy-hud .header-title { display: flex; align-items: center; justify-content: center; width: 100%; }
   .enemy-hud .enemy-vitals { justify-content: center; }
+}
+
+/* Very short landscape viewports keep a smaller panel; its contents can scroll. */
+@media (min-width: 1100px) and (orientation: landscape) and (max-height: 480px) {
+  .board-grid > .enemy-board { height: 35%; }
 }
