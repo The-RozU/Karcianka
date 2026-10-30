@@ -1099,7 +1099,6 @@ function startDuelRun() {
         active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
         level: 1, xp: 0, xpNext: 100, boss: generated.boss, nodes: generated.nodes,
         currentNodeId: 0, visitedNodes: new Set([0]), discoveredNodes: new Set(),
-        mapWidth: generated.mapWidth, mapHeight: generated.mapHeight,
         mazeColumns: generated.mazeColumns, mazeRows: generated.mazeRows,
         shortestPathFields: generated.shortestPathFields
     };
@@ -1125,8 +1124,6 @@ function startNextDuelAct() {
     const generated = generateActMap(mapRun.act);
     mapRun.boss = generated.boss;
     mapRun.nodes = generated.nodes;
-    mapRun.mapWidth = generated.mapWidth;
-    mapRun.mapHeight = generated.mapHeight;
     mapRun.mazeColumns = generated.mazeColumns;
     mapRun.mazeRows = generated.mazeRows;
     mapRun.shortestPathFields = generated.shortestPathFields;
@@ -1260,8 +1257,6 @@ function openMapModal(fromTopButton = false) {
         mapRun.active = true;
         mapRun.boss = generated.boss;
         mapRun.nodes = generated.nodes;
-        mapRun.mapWidth = generated.mapWidth;
-        mapRun.mapHeight = generated.mapHeight;
         mapRun.mazeColumns = generated.mazeColumns;
         mapRun.mazeRows = generated.mazeRows;
         mapRun.shortestPathFields = generated.shortestPathFields;
