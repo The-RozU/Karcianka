@@ -1056,7 +1056,7 @@ const headerName = document.getElementById('header-enemy-name');
             }
         }
     } else {
-        headerName.innerText = '⚓ Pod Złamaną Kotwicą';
+        headerName.innerText = '⚓ Kalon';
         bossSkillBox.style.display = 'none';
         traitBar.style.display = 'none';
     }
