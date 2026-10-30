@@ -114,7 +114,7 @@ function createNavigationHarness(map) {
 test('składnia gry, generatora i podstawowe podłączenie', () => {
     new vm.Script(gameSource, { filename: 'game.js' });
     new vm.Script(generatorSource, { filename: 'maze-generator.js' });
-    assert.match(html, /src="maze-generator\.js"/);
+    assert.match(html, /src="maze-generator\.js(?:\?v=[^"]+)?"/);
     assert.match(html, /src="game\.js(?:\?v=[^"]+)?"/);
     assert.match(html, /href="maze-map\.css"/);
     assert.doesNotMatch(html, /svgLayer|src="map-generator\.js"/);
@@ -427,13 +427,13 @@ test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', ()
     }
 });
 
-test('Kalon v0.4.0: nazwa, wersja i czytelny panel informacji o walce', () => {
+test('Kalon v0.4.1: nazwa, wersja i czytelny panel informacji o walce', () => {
     const layout = source('style.css');
-    assert.match(html, /<title>Kalon[^<]*v0\.4\.0<\/title>/);
+    assert.match(html, /<title>Kalon[^<]*v0\.4\.1<\/title>/);
     assert.match(html, /<h2 class="lobby-title">Kalon<\/h2>/);
-    assert.match(html, /aria-label="Wersja 0\.4\.0">v0\.4\.0<\/span>/);
-    assert.match(html, /href="style\.css\?v=0\.4\.0"/);
-    assert.match(html, /src="game\.js\?v=0\.4\.0"/);
+    assert.match(html, /aria-label="Wersja 0\.4\.1">v0\.4\.1<\/span>/);
+    assert.match(html, /href="style\.css\?v=0\.4\.1"/);
+    assert.match(html, /src="game\.js\?v=0\.4\.1"/);
     assert.doesNotMatch(html, /0\.3\.5/);
     assert.match(gameSource, /headerName\.innerText = '⚓ Kalon'/);
     assert.match(layout, /height:\s*min\(41%,\s*305px\)/);
