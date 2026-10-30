@@ -1,0 +1,43 @@
+{
+  "id": "event_30",
+  "name": "Stary handlarz: wołanie o pomoc",
+  "pool": "random",
+  "category": "story",
+  "storyId": "old_merchant_rescue",
+  "repeat": "once-per-run",
+  "weight": 5,
+  "description": "Przy drodze leży ranny stary handlarz. Prosi o pomoc.",
+  "image": null,
+  "choices": [
+    {
+      "id": "help",
+      "text": "Pomóż handlarzowi",
+      "actions": [
+        {
+          "type": "startStory",
+          "storyId": "old_merchant_rescue",
+          "nextEventId": "event_31",
+          "title": "Los starego handlarza"
+        },
+        {
+          "type": "effect",
+          "effect": {
+            "type": "hp",
+            "amount": -10
+          }
+        }
+      ]
+    },
+    {
+      "id": "ignore",
+      "text": "Odejdź",
+      "actions": [
+        {
+          "type": "setRunFlag",
+          "key": "old_merchant_ignored",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

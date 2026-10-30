@@ -1,0 +1,35 @@
+{
+  "id": "event_75",
+  "name": "Stary znajomy",
+  "pool": "random",
+  "category": "story",
+  "storyId": "merchant_return",
+  "weight": 4,
+  "repeat": "once-per-run",
+  "conditions": {
+    "requiredFlags": {
+      "event_31": 1
+    }
+  },
+  "description": "Po wielu piętrach znów spotykasz ocalonego handlarza.",
+  "image": null,
+  "choices": [
+    {
+      "id": "accept",
+      "text": "Wysłuchaj jego propozycji",
+      "actions": [
+        {
+          "type": "startStory",
+          "storyId": "merchant_return",
+          "nextEventId": "event_76",
+          "title": "Dług wdzięczności"
+        }
+      ]
+    },
+    {
+      "id": "decline",
+      "text": "Odmów",
+      "actions": []
+    }
+  ]
+}

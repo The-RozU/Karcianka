@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Calion - Szulernia · Wyprawa PvE · 0.3.5</title>
-<link rel="stylesheet" href="style.css">
+<title>Kalon · Wyprawa PvE · v0.4.0</title>
+<link rel="stylesheet" href="style.css?v=0.4.0">
+<link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
 
@@ -23,7 +24,7 @@
     </div>
 
     <div class="top-right-btns">
-      <span class="game-version" aria-label="Wersja 0.3.5">v0.3.5</span>
+      <span class="game-version" aria-label="Wersja 0.4.0">v0.4.0</span>
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
   </div>
@@ -45,7 +46,7 @@
 
     <section class="enemy-hud battle-panel" aria-label="Stan przeciwnika">
       <div class="top-enemy-header">
-        <h1 class="header-title" id="header-enemy-name">⚓ Pod Złamaną Kotwicą</h1>
+        <h1 class="header-title" id="header-enemy-name">⚓ Kalon</h1>
         <div class="boss-skill" id="header-boss-skill" style="display:none">
           <span class="skill-name" id="header-skill-name"></span>
           <span id="header-skill-desc"></span>
@@ -107,8 +108,8 @@
     <div class="lobby-left">
       <div class="lobby-kicker">Karczemna gra karciana</div>
       <div class="lobby-emblem" aria-hidden="true">⚓</div>
-      <h2 class="lobby-title">Pod Złamaną<br>Kotwicą</h2>
-      <div class="lobby-subtitle">Karczma Calionu · Wyprawa PvE · wersja 0.3.5</div>
+      <h2 class="lobby-title">Kalon</h2>
+      <div class="lobby-subtitle">Pod Złamaną Kotwicą · Świat Calionu · wersja 0.4.0</div>
       <div class="lobby-cards" aria-hidden="true"><div class="lobby-card-face">A</div><div class="lobby-card-face">K</div><div class="lobby-card-face">Q</div></div>
       <p class="hub-intro">Wyrusz na szlak Calionu: walcz z wrogami, otwieraj skrzynie, zdobywaj EXP i pokonaj Bossa piętra.</p>
       <div class="lobby-wallet">🪙 Monety: <span id="ui-lobby-coins">0</span></div>
@@ -116,7 +117,7 @@
     <div class="lobby-right">
       <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
       <button class="btn-action hub-main-action" style="background:linear-gradient(180deg,#2c6b4f,#194230);border-color:#58b889" onclick="startDuelRun()">
-        <span>🗺️ Wyprawa PvE (Mapa)<small>Zbir 500 HP · Elita 750 HP · Boss 900 HP · Skrzynie i EXP</small></span><span>›</span>
+        <span>🗺️ Wyprawa PvE (Labirynt 7×10)<small>Zbir 500 HP · Elita 750 HP · Boss 900 HP · Skrzynie i EXP</small></span><span>›</span>
       </button>
       <div class="hub-grid">
         <button class="hub-tile" onclick="openLobbySection('quests')">📜 Zadania</button>
@@ -131,18 +132,19 @@
 <!-- Modal Mapy Wyprawy PvE -->
 <div class="modal-overlay" id="mapModal">
   <div class="modal-content map-modal-wide">
-    <div class="modal-title" id="mapTitle">Szlak Calionu · Piętro 1</div>
+    <div class="modal-title" id="mapTitle">Labirynt Calionu · Piętro 1</div>
     <div class="map-status-header">
       <span style="color:var(--heal);font-weight:bold">❤️ HP: <span id="mapPlayerHp">750/750</span></span>
       <span style="color:#f1c40f;font-weight:bold">⭐ Poz. <span id="mapPlayerLvl">1</span> (<span id="mapPlayerXp">0/100</span>)</span>
       <span style="color:#f1c40f;font-weight:bold">🪙 <span id="mapPlayerCoins">0</span></span>
-      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Kliknij podświetlone żółtą linią kółko, aby przejść.</span>
+      <span style="font-size:11px;color:#b9ad92" id="mapHintText">Dotknij sąsiedniego pola albo wybierz poznane przejście.</span>
     </div>
     <div class="map-boss-banner" id="mapBossBanner"></div>
     
-    <div class="map-board" id="mapBoard">
-      <svg id="svgLayer" viewBox="0 0 1000 450" preserveAspectRatio="none"></svg>
+    <div class="map-viewport" id="mapViewport" aria-label="Labirynt wyprawy, przewijaj pionowo aby zobaczyć wszystkie pola" tabindex="0">
+      <div class="map-board" id="mapBoard"></div>
     </div>
+    <div class="map-scroll-hint">↕ Przewijaj w pionie. Zielone: odwiedzone · Szare: poznane przejście · Ciemne: nieodkryte. Ściany ujawniają się po wejściu na pole.</div>
 
     <div style="display:flex; gap:10px;">
       <button class="btn-action" id="mapClosePeekBtn" style="display:none" onclick="toggleModal('mapModal', false)">Wróć do stołu</button>
@@ -195,14 +197,14 @@
     <div class="modal-title">Tabela Punktacji</div>
     <div style="max-height: 58dvh; overflow-y: auto; padding-right: 5px;">
         <table class="score-table">
-          <tr><td>Poker<div class="hand-hint">5 kart z rzędu w tym samym znaczniku (np. 9♠, 8♠, 7♠, 6♠, 5♠)</div></td><td>100</td><td>x 8</td></tr>
-          <tr><td>Kareta<div class="hand-hint">4 karty o tej samej wartości (np. 8, 8, 8, 8)</div></td><td>60</td><td>x 7</td></tr>
-          <tr><td>Full<div class="hand-hint">Trójka i Para (np. K, K, K, 7, 7)</div></td><td>40</td><td>x 4</td></tr>
-          <tr><td>Kolor<div class="hand-hint">5 kart o tym samym znaczniku (np. pięć kierów ♥)</div></td><td>35</td><td>x 4</td></tr>
-          <tr><td>Strit<div class="hand-hint">5 kart z rzędu (np. Q, J, 10, 9, 8)</div></td><td>30</td><td>x 4</td></tr>
-          <tr><td>Trójka (Atak i Tarcza 🛡)<div class="hand-hint">3 karty o tej samej wartości (np. 10, 10, 10)</div></td><td>30</td><td>x 3</td></tr>
-          <tr><td>Dwie Pary<div class="hand-hint">Dwie różne pary (np. J, J, 5, 5)</div></td><td>20</td><td>x 2</td></tr>
-          <tr><td>Para (Atak i Tarcza 🛡)<div class="hand-hint">2 karty o tej samej wartości (np. 9, 9)</div></td><td>10</td><td>x 2</td></tr>
+          <tr><td>Poker<div class="hand-hint">5 kart z rzędu w tym samym znaczniku (np. 9♠, 8♠, 7♠, 6♠, 5♠)</div></td><td>100</td><td>x 4.5</td></tr>
+          <tr><td>Kareta<div class="hand-hint">4 karty o tej samej wartości (np. 8, 8, 8, 8)</div></td><td>60</td><td>x 4</td></tr>
+          <tr><td>Full<div class="hand-hint">Trójka i Para (np. K, K, K, 7, 7)</div></td><td>40</td><td>x 3.5</td></tr>
+          <tr><td>Kolor<div class="hand-hint">5 kart o tym samym znaczniku (np. pięć kierów ♥)</div></td><td>35</td><td>x 3</td></tr>
+          <tr><td>Strit<div class="hand-hint">5 kart z rzędu (np. Q, J, 10, 9, 8)</div></td><td>30</td><td>x 2.5</td></tr>
+          <tr><td>Trójka (Atak i Tarcza 🛡)<div class="hand-hint">3 karty o tej samej wartości (np. 10, 10, 10)</div></td><td>30</td><td>x 2</td></tr>
+          <tr><td>Dwie Pary<div class="hand-hint">Dwie różne pary (np. J, J, 5, 5)</div></td><td>20</td><td>x 1.5</td></tr>
+          <tr><td>Para (Atak i Tarcza 🛡)<div class="hand-hint">2 karty o tej samej wartości (np. 9, 9)</div></td><td>10</td><td>x 1.5</td></tr>
           <tr><td>Wysoka Karta<div class="hand-hint">Atak: najwyższa karta | Tarcza 🛡: suma wybranych kart x 2</div></td><td>5</td><td>x 1</td></tr>
         </table>
     </div>
@@ -220,13 +222,17 @@
           <span id="shopHpDisplay" style="margin-left:10px;color:#2ecc71;font-weight:bold;font-size:12px"></span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="shop-inventory-title">Plecak (kliknij, by uleczyć):</span>
+          <span class="shop-inventory-title">Plecak (mikstury życia kliknij, by użyć):</span>
           <div class="inv-slots" id="shopInventorySlots"></div>
           <div class="relic-badges" id="shopRelicsSlots"></div>
         </div>
     </div>
 
     <div id="shopItemsContainer" class="shop-grid-list"></div>
+    <div class="shop-reroll-row">
+      <span>Handlarz losuje 2 mikstury leczenia, 2 jednorazowe przedmioty i 1 artefakt. Po zakupie oferta znika, ale mikstury i jednorazówki mogą wrócić po losowaniu. Artefakty są unikatowe.</span>
+      <button class="btn-buy shop-reroll-btn" id="shopRerollBtn" onclick="rerollShop()">🎲 Losuj ponownie: 10 🪙</button>
+    </div>
     <div style="display:flex;gap:10px;">
       <button class="btn-action" id="shopProceedBtn" onclick="closeShopToMap()">Wróć na Mapę</button>
       <button class="btn-action lobby-shop" id="shopLeaveDuelBtn" style="display:none" onclick="leaveDuelFromShop()">Wróć do lobby</button>
@@ -246,16 +252,22 @@
   <div class="modal-content" style="max-width:520px">
     <div class="modal-title" id="duelResultTitle">Wynik</div>
     <div class="summary-box" id="duelResultText"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn-action" id="duelMapContinueBtn" style="display:none;flex:1" onclick="continueToMapAfterDuel()">Wróć na Szlak</button>
-      <button class="btn-action" id="duelNextActBtn" style="display:none;flex:1;background:linear-gradient(180deg,#2ecc71,#27ae60)" onclick="startNextDuelAct()">Kolejne Piętro (+125 HP wrogów)!</button>
-      <button class="btn-action" id="duelRetryBtn" style="flex:1" onclick="startDuelRun()">Nowa Wyprawa</button>
-      <button class="btn-action lobby-shop" style="flex:1" onclick="leaveDuel()">Wróć do lobby</button>
+    <div class="duel-result-actions">
+      <button class="btn-action duel-result-primary" id="duelMapContinueBtn" style="display:none" onclick="continueToMapAfterDuel()">🗺️ Wróć na szlak</button>
+      <button class="btn-action duel-result-primary" id="duelNextActBtn" style="display:none;background:linear-gradient(180deg,#2ecc71,#27ae60)" onclick="startNextDuelAct()">🏰 Kolejne piętro (+125 HP wrogów)!</button>
+      <button class="btn-action duel-result-primary" id="duelRetryBtn" style="display:none" onclick="startDuelRun()">🔄 Nowa wyprawa</button>
+      <button class="btn-action duel-result-exit" onclick="leaveDuel()">🚪 Wróć do lobby</button>
     </div>
   </div>
 </div>
 
-   <script src="game.js"></script>
+   <script src="maze-generator.js"></script>
+   <script src="player-stats.js"></script>
+   <script src="data/items/shop-items.js"></script>
+    <script src="data/enemies/regular.js"></script>
+    <script src="data/enemies/elite.js"></script>
+    <script src="data/enemies/bosses.js"></script>
+    <script src="game.js?v=0.4.0"></script>
    <script src="dev.js"></script>
    </body>
 </html>

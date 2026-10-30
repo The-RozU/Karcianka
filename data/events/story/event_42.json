@@ -1,0 +1,29 @@
+{
+  "id": "event_42",
+  "name": "Zgaszona latarnia: tajemnica",
+  "pool": "continuation",
+  "category": "story",
+  "storyId": "lost_lantern",
+  "description": "Ukryty schowek kryje stare monety.",
+  "image": null,
+  "choices": [
+    {
+      "id": "close",
+      "text": "Zabierz monety i zakończ wątek",
+      "actions": [
+        {
+          "type": "effect",
+          "effect": {
+            "type": "coins",
+            "amount": 20
+          }
+        },
+        {
+          "type": "finishStory",
+          "storyId": "lost_lantern",
+          "permanent": false
+        }
+      ]
+    }
+  ]
+}

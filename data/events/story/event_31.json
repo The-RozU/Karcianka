@@ -1,0 +1,38 @@
+{
+  "id": "event_31",
+  "name": "Stary handlarz: ostatnia szansa",
+  "pool": "continuation",
+  "category": "story",
+  "storyId": "old_merchant_rescue",
+  "permanence": "global",
+  "description": "Wracasz do handlarza. Jego los jest w twoich rękach.",
+  "image": null,
+  "choices": [
+    {
+      "id": "rescue",
+      "text": "Uratuj handlarza",
+      "actions": [
+        {
+          "type": "finishStory",
+          "storyId": "old_merchant_rescue",
+          "permanent": true,
+          "flagKey": "event_31",
+          "flagValue": 1
+        }
+      ]
+    },
+    {
+      "id": "death",
+      "text": "Handlarz nie przeżywa",
+      "actions": [
+        {
+          "type": "finishStory",
+          "storyId": "old_merchant_rescue",
+          "permanent": true,
+          "flagKey": "event_31",
+          "flagValue": 2
+        }
+      ]
+    }
+  ]
+}
