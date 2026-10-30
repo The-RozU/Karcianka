@@ -1095,7 +1095,7 @@ function startDuelRun() {
     mapRun = {
         active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,
         level: 1, xp: 0, xpNext: 100, boss: generated.boss, nodes: generated.nodes,
-        currentNodeId: 0, visitedNodes: new Set([0]),
+        currentNodeId: 0, visitedNodes: new Set([0]), discoveredNodes: new Set(),
         mapWidth: generated.mapWidth, mapHeight: generated.mapHeight,
         shortestPathFields: generated.shortestPathFields
     };
@@ -1128,6 +1128,7 @@ function startNextDuelAct() {
     mapRun.shortestPathFields = generated.shortestPathFields;
     mapRun.currentNodeId = 0;
     mapRun.visitedNodes = new Set([0]);
+    mapRun.discoveredNodes = new Set();
     openMapModal(false);
     updateUI();
 }
@@ -1154,6 +1155,18 @@ function renderMazeMap(lockMovement) {
     board.style.removeProperty('grid-template-rows');
     board.replaceChildren();
 
+    // Pamietamy zobaczone wyjscia, ale nie ujawniamy zawartosci ani scian.
+    if (!(mapRun.discoveredNodes instanceof Set)) mapRun.discoveredNodes = new Set();
+    const byId = new Map(mapNodes.map(node => [node.id, node]));
+    for (const visitedId of mapRun.visitedNodes) {
+        const room = byId.get(visitedId);
+        if (!room) continue;
+        for (const targetId of room.targets) {
+            if (!mapRun.visitedNodes.has(targetId)) mapRun.discoveredNodes.add(targetId);
+        }
+    }
+    for (const visitedId of mapRun.visitedNodes) mapRun.discoveredNodes.delete(visitedId);
+
     const byPosition = new Map(mapNodes.map(node => [node.row + ':' + node.col, node]));
     const fragment = document.createDocumentFragment();
     for (const node of mapNodes) {
@@ -1167,11 +1180,11 @@ function renderMazeMap(lockMovement) {
         const isCurrent = current.id === node.id;
         const adjacent = current.targets.includes(node.id);
         const canMove = !lockMovement && gameOver && !mazeWalkInProgress && !isCurrent && (adjacent || visited);
-        const known = visited || adjacent || node.type === 'boss';
+        const frontier = !visited && mapRun.discoveredNodes.has(node.id);
+        const known = visited || frontier || node.type === 'boss';
         const completed = visited && node.cleared && node.originalIcon && node.originalIcon !== '·' && node.originalIcon !== '🏕️';
-        // Mgla wojny: sciany odkrywaja sie dopiero w poznanych polach
-        // oraz w bezposrednio dostepnych pokojach obok postaci.
-        const wallsRevealed = visited || adjacent;
+        // Sciany odslaniaja sie dopiero po wejsciu na pole.
+        const wallsRevealed = visited;
         tile.classList.add(wallsRevealed ? 'maze-walls-revealed' : 'maze-walls-hidden');
 
         // Brak ściany tylko tam, gdzie istnieje rzeczywiste przejście.
@@ -1187,6 +1200,7 @@ function renderMazeMap(lockMovement) {
         }
 
         if (visited) tile.classList.add('explored');
+        else if (frontier) tile.classList.add('maze-frontier');
         if (completed) tile.classList.add('maze-completed');
         else if (!known) tile.classList.add('unexplored');
         if (node.type === 'boss') tile.classList.add('boss-tile');
@@ -1196,9 +1210,10 @@ function renderMazeMap(lockMovement) {
 
         // Nawet gdy walka lub nagroda zmienily pokoj na pusty,
         // zachowujemy ikone i nazwe pierwszego napotkanego zdarzenia.
-        tile.textContent = isCurrent ? '' : known ? (visited ? (node.originalIcon || node.icon) : node.icon) : '·';
+        tile.textContent = isCurrent ? '' : visited ? (node.originalIcon || node.icon)
+            : frontier ? '' : known ? node.icon : '·';
         tile.disabled = !canMove;
-        tile.title = isCurrent ? 'Twoja pozycja'
+        tile.title = isCurrent ? 'Twoja pozycja' : frontier ? 'Odkryte przejście (niezbadane)'
             : known ? ((completed ? (node.originalTitle || node.title) + ' (ukończone)' : node.title))
                 : 'Nieodkryte pole';
         tile.setAttribute('aria-label', (canMove ? (visited ? 'Wróć do: ' : 'Przejdź do: ') : '') + tile.title);
@@ -1331,6 +1346,7 @@ function openMapModal(fromTopButton = false) {
         mapRun.shortestPathFields = generated.shortestPathFields;
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
+    mapRun.discoveredNodes = new Set();
     }
 
     // Blokujemy ruch na mapie TYLKO wtedy, gdy trwa nierozstrzygnięta walka przy stole
@@ -1434,7 +1450,12 @@ async function walkMazeRoute(route) {
         }
         mapRun.currentNodeId = id;
         mapRun.visitedNodes.add(id);
-        tile.classList.remove('available', 'returnable', 'unexplored');
+        if (!(mapRun.discoveredNodes instanceof Set)) mapRun.discoveredNodes = new Set();
+        mapRun.discoveredNodes.delete(id);
+        for (const neighborId of node.targets) {
+            if (!mapRun.visitedNodes.has(neighborId)) mapRun.discoveredNodes.add(neighborId);
+        }
+        tile.classList.remove('available', 'returnable', 'unexplored', 'maze-frontier');
         tile.classList.add('player-here', 'explored');
         tile.textContent = '';
     }
