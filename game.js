@@ -1202,6 +1202,7 @@ function renderMazeMap(lockMovement) {
 
         if (visited) tile.classList.add('explored');
         else if (frontier) tile.classList.add('maze-frontier');
+        if (frontier && adjacent) tile.classList.add('maze-frontier-adjacent');
         if (completed) tile.classList.add('maze-completed');
         else if (!known) tile.classList.add('unexplored');
         if (node.type === 'boss' && visited) tile.classList.add('boss-tile');
@@ -1212,10 +1213,11 @@ function renderMazeMap(lockMovement) {
         // Nawet gdy walka lub nagroda zmienily pokoj na pusty,
         // zachowujemy ikone i nazwe pierwszego napotkanego zdarzenia.
         tile.textContent = isCurrent ? '' : visited ? (node.originalIcon || node.icon)
-            : frontier ? '' : known ? node.icon : '·';
+            : frontier && adjacent ? node.icon : frontier ? '' : '·';
         tile.disabled = !canMove;
-        tile.title = isCurrent ? 'Twoja pozycja' : frontier ? 'Odkryte przejście (niezbadane)'
-            : known ? ((completed ? (node.originalTitle || node.title) + ' (ukończone)' : node.title))
+        tile.title = isCurrent ? 'Twoja pozycja' : frontier && adjacent ? node.title
+            : frontier ? 'Odkryte przejście (niezbadane)'
+            : visited ? ((completed ? (node.originalTitle || node.title) + ' (ukończone)' : node.title))
                 : 'Nieodkryte pole';
         tile.setAttribute('aria-label', (canMove ? (visited ? 'Wróć do: ' : 'Przejdź do: ') : '') + tile.title);
         if (canMove) tile.onclick = () => selectMapNode(node.id);
