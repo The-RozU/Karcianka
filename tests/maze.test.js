@@ -427,13 +427,13 @@ test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', ()
     }
 });
 
-test('Kalon v0.4.1: nazwa, wersja i czytelny panel informacji o walce', () => {
+test('Kalon v0.4.2: nazwa, wersja i czytelny panel informacji o walce', () => {
     const layout = source('style.css');
-    assert.match(html, /<title>Kalon[^<]*v0\.4\.1<\/title>/);
+    assert.match(html, /<title>Kalon[^<]*v0\.4\.2<\/title>/);
     assert.match(html, /<h2 class="lobby-title">Kalon<\/h2>/);
-    assert.match(html, /aria-label="Wersja 0\.4\.1">v0\.4\.1<\/span>/);
-    assert.match(html, /href="style\.css\?v=0\.4\.1"/);
-    assert.match(html, /src="game\.js\?v=0\.4\.1"/);
+    assert.match(html, /aria-label="Wersja 0\.4\.2">v0\.4\.2<\/span>/);
+    assert.match(html, /href="style\.css\?v=0\.4\.2"/);
+    assert.match(html, /src="game\.js\?v=0\.4\.2"/);
     assert.doesNotMatch(html, /0\.3\.5/);
     assert.match(gameSource, /headerName\.innerText = '⚓ Kalon'/);
     assert.match(layout, /height:\s*min\(41%,\s*305px\)/);
@@ -538,4 +538,17 @@ test('skrzynia przyznaje tylko monety albo jeden przedmiot jednorazowy, nigdy ob
     assert.ok(full.context.coins > 10);
     assert.equal(full.runStats.coinsEarned, full.context.coins - 10);
     assert.match(full.summary, /Znalezione monety/);
+});
+
+test('przyciski wyniku: wyjście po lewej i Kontynuuj po prawej', () => {
+    const section = html.split('<div class="modal-overlay" id="duelResultModal">')[1]
+        .split('<script src="maze-generator.js')[0];
+    const lobby = section.indexOf('onclick="leaveDuel()"');
+    const continueBtn = section.indexOf('id="duelMapContinueBtn"');
+    const bossBtn = section.indexOf('id="duelNextActBtn"');
+    const retryBtn = section.indexOf('id="duelRetryBtn"');
+    assert.ok(lobby >= 0 && continueBtn > lobby && bossBtn > continueBtn && retryBtn > bossBtn);
+    assert.match(section, /id="duelMapContinueBtn"[^>]*onclick="continueToMapAfterDuel\(\)"[^>]*>🗺️ Kontynuuj<\/button>/);
+    assert.match(section, /class="btn-action duel-result-exit" onclick="leaveDuel\(\)">🚪 Wróć do lobby<\/button>/);
+    assert.doesNotMatch(section, /Wróć na szlak/);
 });
