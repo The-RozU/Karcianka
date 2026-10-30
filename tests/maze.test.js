@@ -386,3 +386,19 @@ test('wydarzenie na pierwszym piętrze nie dodaje walk ponad limit', () => {
     assert.ok(context.coins > 0);
     assert.equal(context.runStats.mysteryEvents, 1);
 });
+
+test('balans mnożników pokerowych: progresja co 0,5', () => {
+    const rules = gameSource.match(/const HAND_RULES = \{([\s\S]*?)\n\};/);
+    assert.ok(rules);
+    const expected = {
+        highCard: 1, pair: 1.5, twoPair: 1.5,
+        threeKind: 2, straight: 2.5, flush: 3,
+        fullHouse: 3.5, fourKind: 4, poker: 4.5
+    };
+    for (const [key, multiplier] of Object.entries(expected)) {
+        const line = rules[1].split('\n').find(line => line.trim().startsWith(key + ':'));
+        assert.ok(line, key);
+        assert.match(line, new RegExp('mult: ' + multiplier + ' \\}'), key);
+    }
+    assert.match(gameSource, /let finalMultiplier = rule\.mult/);
+});
