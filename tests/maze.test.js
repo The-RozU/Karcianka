@@ -283,3 +283,104 @@ test('zachowane moduły fabularne i dane nie korzystają ze starego generatora',
         assert.doesNotMatch(source(name), /map-generator\.js/);
     }
 });
+
+
+test('zwycięstwo w walce zachowuje EXP, monety i ikonę ukończonego starcia', () => {
+    const target = { id: 17, type: 'fight', icon: '⚔️', title: 'Zbir', xp: 50, cleared: false };
+    const mapRun = {
+        active: true, act: 1, nodes: [target], currentNodeId: 17,
+        playerHp: 550, playerMaxHp: 750, xp: 0, level: 1
+    };
+    const duel = {
+        stats: { dealt: 450, taken: 110, blocked: 20 },
+        playerHp: 550, playerMaxHp: 750, streak: 0, token: 7,
+        active: true, round: 4
+    };
+    const runStats = {
+        enemiesDefeated: 0, bossesDefeated: 0, coinsEarned: 0
+    };
+    const elements = new Map();
+    const document = {
+        getElementById(id) {
+            if (!elements.has(id)) elements.set(id, { style: {}, innerText: '', innerHTML: '' });
+            return elements.get(id);
+        }
+    };
+    const context = vm.createContext({
+        document, mapRun, duel, runStats, DUEL: { POST_FIGHT_HEAL: 150 },
+        coins: 0, currentFightBonus: 0, currentEnemyTrait: { name: 'Zbir' },
+        gameOver: false, setHandResolutionPending() {}, playHaptic() {},
+        showFloatingText() {}, updateUI() {}, recordRunResult() {},
+        toggleModal() {}, setTimeout(callback) { callback(); },
+        gainXp(amount) { mapRun.xp += amount; return 0; }
+    });
+    vm.runInContext(snippetBetween('function duelEnd(', 'function duelPlay('), context);
+    context.duelEnd(true);
+    assert.equal(context.coins, runStats.coinsEarned);
+    assert.ok(context.coins >= 12);
+    assert.equal(runStats.enemiesDefeated, 1);
+    assert.equal(mapRun.xp, 50);
+    assert.equal(mapRun.playerHp, 700);
+    assert.equal(target.cleared, true);
+    assert.equal(target.type, 'empty');
+    assert.equal(target.originalIcon, '⚔️');
+    assert.equal(target.originalTitle, 'Zbir');
+    assert.equal(elements.get('duelMapContinueBtn').style.display, 'block');
+    assert.equal(elements.get('duelNextActBtn').style.display, 'none');
+});
+
+test('boss odblokowuje kolejne piętro i zeruje poznane przejścia', () => {
+    const generate = createGenerator();
+    const run = {
+        act: 1, nodes: [{ id: 7 }], currentNodeId: 7,
+        visitedNodes: new Set([7]), discoveredNodes: new Set([1, 4])
+    };
+    const context = vm.createContext({
+        mapRun: run, stopMazeWalk() {}, toggleModal() {},
+        generateActMap: () => generate(), openMapModal() {}, updateUI() {}
+    });
+    vm.runInContext(
+        snippetBetween('function startNextDuelAct(', '// Jedyny widok mapy:'),
+        context
+    );
+    context.startNextDuelAct();
+    assert.equal(run.act, 2);
+    assert.equal(run.nodes.length, 70);
+    assert.equal(run.currentNodeId, 0);
+    assert.deepEqual(Array.from(run.visitedNodes), [0]);
+    assert.equal(run.discoveredNodes.size, 0);
+    assert.equal(run.mazeColumns, 7);
+    assert.equal(run.mazeRows, 10);
+});
+
+test('wydarzenie na pierwszym piętrze nie dodaje walk ponad limit', () => {
+    const event = { id: 15, type: 'event', originalIcon: '?', cleared: false };
+    const mapRun = { mazeColumns: 7, mazeRows: 10, act: 1, nodes: [event] };
+    const elements = new Map();
+    let fights = 0;
+    let opened = 0;
+    const math = Object.create(Math);
+    math.random = () => 0.98;
+    const context = vm.createContext({
+        Math: math, mapRun, runStats: { mysteryEvents: 0, coinsEarned: 0 },
+        coins: 0, duel: { playerHp: 750 }, DUEL,
+        document: { getElementById(id) {
+            if (!elements.has(id)) elements.set(id, { innerText: '', innerHTML: '' });
+            return elements.get(id);
+        } },
+        updateUI() {}, toggleModal() { opened++; },
+        openMapShopNode() { throw new Error('Nieoczekiwany sklep'); },
+        startDuelFromMapNode() { fights++; }
+    });
+    vm.runInContext(
+        snippetBetween('function openMysteryMapEvent(', 'function openHealSpringNode('),
+        context
+    );
+    context.openMysteryMapEvent(event);
+    assert.equal(fights, 0);
+    assert.equal(opened, 1);
+    assert.equal(event.type, 'empty');
+    assert.equal(event.cleared, true);
+    assert.ok(context.coins > 0);
+    assert.equal(context.runStats.mysteryEvents, 1);
+});
