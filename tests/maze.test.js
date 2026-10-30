@@ -412,9 +412,9 @@ test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', ()
         ['twoPair', 'Dwie Pary'], ['pair', 'Para'], ['highCard', 'Wysoka Karta']
     ];
     for (const [key, label] of names) {
-        const rule = gameSource.split('\n').find(line => line.trim().startsWith(key + ':'));
+        const rule = gameSource.match(new RegExp('^\\s*' + key + ': \\{[^\\n]*mult: ([0-9.]+)', 'm'));
         assert.ok(rule, key);
-        const mult = Number(rule.match(/mult: ([\d.]+)/)[1]);
+        const mult = Number(rule[1]);
         const row = section.split('\n').find(line => line.includes('<tr><td>' + label));
         assert.ok(row, label);
         assert.ok(row.includes('<td>x ' + mult + '</td>'), label + ': tabela != obrażenia');
