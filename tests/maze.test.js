@@ -115,7 +115,7 @@ test('składnia gry, generatora i podstawowe podłączenie', () => {
     new vm.Script(gameSource, { filename: 'game.js' });
     new vm.Script(generatorSource, { filename: 'maze-generator.js' });
     assert.match(html, /src="maze-generator\.js"/);
-    assert.match(html, /src="game\.js"/);
+    assert.match(html, /src="game\.js(?:\?v=[^"]+)?"/);
     assert.match(html, /href="maze-map\.css"/);
     assert.doesNotMatch(html, /svgLayer|src="map-generator\.js"/);
     assert.doesNotMatch(gameSource, /function renderDiceyMap\(|\bsvgLayer\b|node-plate/);
