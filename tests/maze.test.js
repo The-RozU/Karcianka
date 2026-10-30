@@ -54,10 +54,14 @@ function fakeElement(tagName) {
         },
         replaceChildren() { this.children = []; },
         querySelector(selector) {
-            return this.children.find(child => child.classList.contains(selector.slice(1))) || null;
+            const name = selector.slice(1);
+            return this.children.find(child => child.classList.contains(name)
+                || (child.className || '').split(/\s+/).includes(name)) || null;
         },
         querySelectorAll(selector) {
-            return this.children.filter(child => child.classList.contains(selector.slice(1)));
+            const name = selector.slice(1);
+            return this.children.filter(child => child.classList.contains(name)
+                || (child.className || '').split(/\s+/).includes(name));
         },
         setAttribute(key, value) { this[key] = value; },
         get offsetTop() { return ((Number(this.style.gridRow) || 1) - 1) * 60; },
