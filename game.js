@@ -1029,6 +1029,53 @@ const headerName = document.getElementById('header-enemy-name');
     const bossSkillName = document.getElementById('header-skill-name');
     const bossSkillDesc = document.getElementById('header-skill-desc');
     const traitBar = document.getElementById('ui-enemy-trait');
+    const enemyType = document.getElementById('enemy-type');
+    const enemyQuote = document.getElementById('enemy-quote');
+    const portraitImg = document.getElementById('enemy-portrait-image');
+    const portraitFallback = document.getElementById('enemy-portrait-fallback');
+    const healthTrack = document.getElementById('enemy-health-track');
+    const healthFill = document.getElementById('enemy-health-fill');
+    const displayedEnemy = currentEnemyTrait && duel.active ? currentEnemyTrait : null;
+    const portraitPath = displayedEnemy?.portrait || '';
+
+    // Portret jest przypisany do postaci, nie do typu walki. Brak grafiki
+    // lub błąd ładowania zostawia bezpieczny placeholder zamiast pustego HUD-u.
+    portraitFallback.textContent = displayedEnemy ? displayedEnemy.name.charAt(0).toUpperCase() : '⚔';
+    portraitImg.alt = displayedEnemy ? 'Portret: ' + displayedEnemy.name : '';
+    if (portraitImg.dataset.portrait !== portraitPath) {
+        portraitImg.dataset.portrait = portraitPath;
+        portraitImg.hidden = true;
+        portraitFallback.hidden = false;
+        portraitImg.removeAttribute('src');
+        if (portraitPath) {
+            portraitImg.onload = () => {
+                if (portraitImg.dataset.portrait === portraitPath) {
+                    portraitImg.hidden = false;
+                    portraitFallback.hidden = true;
+                }
+            };
+            portraitImg.onerror = () => {
+                if (portraitImg.dataset.portrait === portraitPath) {
+                    portraitImg.hidden = true;
+                    portraitFallback.hidden = false;
+                }
+            };
+            portraitImg.src = portraitPath;
+        }
+    }
+
+    const enemyHP = displayedEnemy ? Math.max(0, duel.enemyHp) : 0;
+    const enemyMaxHP = displayedEnemy ? duel.enemyMaxHp : 0;
+    healthFill.style.width = enemyMaxHP ? (100 * enemyHP / enemyMaxHP) + '%' : '0%';
+    healthTrack.setAttribute('aria-valuenow', String(enemyHP));
+    healthTrack.setAttribute('aria-valuemax', String(enemyMaxHP || 1));
+    enemyType.textContent = !displayedEnemy ? '⚔ OCZEKIWANIE NA POJEDYNEK'
+        : displayedEnemy.id.startsWith('boss_') ? '👑 PRZECIWNIK · BOSS'
+        : displayedEnemy.traitName !== 'Brak cechy' ? '💀 PRZECIWNIK · ELITA'
+        : '⚔ PRZECIWNIK · ZWYKŁY';
+    enemyQuote.textContent = displayedEnemy
+        ? (displayedEnemy.quote ? '„' + displayedEnemy.quote + '”' : displayedEnemy.desc || '')
+        : '';
 
     if (currentEnemyTrait && duel.active) {
         const isBoss = currentEnemyTrait.id.startsWith('boss_');
