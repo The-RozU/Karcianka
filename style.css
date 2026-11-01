@@ -785,3 +785,114 @@ body.duel-mode .card.spent::before {
 @media (max-width: 700px) and (orientation: portrait) {
   .enemy-hud { grid-template-columns: minmax(65px, 25%) minmax(0, 1fr); }
 }
+
+
+/* Mobilny układ 2/5 i 3/5: 40% po lewej (zamiary + gracz),
+   60% po prawej (przeciwnik + przebieg walki + karty).
+   Prawa kolumna zaczyna się POD portretem, zamiast na niego nachodzić.
+   Desktopowy układ VisBug od 1100px pozostaje bez zmian. */
+@media (min-width: 701px) and (max-width: 1099px) and (orientation: landscape) {
+  .board-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: max-content minmax(0, 1fr) max-content;
+    column-gap: clamp(6px, 1vw, 11px);
+    row-gap: clamp(4px, .85vh, 8px);
+  }
+
+  .board-grid > .enemy-board {
+    grid-area: 1 / 1 / 3 / 2;
+    width: 100%;
+    height: 46vh;
+    max-height: 100%;
+    align-self: start;
+    justify-self: stretch;
+    min-height: 0;
+  }
+
+  .board-grid > .enemy-hud {
+    grid-area: 1 / 2 / 2 / 3;
+    justify-self: stretch;
+    align-self: start;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 28%) minmax(0, 1fr);
+    gap: clamp(5px, .8vw, 9px);
+    padding: clamp(5px, .7vh, 8px);
+  }
+
+  .board-grid > .player-hud {
+    grid-area: 3 / 1 / 4 / 2;
+    width: 100%;
+    align-self: end;
+    justify-self: stretch;
+    min-height: 0;
+  }
+
+  .board-grid > .right-col {
+    grid-area: 2 / 2 / 4 / 3;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    align-self: stretch;
+    justify-self: stretch;
+    justify-content: flex-start;
+    gap: clamp(3px, .65vh, 6px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .right-col > .info-strip,
+  .right-col > .eval-screen,
+  .right-col > .play-area {
+    min-width: 0;
+    flex-shrink: 0;
+  }
+
+  .right-col > .play-area {
+    margin-top: auto;
+    gap: clamp(3px, .65vh, 6px);
+  }
+
+  .right-col .hand-zone {
+    min-height: clamp(62px, 16vh, 92px);
+  }
+
+  .right-col .controls .btn {
+    padding: clamp(4px, .8vh, 7px) clamp(5px, .7vw, 9px);
+  }
+
+  .enemy-hud .enemy-portrait {
+    align-self: start;
+    width: 100%;
+    max-width: 28vh;
+    justify-self: center;
+  }
+
+  .enemy-hud .top-enemy-header {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .enemy-hud .header-title,
+  .enemy-hud .top-enemy-header .header-title {
+    font-size: clamp(13px, 2.7vh, 19px);
+    line-height: 1.12;
+    text-align: left;
+  }
+
+  .enemy-hud .enemy-type { font-size: clamp(8px, 1.5vh, 11px); }
+  .enemy-hud .enemy-hud-content { gap: clamp(2px, .4vh, 4px); }
+  .enemy-hud .enemy-vitals { gap: 2px; }
+  .enemy-hud .enemy-health-track { height: clamp(7px, 1.5vh, 11px); }
+  .enemy-hud .enemy-quote { display: none; }
+
+  .enemy-hud .boss-skill,
+  .enemy-hud .enemy-trait-bar {
+    max-height: 3.5em;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
