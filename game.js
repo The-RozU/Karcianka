@@ -1069,6 +1069,14 @@ const headerName = document.getElementById('header-enemy-name');
     healthFill.style.width = enemyMaxHP ? (100 * enemyHP / enemyMaxHP) + '%' : '0%';
     healthTrack.setAttribute('aria-valuenow', String(enemyHP));
     healthTrack.setAttribute('aria-valuemax', String(enemyMaxHP || 1));
+    const portraitFrame = document.querySelector('.enemy-portrait');
+    const enemyRank = !displayedEnemy ? 'normal'
+        : displayedEnemy.id.startsWith('boss_') ? 'boss'
+        : displayedEnemy.traitName !== 'Brak cechy' ? 'elite' : 'normal';
+    if (portraitFrame) {
+        portraitFrame.classList.toggle('enemy-portrait--elite', enemyRank === 'elite');
+        portraitFrame.classList.toggle('enemy-portrait--boss', enemyRank === 'boss');
+    }
     enemyType.textContent = !displayedEnemy ? '⚔ OCZEKIWANIE NA POJEDYNEK'
         : displayedEnemy.id.startsWith('boss_') ? '👑 PRZECIWNIK · BOSS'
         : displayedEnemy.traitName !== 'Brak cechy' ? '💀 PRZECIWNIK · ELITA'

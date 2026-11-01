@@ -896,3 +896,17 @@ body.duel-mode .card.spent::before {
     scrollbar-width: thin;
   }
 }
+
+/* Ramki portretów zależne od rangi przeciwnika: brąz / srebro / złoto. */
+.enemy-hud .enemy-portrait {
+  border-color: #95612e;
+  box-shadow: inset 0 0 10px #000, 0 0 0 1px #3b2412;
+}
+.enemy-hud .enemy-portrait.enemy-portrait--elite {
+  border-color: #c4ccd5;
+  box-shadow: inset 0 0 10px #000, 0 0 0 1px #687583, 0 0 12px rgba(183,200,216,.35);
+}
+.enemy-hud .enemy-portrait.enemy-portrait--boss {
+  border-color: #e6b746;
+  box-shadow: inset 0 0 10px #000, 0 0 0 1px #8d6320, 0 0 16px rgba(236,183,54,.5);
+}
