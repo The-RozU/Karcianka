@@ -1,0 +1,33 @@
+name: Odśwież podgląd Kalon po zmianie dev-mode
+
+on:
+  push:
+    branches: [dev-mode]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify-test-repository:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Uruchom publikację strony testowej
+        env:
+          TEST_TOKEN: ${{ secrets.KALON_TEST_SYNC_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TEST_TOKEN}" ]; then
+            echo "::warning::Brak sekretu KALON_TEST_SYNC_TOKEN. Automatyczna publikacja do Karcianka-test wymaga jednorazowej konfiguracji tokenu."
+            exit 0
+          fi
+
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${TEST_TOKEN}" | base64 -w0)"
+          git -c http.extraheader="${AUTH_HEADER}" clone --quiet --depth 1 --branch dev-mode \
+            https://github.com/The-RozU/Karcianka-test.git /tmp/kalon-test
+          cd /tmp/kalon-test
+          git config user.name "kalon-sync[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: odśwież test dla dev-mode ${SOURCE_SHA}"
+          git -c http.extraheader="${AUTH_HEADER}" push origin HEAD:dev-mode
