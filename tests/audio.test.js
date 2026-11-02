@@ -20,8 +20,8 @@ test('all 12 medieval sounds are valid mono PCM WAV files', () => {
 });
 test('audio module and settings are included before game logic', () => {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.ok(html.includes('audio.js?v=0.4.21'));
-    assert.ok(html.indexOf('audio.js?v=0.4.21') < html.indexOf('game.js?v=0.4.21'));
+    assert.ok(html.includes('audio.js?v=0.4.22'));
+    assert.ok(html.indexOf('audio.js?v=0.4.22') < html.indexOf('game.js?v=0.4.22'));
     assert.ok(html.includes('audioSettingsModal') && html.includes('audioPreview'));
     const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
     for (const name of sounds) assert.ok(script.includes("'" + name + "'"), name);
