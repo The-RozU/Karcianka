@@ -1,5 +1,5 @@
 const REGULAR_ENEMIES = [
-    { id: 'thug', name: 'Nożownik z Zaułka', traitName: 'Brak cechy', desc: 'Zwykły portowy zabijaka' },
+    { id: 'thug', portrait: 'assets/enemies/thug.png', name: 'Nożownik z Zaułka', traitName: 'Brak cechy', desc: 'Zwykły portowy zabijaka' },
     { id: 'sailor', portrait: 'assets/enemies/sailor.png', name: 'Pijany Marynarz', traitName: 'Brak cechy', desc: 'Szuka zaczepki przy kuflu' },
     { id: 'smuggler', portrait: 'assets/enemies/smuggler.png', name: 'Przemytnik z Doków', traitName: 'Brak cechy', desc: 'Pilnuje trefnego towaru' },
     { id: 'bored_waitress', portrait: 'assets/enemies/bored_waitress.png', name: 'Znudzona Kelnerka', traitName: 'Brak cechy', desc: 'Ma dość klientów i ich karcianych porachunków' },

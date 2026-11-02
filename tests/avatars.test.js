@@ -12,7 +12,7 @@ const enemies = vm.runInNewContext(js + '\nREGULAR_ENEMIES;');
 const expectedPortraitIds = [
   'sailor', 'smuggler', 'bored_waitress', 'young_rascal',
   'tavern_drunk', 'dock_porter', 'street_beggar',
-  'traveling_merchant', 'firefighter_hubert', 'grave_digger'
+  'traveling_merchant', 'firefighter_hubert', 'grave_digger', 'thug'
 ];
 
 test('Przypisane portrety należą do istniejących zwykłych przeciwników', () => {

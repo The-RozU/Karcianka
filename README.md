@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.11**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.12**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,13 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.12
+
+- Powiązano komplet 11/11 awatarów zwykłych przeciwników, w tym Nożownika z Zaułka (`thug`).
+- Nowe pliki nazwane `.webp` zawierają w rzeczywistości dane PNG (zidentyfikowane przez sygnatury binarne i niezmienione SHA plików); aby uniknąć błędnego formatu, dodano równoległe ścieżki `.png` wskazujące dokładnie tę samą zawartość. Oryginalnych przesłanych plików nie usuwano.
+- Postać Barnaba nadal używa swojego oryginalnego prawdziwego pliku `tavern_drunk.webp`.
+- Rozszerzono test kompletności i poprawnego formatu przypisanych portretów na wszystkie 11 zwykłych postaci.
 
 ## Poprawki 0.4.11
 
