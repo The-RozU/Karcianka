@@ -1,15 +1,12 @@
-/* Kalon v0.4.23: dyskretne efekty interfejsu, kart i ruchu po labiryncie. */
+/* Kalon v0.4.24: niskie opóźnienia i cichsze karty/kroki. */
 (function (global) {
     'use strict';
 
-    // Na razie nie używamy fanfar ani dźwięków nagród. Zachowujemy ich pliki,
-    // żeby móc je wymienić bez usuwania wcześniejszych wersji z repozytorium.
+    // Niechciane efekty pozostają wyłączone, a ich pliki zachowane w repozytorium.
     const DISABLED_SOUNDS = Object.freeze([
         'ui_confirm', 'coin_gain', 'exp_gain', 'level_up',
         'training_start', 'quest_start', 'quest_complete'
     ]);
-
-    // Nazwy logiczne mogą mieć kilka krótkich wariantów tego samego efektu.
     const SOUND_FILES = Object.freeze({
         ui_click: ['ui_click'],
         ui_back: ['ui_back'],
@@ -20,12 +17,18 @@
         maze_step: ['maze_step_1', 'maze_step_2']
     });
     const SOUND_NAMES = Object.freeze(Object.keys(SOUND_FILES));
+    // Mnożniki względem istniejącej głównej głośności (np. 35% → papier 10,5%).
+    const SOUND_GAINS = Object.freeze({ card_paper: 0.30, maze_step: 0.22 });
     const STORAGE_KEY = 'kalon.audio.v1';
     const LIMIT = 4;
     const COOLDOWNS = Object.freeze({ ui_click: 45, card_paper: 40, maze_step: 135 });
     const active = new Set();
     const lastPlayed = new Map();
     const variantIndex = new Map();
+    const audioElements = new Map();
+    const htmlPlayback = new Map();
+    const decodedBuffers = new Map();
+    let audioContext = null;
     let enabled = true;
     let volume = 0.35;
 
@@ -33,35 +36,127 @@
         const saved = JSON.parse(global.localStorage.getItem(STORAGE_KEY) || 'null');
         if (saved && typeof saved.enabled === 'boolean') enabled = saved.enabled;
         if (saved && Number.isFinite(saved.volume)) volume = Math.min(1, Math.max(0, saved.volume));
-    } catch (_) { /* Brak dostępu do localStorage nie wyłącza efektów. */ }
+    } catch (_) { /* Gra działa również bez localStorage. */ }
 
     function persist() {
         try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabled, volume })); }
         catch (_) {}
     }
 
-    function play(name) {
-        const files = Object.prototype.hasOwnProperty.call(SOUND_FILES, name) ? SOUND_FILES[name] : null;
-        if (!enabled || volume <= 0 || !files || typeof global.Audio !== 'function') return false;
-        const now = Date.now();
-        if (now - (lastPlayed.get(name) || 0) < (COOLDOWNS[name] || 45)) return false;
-        if (active.size >= LIMIT) return false;
-        lastPlayed.set(name, now);
-        const n = variantIndex.get(name) || 0;
-        variantIndex.set(name, n + 1);
+    function effectiveVolume(name) {
+        return volume * (SOUND_GAINS[name] || 1);
+    }
 
+    // Przygotuj HTMLAudio raz, zamiast tworzyć nowy odtwarzacz przy każdym kliknięciu.
+    // Na urządzeniach z Web Audio użyj już zdekodowanych buforów, bez opóźnień pobierania.
+    function preloadSounds() {
+        const files = [...new Set(Object.values(SOUND_FILES).flat())];
+        if (typeof global.Audio === 'function') {
+            for (const file of files) {
+                try {
+                    const clip = new global.Audio('assets/audio/' + file + '.wav');
+                    clip.preload = 'auto';
+                    if (typeof clip.load === 'function') clip.load();
+                    audioElements.set(file, clip);
+                } catch (_) {}
+            }
+        }
+
+        const AudioContextCtor = global.AudioContext || global.webkitAudioContext;
+        if (typeof AudioContextCtor !== 'function' || typeof global.fetch !== 'function') return;
         try {
-            const clip = new global.Audio('assets/audio/' + files[n % files.length] + '.wav');
-            clip.volume = volume;
-            clip.preload = 'auto';
-            active.add(clip);
-            const cleanup = () => active.delete(clip);
-            clip.addEventListener('ended', cleanup, { once: true });
-            clip.addEventListener('error', cleanup, { once: true });
-            const result = clip.play();
-            if (result && typeof result.catch === 'function') result.catch(cleanup);
+            audioContext = new AudioContextCtor({ latencyHint: 'interactive' });
+        } catch (_) { return; }
+
+        // Dekodowanie odbywa się w tle PRZED pierwszym wyborem karty lub ruchem.
+        // Nie odtwarzamy nic po zakończeniu ładowania: spóźnione efekty są gorsze od ciszy.
+        for (const file of files) {
+            const url = 'assets/audio/' + file + '.wav';
+            try {
+                Promise.resolve(global.fetch(url))
+                    .then(response => {
+                        if (!response.ok) throw new Error('Audio HTTP ' + response.status);
+                        return response.arrayBuffer();
+                    })
+                    .then(data => audioContext.decodeAudioData(data))
+                    .then(buffer => { if (buffer) decodedBuffers.set(file, buffer); })
+                    .catch(() => {});
+            } catch (_) {}
+        }
+    }
+
+    function resumeAudio() {
+        if (!enabled || !audioContext || audioContext.state !== 'suspended') return;
+        try {
+            const task = audioContext.resume();
+            if (task && typeof task.catch === 'function') task.catch(() => {});
+        } catch (_) {}
+    }
+
+    function playWebAudio(file, name) {
+        if (!audioContext || audioContext.state !== 'running' || !decodedBuffers.has(file)) return false;
+        try {
+            const source = audioContext.createBufferSource();
+            source.buffer = decodedBuffers.get(file);
+            const gain = audioContext.createGain();
+            gain.gain.value = effectiveVolume(name);
+            source.connect(gain);
+            gain.connect(audioContext.destination);
+            const entry = {
+                stop() { try { source.stop(); } catch (_) {} },
+                setVolume() { gain.gain.value = effectiveVolume(name); }
+            };
+            active.add(entry);
+            source.onended = () => active.delete(entry);
+            source.start(0);
             return true;
         } catch (_) { return false; }
+    }
+
+    function playHtmlAudio(file, name) {
+        const clip = audioElements.get(file);
+        if (!clip) return false;
+        try {
+            // Przerywając ten sam wariant, zwolnij jego poprzedni kanał.
+            const previous = htmlPlayback.get(file);
+            if (previous) active.delete(previous);
+            // Ten sam odtwarzacz i plik pozostają rozgrzane w pamięci.
+            clip.pause();
+            clip.currentTime = 0;
+            clip.volume = effectiveVolume(name);
+            const entry = {
+                stop() { try { clip.pause(); clip.currentTime = 0; } catch (_) {} },
+                setVolume() { clip.volume = effectiveVolume(name); }
+            };
+            active.add(entry);
+            htmlPlayback.set(file, entry);
+            const cleanup = () => {
+                active.delete(entry);
+                if (htmlPlayback.get(file) === entry) htmlPlayback.delete(file);
+            };
+            clip.addEventListener('ended', cleanup, { once: true });
+            clip.addEventListener('error', cleanup, { once: true });
+            const task = clip.play();
+            if (task && typeof task.catch === 'function') task.catch(cleanup);
+            return true;
+        } catch (_) { return false; }
+    }
+
+    function play(name) {
+        const files = Object.prototype.hasOwnProperty.call(SOUND_FILES, name) ? SOUND_FILES[name] : null;
+        if (!enabled || volume <= 0 || !files || active.size >= LIMIT) return false;
+        const now = Date.now();
+        if (now - (lastPlayed.get(name) || 0) < (COOLDOWNS[name] || 45)) return false;
+        const index = variantIndex.get(name) || 0;
+        const file = files[index % files.length];
+
+        // Obie ścieżki startują synchronicznie. Nigdy nie odpalamy efektu z opóźnionego Promise.
+        const started = playWebAudio(file, name) || playHtmlAudio(file, name);
+        if (started) {
+            lastPlayed.set(name, now);
+            variantIndex.set(name, index + 1);
+        }
+        return started;
     }
 
     function syncSettings() {
@@ -77,21 +172,19 @@
             header.setAttribute('aria-label', 'Ustawienia dźwięku');
         }
     }
-
     function setEnabled(value) {
         enabled = Boolean(value); persist(); syncSettings();
         if (!enabled) {
-            for (const clip of active) { try { clip.pause(); clip.currentTime = 0; } catch (_) {} }
+            for (const entry of active) entry.stop();
             active.clear();
+            htmlPlayback.clear();
         }
     }
-
     function setVolume(value) {
         volume = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : volume;
-        for (const clip of active) clip.volume = volume;
+        for (const entry of active) entry.setVolume();
         persist(); syncSettings();
     }
-
     function openSettings() {
         const modal = document.getElementById('audioSettingsModal');
         if (modal) modal.style.display = 'flex';
@@ -108,9 +201,10 @@
         if (select) play(select.value);
     }
 
-    // Przycisk daje jedynie krótki, suchy klik. Kafelki mapy mają dźwięk kroku,
-    // więc nie odtwarzamy dla nich dodatkowo kliknięcia. Karty nie są buttonami.
     if (typeof document !== 'undefined') {
+        // Na telefonie pointerdown wybudza silnik audio, zanim pojawi się zdarzenie click.
+        document.addEventListener('pointerdown', resumeAudio, { capture: true, passive: true });
+        document.addEventListener('keydown', resumeAudio, { capture: true });
         document.addEventListener('click', function (event) {
             const button = event.target && event.target.closest ? event.target.closest('button') : null;
             if (!button || button.disabled || (button.classList && button.classList.contains('maze-tile'))) return;
@@ -120,6 +214,8 @@
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncSettings);
         else syncSettings();
     }
+
+    preloadSounds();
     global.KalonAudio = Object.freeze({
         play, setEnabled, setVolume, openSettings, closeSettings, previewSelected,
         getSettings: () => ({ enabled, volume }),

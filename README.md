@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.23**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.24**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,14 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.24
+
+- Karty i kroki w labiryncie są ściszone niezależnymi mnożnikami: papier do 30%, kroki do 22% wcześniejszej głośności (nadal zależne od suwaka głównego).
+- Efekty są wstępnie ładowane. Na obsługiwanych urządzeniach Web Audio dekoduje je przed pierwszą akcją i odtwarza bez nowego pobierania pliku przy każdym kliknięciu.
+- Mobilne odblokowanie AudioContext następuje już przy dotknięciu ekranu, przed kliknięciem; na starszych urządzeniach pozostaje wstępnie załadowany HTML Audio.
+- Dźwięki nadal wyzwalają się przy zmianie wyboru karty i na początku każdego animowanego kroku; żaden spóźniony efekt nie jest odtwarzany po zakończeniu ładowania.
+- Zachowano wyciszenie siedmiu niechcianych efektów i dotychczasowe ustawienia użytkownika.
 
 ## Poprawki 0.4.23
 
