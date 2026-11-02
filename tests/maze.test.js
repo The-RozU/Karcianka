@@ -343,9 +343,14 @@ test('boss odblokowuje kolejne piętro i zeruje poznane przejścia', () => {
         act: 1, nodes: [{ id: 7 }], currentNodeId: 7,
         visitedNodes: new Set([7]), discoveredNodes: new Set([1, 4])
     };
+    let preloadedFloors = 0;
     const context = vm.createContext({
         mapRun: run, stopMazeWalk() {}, toggleModal() {},
-        generateActMap: () => generate(), openMapModal() {}, updateUI() {}
+        generateActMap: () => generate(), openMapModal() {}, updateUI() {},
+        PortraitCache: { preloadFloor(floor) {
+            assert.strictEqual(floor, run);
+            preloadedFloors++;
+        } }
     });
     vm.runInContext(
         snippetBetween('function startNextDuelAct(', '// Jedyny widok mapy:'),
@@ -359,6 +364,7 @@ test('boss odblokowuje kolejne piętro i zeruje poznane przejścia', () => {
     assert.equal(run.discoveredNodes.size, 0);
     assert.equal(run.mazeColumns, 7);
     assert.equal(run.mazeRows, 10);
+    assert.equal(preloadedFloors, 1);
 });
 
 test('wydarzenie na pierwszym piętrze nie dodaje walk ponad limit', () => {
