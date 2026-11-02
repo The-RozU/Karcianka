@@ -9,5 +9,5 @@ const REGULAR_ENEMIES = [
     { id: 'street_beggar', portrait: 'assets/enemies/street_beggar.png', name: 'Uliczny Żebrak', traitName: 'Brak cechy', desc: 'Pod łachmanami kryje spryt starego wyjadacza' },
     { id: 'traveling_merchant', portrait: 'assets/enemies/traveling_merchant.png', name: 'Wędrowny Kupiec', traitName: 'Brak cechy', desc: 'Zawsze próbuje wyjść na swoje, nawet przy kartach' },
     { id: 'firefighter_hubert', portrait: 'assets/enemies/firefighter_hubert.png', name: 'Strażak Hubert', traitName: 'Brak cechy', desc: 'Gasi każdy pożar, ale nigdy nie odmawia karcianego pojedynku' },
-    { id: 'grave_digger', name: 'Cmentarny Grabarz', traitName: 'Brak cechy', desc: 'Ponury kopacz grobów, który rzadko przegrywa w ciszy' }
+    { id: 'grave_digger', portrait: 'assets/enemies/grave_digger.png', name: 'Cmentarny Grabarz', traitName: 'Brak cechy', desc: 'Ponury kopacz grobów, który rzadko przegrywa w ciszy' }
 ];
