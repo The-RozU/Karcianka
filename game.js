@@ -46,6 +46,11 @@ const DUEL = {
     POST_FIGHT_HEAL: 150,
     LEVEL_UP_HP: 100,
     ENEMY_HAND: 8,
+    ELITE_ACE_INTERVAL: 3,
+    ELITE_ACE_BONUS_CARDS: 1,
+    ELITE_DAMAGE_REDUCTION: 0.05,
+    ELITE_DISCARD_PENALTY: 1,
+    ELITE_GUARD_SHIELD: 5,
     CAP_PCT: 0.20,
     FATIGUE_ROUND: 10,
     FATIGUE_MULT: 1.25,
@@ -145,10 +150,7 @@ function updateLockedCard(reroll = false) {
     lockedCardId = null;
     if (!currentEnemyTrait || hand.length === 0) return;
 
-    if (currentEnemyTrait.id === 'block_high' && duel.round % 3 === 0) {
-        const sorted = [...hand].sort((a, b) => rankOrder.get(a.rank) - rankOrder.get(b.rank));
-        lockedCardId = sorted[0].id;
-    } else if (currentEnemyTrait.id === 'boss_varek') {
+    if (currentEnemyTrait.id === 'boss_varek') {
         const randomCard = hand[Math.floor(Math.random() * hand.length)];
         lockedCardId = randomCard.id;
     }
@@ -385,8 +387,11 @@ function computeAttackDamage(rule, sum, opts = {}) {
     let damage = dice === 1 ? 0 : ((rule.baseChips + sum) * finalMultiplier + potionBonus) * relicMult;
 
     if (opts.applyEnemyTrait && currentEnemyTrait) {
-        if (currentEnemyTrait.id === 'weaken_10') { damage = Math.floor(damage * 0.90); }
-        else if (currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven') { damage = Math.floor(damage * 0.85); }
+        if (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15') {
+            damage = Math.floor(damage * (1 - DUEL.ELITE_DAMAGE_REDUCTION));
+        } else if (currentEnemyTrait.id === 'boss_corven') {
+            damage = Math.floor(damage * 0.85);
+        }
     }
     return { damage, finalMultiplier, potionBonus, relicMult };
 }
@@ -416,7 +421,8 @@ function evaluateHand() {
             const relicText = calc.relicMult > 1 ? ` <span class="color-buff">× ${calc.relicMult.toFixed(2)} (artefakt)</span>` : '';
             const diceText = pendingDiceRoll > 1 ? ` <span class="color-buff">(+${(pendingDiceRoll * 0.5).toFixed(1)} za 🎲 ${pendingDiceRoll})</span>` : '';
             const hasReduction = currentEnemyTrait && (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven');
-            const traitModText = hasReduction ? ` <span style="color:#f39c12">(${currentEnemyTrait.id === 'weaken_10' ? '-10%' : '-15%'} ${currentEnemyTrait.traitName})</span>` : '';
+            const traitReduction = currentEnemyTrait && currentEnemyTrait.id === 'boss_corven' ? 15 : Math.round(DUEL.ELITE_DAMAGE_REDUCTION * 100);
+            const traitModText = hasReduction ? ` <span style="color:#f39c12">(-${traitReduction}% ${currentEnemyTrait.traitName})</span>` : '';
             document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${relicText}${traitModText} = ${currentDamage} DMG`;
             return;
         }
@@ -1625,12 +1631,12 @@ function startDuelFromMapNode(node) {
     currentEnemyTrait = node.enemy;
     // Także walki wywoływane z panelu deweloperskiego.
     if (currentEnemyTrait?.portrait) void PortraitCache.preload(currentEnemyTrait.portrait);
-    duel.enemyShield = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
+    duel.enemyShield = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? DUEL.ELITE_GUARD_SHIELD : 0;
 
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('fatigueModal', false);
     toggleModal('shopModal', false); toggleModal('lobbySectionModal', false);
     gameOver = false;
-    discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - 2) : MAX_DISCARDS;
+    discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - DUEL.ELITE_DISCARD_PENALTY) : MAX_DISCARDS;
     activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     document.getElementById('enemyHand').innerHTML = '';
@@ -1842,8 +1848,11 @@ function fatigueMult() { return isFatigued() ? DUEL.FATIGUE_MULT : 1; }
 
 async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     const alive = () => duel.active && duel.token === token && !gameOver; const k = motionScale();
-    duel.enemyCards = shuffle(createDeck()).slice(0, DUEL.ENEMY_HAND); const plan = planEnemyTurn(duel.enemyCards);
-    setEnemyNote(isSecondStrike ? '⚔️ Szał Bojowy Lokara — drugi atak!' : 'Wróg losuje karty…');
+    const aceInSleeve = !isSecondStrike && currentEnemyTrait?.id === 'ace_sleeve' && duel.round % DUEL.ELITE_ACE_INTERVAL === 0;
+    const enemyHandSize = DUEL.ENEMY_HAND + (aceInSleeve ? DUEL.ELITE_ACE_BONUS_CARDS : 0);
+    duel.enemyCards = shuffle(createDeck()).slice(0, enemyHandSize); const plan = planEnemyTurn(duel.enemyCards);
+    setEnemyNote(aceInSleeve ? '🃏 As w Rękawie! Szuler dobrał dodatkową kartę (9 kart).' : (isSecondStrike ? '⚔️ Szał Bojowy Lokara — drugi atak!' : 'Wróg losuje karty…'));
+    if (aceInSleeve) showFloatingText('🃏 AS W RĘKAWIE! +1 KARTA', '#f1c40f', '30%', '28%', '18px');
     renderEnemyHand(duel.enemyCards); await wait(800 * k); if (!alive()) return false;
     for (const card of plan.attack) { revealEnemyCard(card, 'attack'); await wait(210 * k); if (!alive()) return false; }
     await wait(320 * k); if (!alive()) return false;
@@ -1871,7 +1880,7 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     await wait(550 * k); if (!alive()) return false;
 
     for (const card of plan.shield) { revealEnemyCard(card, 'shield'); await wait(180 * k); if (!alive()) return false; }
-    const traitGuardBonus = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
+    const traitGuardBonus = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? DUEL.ELITE_GUARD_SHIELD : 0;
     duel.enemyShield = plan.shieldValue + traitGuardBonus;
     if (duel.enemyShield > 0) { setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG) · ${plan.shieldName} +${duel.enemyShield} 🛡`); showFloatingText(`+${duel.enemyShield} 🛡`, '#5dade2', '30%', '34%', '20px'); }
     updateUI(); await wait(700 * k); if (!alive()) return false;
