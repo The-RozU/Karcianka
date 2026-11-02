@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.16**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.17**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -59,5 +59,3 @@ Automatyczne testy: `node --test tests/*.test.js`.
 ### Awatary przeciwników
 
 HUD automatycznie wczytuje portret z pola `portrait` w danych postaci (`data/enemies/regular.js`, `elite.js`, `bosses.js`). Obrazy umieszczaj w katalogu `assets/enemies/`, najlepiej jako kwadratowe pliki WebP w stylistyce medieval dark fantasy pixel art. Przykład: `portrait: 'assets/enemies/tavern_drunk.webp'`. Opcjonalne pole `quote` dodaje kwestię postaci pod paskiem HP. Gdy portretu brak lub nie może się wczytać, HUD wyświetla inicjał postaci zamiast uszkodzonego obrazka.
-
-Uwaga: zmiana samej końcówki nazwy pliku z `.png` na `.webp` **nie konwertuje obrazu**. Eksportuj prawdziwy WebP (preferowany dla wydajności na telefonie) albo używaj rozszerzenia `.png` dla PNG. Nowe PNG mają po około 2–2,6 MB, warto je w przyszłości zoptymalizować.

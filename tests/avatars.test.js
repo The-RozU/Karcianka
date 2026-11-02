@@ -1,5 +1,3 @@
-// node --test tests/avatars.test.js
-// Zabezpiecza mapowanie portretów postaci i zgodność rozszerzenia z formatem pliku.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -7,55 +5,32 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const js = fs.readFileSync(path.join(root, 'data/enemies/regular.js'), 'utf8');
-const enemies = vm.runInNewContext(js + '\nREGULAR_ENEMIES;');
-const expectedPortraitIds = [
-  'sailor', 'smuggler', 'bored_waitress', 'young_rascal',
-  'tavern_drunk', 'dock_porter', 'street_beggar',
-  'traveling_merchant', 'firefighter_hubert', 'grave_digger', 'thug'
+const categories = [
+  ['regular.js', 'REGULAR_ENEMIES', 11],
+  ['elite.js', 'ELITE_ENEMIES', 5],
+  ['bosses.js', 'CALION_BOSSES', 8]
 ];
 
-test('Przypisane portrety należą do istniejących zwykłych przeciwników', () => {
-  assert.equal(enemies.length, 11);
-  assert.equal(new Set(enemies.map(enemy => enemy.id)).size, enemies.length);
-  const assigned = enemies.filter(enemy => enemy.portrait).map(enemy => enemy.id).sort();
-  assert.deepEqual(Array.from(assigned), expectedPortraitIds.slice().sort());
-});
-
-test('Pliki portretów istnieją i mają prawidłowe sygnatury PNG / WebP', () => {
-  for (const enemy of enemies.filter(enemy => enemy.portrait)) {
-    assert.match(enemy.portrait, /^assets\/enemies\/[a-z0-9_]+\.(png|webp)$/);
-    const filename = path.join(root, enemy.portrait);
-    assert.ok(fs.existsSync(filename), 'Brak grafiki postaci: ' + enemy.name);
-    const raw = fs.readFileSync(filename);
-    if (enemy.portrait.endsWith('.png')) {
-      assert.ok(raw.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])),
-        'Plik z rozszerzeniem PNG ma złą sygnaturę: ' + enemy.portrait);
-    } else {
-      assert.equal(raw.toString('ascii', 0, 4), 'RIFF', enemy.portrait);
-      assert.equal(raw.toString('ascii', 8, 12), 'WEBP', enemy.portrait);
+test('Wszystkie 24 postacie mają własne portrety w formacie WebP', () => {
+  const allIds = new Set();
+  for (const [filename, variable, count] of categories) {
+    const code = fs.readFileSync(path.join(root, 'data/enemies', filename), 'utf8');
+    const enemies = vm.runInNewContext(code + '\n' + variable + ';');
+    assert.equal(enemies.length, count, filename);
+    for (const enemy of enemies) {
+      assert.ok(!allIds.has(enemy.id), 'Powtórzony identyfikator: ' + enemy.id);
+      allIds.add(enemy.id);
+      assert.equal(enemy.portrait, 'assets/enemies/' + enemy.id + '.webp');
+      const filepath = path.join(root, enemy.portrait);
+      assert.ok(fs.existsSync(filepath), 'Brak portretu: ' + enemy.name);
+      const data = fs.readFileSync(filepath);
+      assert.equal(data.toString('ascii', 0, 4), 'RIFF', enemy.portrait);
+      assert.equal(data.toString('ascii', 8, 12), 'WEBP', enemy.portrait);
     }
   }
+  assert.equal(allIds.size, 24);
+  const directory = fs.readdirSync(path.join(root, 'assets/enemies'));
+  assert.deepEqual(directory.filter(name => name.endsWith('.png')), [],
+    'W katalogu pozostały zbędne pliki PNG');
+  assert.equal(directory.filter(name => name.endsWith('.webp')).length, 24);
 });
-
-
-// Elity i bossowie korzystają z tego samego HUD-u, ale mają własne portrety.
-for (const [filename, variable, count, kind] of [
-  ['elite.js', 'ELITE_ENEMIES', 5, 'elit'],
-  ['bosses.js', 'CALION_BOSSES', 8, 'bossów']
-]) {
-  test('Wszystkie ' + kind + ' mają przypisane istniejące portrety', () => {
-    const code = fs.readFileSync(path.join(root, 'data/enemies', filename), 'utf8');
-    const characters = vm.runInNewContext(code + '\n' + variable + ';');
-    assert.equal(characters.length, count);
-    assert.equal(new Set(characters.map(character => character.id)).size, count);
-    for (const character of characters) {
-      assert.equal(character.portrait, 'assets/enemies/' + character.id + '.png');
-      const filepath = path.join(root, character.portrait);
-      assert.ok(fs.existsSync(filepath), 'Brak portretu dla ' + character.name);
-      const image = fs.readFileSync(filepath);
-      assert.ok(image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
-        'Nieprawidłowy format PNG: ' + character.portrait);
-    }
-  });
-}
