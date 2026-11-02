@@ -20,8 +20,8 @@ test('all 16 WAV assets (including disabled originals) are valid mono PCM files'
 });
 test('audio module and settings are included before game logic', () => {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.ok(html.includes('audio.js?v=0.4.26'));
-    assert.ok(html.indexOf('audio.js?v=0.4.26') < html.indexOf('game.js?v=0.4.26'));
+    assert.ok(html.includes('audio.js?v=0.4.29'));
+    assert.ok(html.indexOf('audio.js?v=0.4.29') < html.indexOf('game.js?v=0.4.29'));
     assert.ok(html.includes('audioSettingsModal') && html.includes('audioPreview'));
     const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
     // Nieaktywne, historyczne pliki WAV nadal istnieją, ale nie muszą być w mapie odtwarzania.
@@ -66,7 +66,7 @@ test('seven disliked effects cannot play; card rustle and footsteps alternate va
         assert.equal(audio.play(name), false, name + ' should be muted');
     }
     assert.equal(calls.length, 0, 'disabled sounds cannot reach the audio player');
-    assert.equal(created.length, 19, '19 active files are preloaded only once');
+    assert.equal(created.length, 22, '22 active files are preloaded only once');
     assert.equal(audio.play('card_paper'), true);
     assert.equal(audio.play('card_paper'), true);
     assert.equal(audio.play('maze_step'), true);
@@ -164,7 +164,7 @@ test('Web Audio plays decoded buffers immediately with per-effect gains', async 
     // Preload/decoding is asynchronous, but playback itself must never await a network request.
     await new Promise(resolve => setImmediate(resolve));
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(fetchCount, 19);
+    assert.equal(fetchCount, 22);
     unlock();
     const audio = global.KalonAudio;
     assert.equal(audio.play('card_paper'), true);
@@ -313,13 +313,15 @@ test('six short hit variants support rapid triple strikes and independent gains'
         Date: { now: () => (clock += 50) }
     });
     const audio = global.KalonAudio;
+    // Szybkie ciosy używają aktualnie wybranego cięcia; odgłos otrzymania obrażeń
+    // zachowuje trzy warianty, żeby można je było animować niezależnie.
     for (let i=0; i<3; i++) assert.equal(audio.play('hit_enemy'), true);
     for (let i=0; i<3; i++) assert.equal(audio.play('hit_player'), true);
     assert.deepEqual(played, [
-        'assets/audio/hit_enemy_1.ogg','assets/audio/hit_enemy_2.ogg','assets/audio/hit_enemy_3.ogg',
+        'assets/audio/blade_hit.wav','assets/audio/blade_hit.wav','assets/audio/blade_hit.wav',
         'assets/audio/hit_player_1.ogg','assets/audio/hit_player_2.ogg','assets/audio/hit_player_3.ogg'
     ]);
-    assert.equal(volumeByFile['assets/audio/hit_enemy_1.ogg'], 0.35 * 0.46);
+    assert.equal(volumeByFile['assets/audio/blade_hit.wav'], 0.35 * 0.46);
     assert.equal(volumeByFile['assets/audio/hit_player_1.ogg'], 0.35 * 0.42);
     audio.setEnabled(false);
 });
@@ -333,4 +335,52 @@ test('actual HP loss triggers an impact and shield absorption alone does not', (
     assert.match(game, /hpBeforePoison[\s\S]{0,210}playGameSound\('hit_player'\)/);
     assert.ok(html.includes('id="footstepStyle"'));
     assert.ok(html.includes('value="hit_enemy"') && html.includes('value="hit_player"'));
+});
+
+test('three sword hit styles can be previewed, selected and persisted', () => {
+    const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
+    const played = [];
+    let saved, now = 1000;
+    class FakeAudio {
+        constructor(src) { this.src = src; this.handlers = {}; }
+        load() {}
+        pause() {}
+        addEventListener(type, fn) { this.handlers[type] = fn; }
+        play() { played.push(this.src); if (this.handlers.ended) this.handlers.ended(); return Promise.resolve(); }
+    }
+    const win = { Audio: FakeAudio, localStorage: {
+        getItem: () => null,
+        setItem: (key, value) => { saved = JSON.parse(value); }
+    }};
+    vm.runInNewContext(script, {
+        window: win,
+        document: { readyState:'loading', addEventListener() {}, getElementById: () => null },
+        Date: { now: () => (now += 200) }
+    });
+    const audio = win.KalonAudio;
+    assert.equal(audio.getSettings().enemyHitStyle, 'blade_hit');
+    assert.equal(audio.play('hit_enemy'), true);
+    assert.equal(audio.setEnemyHitStyle('sword_slash'), true);
+    assert.equal(audio.play('hit_enemy'), true);
+    assert.equal(audio.setEnemyHitStyle('heavy_slash'), true);
+    assert.equal(audio.play('hit_enemy'), true);
+    assert.equal(audio.setEnemyHitStyle('invalid'), false);
+    assert.equal(saved.enemyHitStyle, 'heavy_slash');
+    assert.equal(saved.footstepStyle, 'stone');
+    assert.deepEqual(played, [
+        'assets/audio/blade_hit.wav',
+        'assets/audio/sword_slash.wav',
+        'assets/audio/heavy_slash.wav'
+    ]);
+});
+
+test('three short sword clips are valid mono WAV files', () => {
+    for (const name of ['sword_slash','blade_hit','heavy_slash']) {
+        const data = fs.readFileSync(path.join(root, 'assets/audio', name + '.wav'));
+        assert.equal(data.toString('ascii', 0, 4), 'RIFF');
+        assert.equal(data.toString('ascii', 8, 12), 'WAVE');
+        assert.equal(data.readUInt16LE(22), 1);
+        assert.equal(data.readUInt32LE(24), 32000);
+        assert.ok((data.length - 44) / 64000 <= 0.20);
+    }
 });

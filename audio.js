@@ -1,4 +1,4 @@
-/* Kalon v0.4.26: autentyczne kroki i szybkie dźwięki trafień (CC0). */
+/* Kalon v0.4.29: trzy prototypowe warianty cięcia mieczem do wyboru. */
 (function (global) {
     'use strict';
 
@@ -17,6 +17,11 @@
         maze_step: ['step_stone_1.ogg', 'step_stone_2.ogg'],
         hit_enemy: ['hit_enemy_1.ogg', 'hit_enemy_2.ogg', 'hit_enemy_3.ogg'],
         hit_player: ['hit_player_1.ogg', 'hit_player_2.ogg', 'hit_player_3.ogg']
+    });
+    const ENEMY_HIT_STYLES = Object.freeze({
+        sword_slash: ['sword_slash'],
+        blade_hit: ['blade_hit'],
+        heavy_slash: ['heavy_slash']
     });
     const FOOTSTEP_STYLES = Object.freeze({
         stone: ['step_stone_1.ogg', 'step_stone_2.ogg'],
@@ -43,6 +48,7 @@
     let enabled = true;
     let volume = 0.35;
     let footstepStyle = 'stone';
+    let enemyHitStyle = 'blade_hit';
 
     try {
         const saved = JSON.parse(global.localStorage.getItem(STORAGE_KEY) || 'null');
@@ -51,10 +57,11 @@
         if (saved && Object.prototype.hasOwnProperty.call(FOOTSTEP_STYLES, saved.footstepStyle)) {
             footstepStyle = saved.footstepStyle;
         }
+        if (saved && Object.prototype.hasOwnProperty.call(ENEMY_HIT_STYLES, saved.enemyHitStyle)) enemyHitStyle = saved.enemyHitStyle;
     } catch (_) { /* Gra działa również bez localStorage. */ }
 
     function persist() {
-        try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabled, volume, footstepStyle })); }
+        try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabled, volume, footstepStyle, enemyHitStyle })); }
         catch (_) {}
     }
 
@@ -64,6 +71,7 @@
 
     function filesFor(name) {
         if (name === 'maze_step') return FOOTSTEP_STYLES[footstepStyle];
+        if (name === 'hit_enemy') return ENEMY_HIT_STYLES[enemyHitStyle];
         return Object.prototype.hasOwnProperty.call(SOUND_FILES, name) ? SOUND_FILES[name] : null;
     }
     function fileUrl(file) {
@@ -73,7 +81,7 @@
     // Przygotuj HTMLAudio raz, zamiast tworzyć nowy odtwarzacz przy każdym kliknięciu.
     // Na urządzeniach z Web Audio użyj już zdekodowanych buforów, bez opóźnień pobierania.
     function preloadSounds() {
-        const files = [...new Set([...Object.values(SOUND_FILES).flat(), ...Object.values(FOOTSTEP_STYLES).flat()])];
+        const files = [...new Set([...Object.values(SOUND_FILES).flat(), ...Object.values(FOOTSTEP_STYLES).flat(), ...Object.values(ENEMY_HIT_STYLES).flat()])];
         if (typeof global.Audio === 'function') {
             for (const file of files) {
                 try {
@@ -187,11 +195,13 @@
         const slider = document.getElementById('audioVolume');
         const label = document.getElementById('audioVolumeValue');
         const style = document.getElementById('footstepStyle');
+        const hitStyle = document.getElementById('enemyHitStyle');
         const header = document.getElementById('soundSettingsBtn');
         if (checkbox) checkbox.checked = enabled;
         if (slider) slider.value = String(Math.round(volume * 100));
         if (label) label.textContent = Math.round(volume * 100) + '%';
         if (style) style.value = footstepStyle;
+        if (hitStyle) hitStyle.value = enemyHitStyle;
         if (header) {
             header.textContent = enabled && volume > 0 ? '🔊 Dźwięki' : '🔇 Dźwięki';
             header.setAttribute('aria-label', 'Ustawienia dźwięku');
@@ -215,6 +225,15 @@
         footstepStyle = value;
         variantIndex.set('maze_step', 0);
         lastPlayed.delete('maze_step');
+        persist();
+        syncSettings();
+        return true;
+    }
+    function setEnemyHitStyle(value) {
+        if (!Object.prototype.hasOwnProperty.call(ENEMY_HIT_STYLES, value)) return false;
+        enemyHitStyle = value;
+        variantIndex.set('hit_enemy', 0);
+        lastPlayed.delete('hit_enemy');
         persist();
         syncSettings();
         return true;
@@ -251,8 +270,8 @@
 
     preloadSounds();
     global.KalonAudio = Object.freeze({
-        play, setEnabled, setVolume, setFootstepStyle, openSettings, closeSettings, previewSelected,
-        getSettings: () => ({ enabled, volume, footstepStyle }),
-        names: SOUND_NAMES, disabledNames: DISABLED_SOUNDS, footstepStyles: Object.keys(FOOTSTEP_STYLES)
+        play, setEnabled, setVolume, setFootstepStyle, setEnemyHitStyle, openSettings, closeSettings, previewSelected,
+        getSettings: () => ({ enabled, volume, footstepStyle, enemyHitStyle }),
+        names: SOUND_NAMES, disabledNames: DISABLED_SOUNDS, footstepStyles: Object.keys(FOOTSTEP_STYLES), enemyHitStyles: Object.keys(ENEMY_HIT_STYLES)
     });
 })(window);

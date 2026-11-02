@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Kalon · Wyprawa PvE · v0.4.28</title>
-<link rel="stylesheet" href="style.css?v=0.4.28">
+<title>Kalon · Wyprawa PvE · v0.4.29</title>
+<link rel="stylesheet" href="style.css?v=0.4.29">
 <link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="top-right-btns">
-      <span class="game-version" aria-label="Wersja 0.4.28">v0.4.28</span>
+      <span class="game-version" aria-label="Wersja 0.4.29">v0.4.29</span>
       <button class="btn-top" id="soundSettingsBtn" onclick="KalonAudio.openSettings()" aria-label="Ustawienia dźwięku">🔊 Dźwięki</button>
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
@@ -134,6 +134,15 @@
       </select>
       <button class="btn-action" onclick="KalonAudio.play('maze_step')">▶ Sprawdź krok</button>
     </div>
+    <label class="audio-settings-label" for="enemyHitStyle">Cięcie mieczem: trafienie przeciwnika</label>
+    <div class="audio-preview-row">
+      <select id="enemyHitStyle" onchange="KalonAudio.setEnemyHitStyle(this.value)">
+        <option value="sword_slash">Sword Slash: szybki świst</option>
+        <option value="blade_hit">Blade Hit: ostrze i kontakt</option>
+        <option value="heavy_slash">Heavy Slash: ciężkie cięcie</option>
+      </select>
+      <button class="btn-action" onclick="KalonAudio.play('hit_enemy')">▶ Sprawdź cięcie</button>
+    </div>
     <label class="audio-settings-label" for="audioPreview">Odsłuch efektu</label>
     <div class="audio-preview-row">
       <select id="audioPreview">
@@ -161,7 +170,7 @@
       <div class="lobby-kicker">Karczemna gra karciana</div>
       <div class="lobby-emblem" aria-hidden="true">⚓</div>
       <h2 class="lobby-title">Kalon</h2>
-      <div class="lobby-subtitle">Pod Złamaną Kotwicą · Świat Calionu · wersja 0.4.28</div>
+      <div class="lobby-subtitle">Pod Złamaną Kotwicą · Świat Calionu · wersja 0.4.29</div>
       <div class="lobby-cards" aria-hidden="true"><div class="lobby-card-face">A</div><div class="lobby-card-face">K</div><div class="lobby-card-face">Q</div></div>
       <p class="hub-intro">Wyrusz na szlak Calionu: walcz z wrogami, otwieraj skrzynie, zdobywaj EXP i pokonaj Bossa piętra.</p>
       <div class="lobby-wallet">🪙 Monety: <span id="ui-lobby-coins">0</span></div>
@@ -313,15 +322,15 @@
   </div>
 </div>
 
-   <script src="audio.js?v=0.4.28"></script>
-   <script src="maze-generator.js?v=0.4.28"></script>
+   <script src="audio.js?v=0.4.29"></script>
+   <script src="maze-generator.js?v=0.4.29"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
-    <script src="data/enemies/regular.js?v=0.4.28"></script>
-    <script src="data/enemies/elite.js?v=0.4.28"></script>
-    <script src="data/enemies/bosses.js?v=0.4.28"></script>
-    <script src="portrait-cache.js?v=0.4.28"></script>
-    <script src="game.js?v=0.4.28"></script>
+    <script src="data/enemies/regular.js?v=0.4.29"></script>
+    <script src="data/enemies/elite.js?v=0.4.29"></script>
+    <script src="data/enemies/bosses.js?v=0.4.29"></script>
+    <script src="portrait-cache.js?v=0.4.29"></script>
+    <script src="game.js?v=0.4.29"></script>
    <script src="dev.js"></script>
    </body>
 </html>

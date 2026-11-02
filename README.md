@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.26**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.29**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,13 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.29
+
+- Dodano trzy prototypowe, autorsko syntetyzowane krótkie efekty cięcia mieczem: Sword Slash (155 ms), Blade Hit (175 ms), Heavy Slash (190 ms).
+- W ustawieniach dźwięku można wybrać i odsłuchać każdy wariant trafienia przeciwnika. Wybór zapisuje się lokalnie i obowiązuje w walce, bez zmiany dźwięku otrzymywanych obrażeń.
+- Zachowano kamienne kroki jako domyślne. Historyczne nagrania uderzeń pozostają w repozytorium.
+- Wersje 0.4.27–0.4.28 wprowadzono wcześniej w bieżącym kodzie; niniejsza zmiana dotyczy wyłącznie dźwięku trafienia przeciwnika.
 
 ## Poprawki 0.4.26
 
