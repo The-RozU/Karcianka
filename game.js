@@ -264,15 +264,28 @@ function toggleCard(id) {
         document.getElementById('log').innerText = '🔒 Ta karta jest sparaliżowana / zablokowana w tej rundzie!';
         return;
     }
-    playHaptic('tap');
+    let changed = false;
     if (duel.phase === 'attack') {
-        if (selectedCards.includes(id)) selectedCards = selectedCards.filter(c => c !== id);
-        else if (selectedCards.length < 5) selectedCards.push(id);
+        if (selectedCards.includes(id)) {
+            selectedCards = selectedCards.filter(c => c !== id);
+            changed = true;
+        } else if (selectedCards.length < 5) {
+            selectedCards.push(id);
+            changed = true;
+        }
     } else if (duel.phase === 'shield') {
         if (selectedCards.includes(id)) return;
-        if (shieldCards.includes(id)) shieldCards = shieldCards.filter(c => c !== id);
-        else if (shieldCards.length < DUEL.SHIELD_MAX_CARDS) shieldCards.push(id);
+        if (shieldCards.includes(id)) {
+            shieldCards = shieldCards.filter(c => c !== id);
+            changed = true;
+        } else if (shieldCards.length < DUEL.SHIELD_MAX_CARDS) {
+            shieldCards.push(id);
+            changed = true;
+        }
     }
+    if (!changed) return;
+    playHaptic('tap');
+    if (typeof playGameSound === 'function') playGameSound('card_paper');
     evaluateHand(); updateUI();
 }
 
@@ -727,7 +740,7 @@ function discardCards() {
     }
 
     if (selectedCards.length === 0 || selectedCards.length > 5 || discardsLeft <= 0) return;
-    playHaptic('discard'); if (typeof playGameSound === 'function') playGameSound('ui_back');
+    playHaptic('discard');
     const moved = hand.filter(card => selectedCards.includes(card.id));
     runStats.discards += moved.length;
     hand = hand.filter(card => !selectedCards.includes(card.id));
@@ -827,7 +840,7 @@ function currentShopOffers() {
 
 function rerollShop() {
     if (coins < 10) { if (typeof playGameSound === 'function') playGameSound('ui_error'); return; }
-    if (typeof playGameSound === 'function') playGameSound('ui_confirm');
+    
     coins -= 10;
     const node = currentShopNode();
     if (node) node.shopOffers = generateShopOffers();
@@ -898,7 +911,7 @@ function useItemFromShop(idx) {
     const item = inventory[idx];
     if (!item || !item.heal || !mapRun.active) return;
     if (mapRun.playerHp >= mapRun.playerMaxHp) { if (typeof playGameSound === 'function') playGameSound('ui_error'); alert('Masz już pełne punkty życia!'); return; }
-    if (typeof playGameSound === 'function') playGameSound('ui_confirm');
+    
     inventory.splice(idx, 1);
     const healed = healPlayerBy(item.heal);
     renderShop(); updateUI();
@@ -916,7 +929,7 @@ function buyItem(idx) {
     }
     const diceStack = item.id === 'dice' ? inventory.find(invItem => invItem.id === 'dice') : null;
     if (diceStack) {
-        if (typeof playGameSound === 'function') playGameSound('ui_confirm');
+        
         coins -= item.price; diceStack.charges = (diceStack.charges ?? 3) + 3;
         markShopOfferSold(idx); renderShop(); updateUI();
     } else if (inventory.length < MAX_INV) {
@@ -987,7 +1000,7 @@ function executeItem(idx) {
     if (gameOver || handResolutionPending) return;
     let item = inventory[idx];
     if (!item) return;
-    if (typeof playGameSound === 'function') playGameSound('ui_confirm');
+    
     if (item.id !== 'dice') inventory.splice(idx, 1);
 
     if (item.id === 'discard') { discardsLeft++; showFloatingText('+1 Odrzut', '#3498db', '65%', '35%', '20px'); }
@@ -1137,7 +1150,6 @@ function gainXp(amount) {
 }
 
 function startDuelRun() {
-    if (typeof playGameSound === 'function') playGameSound('quest_start');
     runStartedAt = Date.now(); runFinishedAt = 0; runRecorded = false;
     runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
     const generated = generateActMap(1);
@@ -1401,6 +1413,7 @@ async function walkMazeRoute(route) {
             renderMazeMap(false);
             return;
         }
+        if (typeof playGameSound === 'function') playGameSound('maze_step');
         avatar.style.left = ((node.col + 0.5) / (mapRun.mazeColumns || 7) * 100) + '%';
         avatar.style.top = ((node.row + 0.5) / (mapRun.mazeRows || 10) * 100) + '%';
         const top = Math.max(0, tile.offsetTop + tile.offsetHeight / 2 - viewport.clientHeight * 0.55);
@@ -1453,6 +1466,7 @@ function selectMapNode(nodeId) {
     }
 
     if (!current.targets.includes(nodeId)) return;
+    if (typeof playGameSound === 'function') playGameSound('maze_step');
     mapRun.currentNodeId = nodeId;
     mapRun.visitedNodes.add(nodeId);
     resolveMapNodeArrival(node, false);
@@ -1506,7 +1520,7 @@ function openMysteryMapEvent(node) {
     }
 
     if (roll < 0.49) {
-        if (typeof playGameSound === 'function') playGameSound('coin_gain');
+        
         const foundCoins = 15 + Math.floor(Math.random() * 21);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1536,7 +1550,7 @@ function openMysteryMapEvent(node) {
     // W labiryncie 7x10 wydarzenia nie moga dokladac walk
     // ponad limit 10 zwyklych przeciwnikow i 4 elit.
     if (mapRun.mazeColumns === 7 && mapRun.mazeRows === 10) {
-        if (typeof playGameSound === 'function') playGameSound('coin_gain');
+        
         const foundCoins = 10 + Math.floor(Math.random() * 16);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1585,7 +1599,7 @@ function openChestNode() {
         inventory.push(makeInventoryItem(item));
         rewardHtml = `<div><span>Znaleziony przedmiot:</span><strong style="color:#2ecc71">${item.name}</strong></div>`;
     } else {
-        if (typeof playGameSound === 'function') playGameSound('coin_gain');
+        
         const foundCoins = 18 + Math.floor(Math.random() * 15);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1596,7 +1610,7 @@ function openChestNode() {
     updateUI(); toggleModal('chestModal', true);
 }
 
-function closeChestToMap() { if (typeof playGameSound === 'function') playGameSound('ui_back'); toggleModal('chestModal', false); openMapModal(false); }
+function closeChestToMap() { toggleModal('chestModal', false); openMapModal(false); }
 
 function abandonMapRun() {
     if (confirm('Czy na pewno chcesz porzucić wyprawę i wrócić do lobby?')) { toggleModal('mapModal', false); leaveDuel(); }
@@ -1655,7 +1669,6 @@ function duelEnd(win) {
         healedHp = mapRun.playerHp - hpBeforeHeal; duel.playerHp = mapRun.playerHp;
 
         xpGained = node ? (node.xp || 50) : 50; levelsGained = gainXp(xpGained);
-        if (typeof playGameSound === 'function') playGameSound(levelsGained ? 'level_up' : 'quest_complete');
 
         if (node) {
             node.originalIcon = node.originalIcon || node.icon;
@@ -1692,7 +1705,7 @@ function duelEnd(win) {
 function duelPlay() {
     if (gameOver || handResolutionPending || !duel.active) return;
     if (duel.phase === 'attack') {
-        if (typeof playGameSound === 'function') playGameSound('ui_confirm');
+        
         playHaptic('tap'); duel.phase = 'shield'; shieldCards = [];
         document.getElementById('log').innerText = selectedCards.length > 0 ? 'Etap 2/2: Wybierz do 3 kart na Tarczę (Para i Trójka dają mnożnik!).' : 'Pominąłeś atak. Etap 2/2: Wybierz do 3 kart na Tarczę.';
         evaluateHand(); updateUI(); return;
@@ -1724,7 +1737,6 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     if (gameOver || !duel.active) return; const fm = fatigueMult();
 
     if (attackCards.length) {
-        if (typeof playGameSound === 'function') playGameSound('equip_item');
         playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards);
         if (!rewardedHandsThisFight.has(handName)) {
             currentFightBonus += HAND_WIN_BONUS[handName] || 0;
@@ -1839,7 +1851,7 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
     showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '17%', '72%', '26px');
-    if (dealt > 0) { if (typeof playGameSound === 'function') playGameSound('ui_error'); playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
+    if (dealt > 0) { playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {
         const healAmt = Math.floor(dealt * 0.5); if (healAmt > 0) { duel.enemyHp = Math.min(duel.enemyMaxHp, duel.enemyHp + healAmt); showFloatingText(`🩸 Pijawka +${healAmt} HP`, '#2ecc71', '30%', '26%', '19px'); }
