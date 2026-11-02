@@ -20,11 +20,17 @@ test('all 16 WAV assets (including disabled originals) are valid mono PCM files'
 });
 test('audio module and settings are included before game logic', () => {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.ok(html.includes('audio.js?v=0.4.24'));
-    assert.ok(html.indexOf('audio.js?v=0.4.24') < html.indexOf('game.js?v=0.4.24'));
+    assert.ok(html.includes('audio.js?v=0.4.25'));
+    assert.ok(html.indexOf('audio.js?v=0.4.25') < html.indexOf('game.js?v=0.4.25'));
     assert.ok(html.includes('audioSettingsModal') && html.includes('audioPreview'));
     const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
-    for (const name of sounds) assert.ok(script.includes("'" + name + "'"), name);
+    // Nieaktywne, historyczne pliki WAV nadal istnieją, ale nie muszą być w mapie odtwarzania.
+    for (const name of ['ui_click','ui_back','ui_open','ui_error','equip_item','card_paper_1','card_paper_2']) {
+        assert.ok(script.includes("'" + name + "'"), name);
+    }
+    for (const name of ['hit_enemy','hit_player','step_stone_1.ogg','step_wood_1.ogg','step_soft_1.ogg']) {
+        assert.ok(script.includes("'" + name + "'"), name);
+    }
 });
 
 const vm = require('node:vm');
@@ -57,7 +63,7 @@ test('seven disliked effects cannot play; card rustle and footsteps alternate va
         assert.equal(audio.play(name), false, name + ' should be muted');
     }
     assert.equal(calls.length, 0, 'disabled sounds cannot reach the audio player');
-    assert.equal(created.length, 9, 'all active files are preloaded only once');
+    assert.equal(created.length, 19, '19 active files are preloaded only once');
     assert.equal(audio.play('card_paper'), true);
     assert.equal(audio.play('card_paper'), true);
     assert.equal(audio.play('maze_step'), true);
@@ -66,16 +72,16 @@ test('seven disliked effects cannot play; card rustle and footsteps alternate va
     assert.deepEqual(calls, [
         'assets/audio/card_paper_1.wav',
         'assets/audio/card_paper_2.wav',
-        'assets/audio/maze_step_1.wav',
-        'assets/audio/maze_step_2.wav',
+        'assets/audio/step_stone_1.ogg',
+        'assets/audio/step_stone_2.ogg',
         'assets/audio/ui_click.wav'
     ]);
-    const sound = (file) => created.find(clip => clip.src.endsWith('/' + file + '.wav'));
-    assert.equal(sound('card_paper_1').volume, 0.35 * 0.30);
-    assert.equal(sound('card_paper_2').volume, 0.35 * 0.30);
-    assert.equal(sound('maze_step_1').volume, 0.35 * 0.22);
-    assert.equal(sound('maze_step_2').volume, 0.35 * 0.22);
-    assert.equal(sound('ui_click').volume, 0.35);
+    const sound = (file) => created.find(clip => clip.src.endsWith('/' + file));
+    assert.equal(sound('card_paper_1.wav').volume, 0.35 * 0.30);
+    assert.equal(sound('card_paper_2.wav').volume, 0.35 * 0.30);
+    assert.equal(sound('step_stone_1.ogg').volume, 0.35 * 0.22);
+    assert.equal(sound('step_stone_2.ogg').volume, 0.35 * 0.22);
+    assert.equal(sound('ui_click.wav').volume, 0.35);
     audio.setEnabled(false);
     assert.equal(audio.play('ui_click'), false);
 });
@@ -155,7 +161,7 @@ test('Web Audio plays decoded buffers immediately with per-effect gains', async 
     // Preload/decoding is asynchronous, but playback itself must never await a network request.
     await new Promise(resolve => setImmediate(resolve));
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(fetchCount, 9);
+    assert.equal(fetchCount, 19);
     unlock();
     const audio = global.KalonAudio;
     assert.equal(audio.play('card_paper'), true);
@@ -200,4 +206,128 @@ test('preload never plays effects when async download completes', async () => {
     resolveLoad({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(played, 0);
+});
+
+const oggSounds = [
+    'step_stone_1','step_stone_2','step_wood_1','step_wood_2',
+    'step_soft_1','step_soft_2',
+    'hit_enemy_1','hit_enemy_2','hit_enemy_3',
+    'hit_player_1','hit_player_2','hit_player_3'
+];
+
+function oggDurationSeconds(data) {
+    const id = data.indexOf(Buffer.from('vorbis'));
+    assert.ok(id >= 1, 'valid Vorbis identification packet');
+    const rate = data.readUInt32LE(id + 11);
+    assert.ok(rate > 10000 && rate < 200000);
+    const lastPage = data.lastIndexOf(Buffer.from('OggS'));
+    assert.ok(lastPage >= 0, 'valid final Ogg page');
+    const samples = data.readUInt32LE(lastPage + 6)
+        + 4294967296 * data.readUInt32LE(lastPage + 10);
+    return samples / rate;
+}
+
+test('Kenney CC0 sound files are valid, hits last less than 150 ms', () => {
+    for (const name of oggSounds) {
+        const data = fs.readFileSync(path.join(root, 'assets/audio', name + '.ogg'));
+        assert.equal(data.toString('ascii', 0, 4), 'OggS', name);
+        const seconds = oggDurationSeconds(data);
+        assert.ok(seconds > 0.04, name + ': nonempty audio');
+        if (name.startsWith('hit_')) {
+            assert.ok(seconds < 0.15, name + ': combat clip must fit fast multi-hit combos, got ' + seconds);
+        }
+        if (name.startsWith('step_')) {
+            assert.ok(seconds < 0.27, name + ': step must fit one 290ms map move');
+        }
+    }
+});
+
+test('footsteps offer stone, wood and soft sounds and remember selection', () => {
+    const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
+    const played = [];
+    let stored = null, clock = 2000;
+    class FakeAudio {
+        constructor(src) { this.src = src; this.handlers = {}; }
+        load() {}
+        pause() {}
+        addEventListener(name, callback) { this.handlers[name] = callback; }
+        play() {
+            played.push(this.src);
+            if (this.handlers.ended) this.handlers.ended();
+            return Promise.resolve();
+        }
+    }
+    const context = {
+        window: {
+            Audio: FakeAudio,
+            localStorage: {
+                getItem: () => JSON.stringify({ enabled:true, volume:0.5, footstepStyle:'wood' }),
+                setItem: (key, value) => { stored = JSON.parse(value); }
+            }
+        },
+        document: { readyState:'loading', addEventListener() {}, getElementById: () => null },
+        Date: { now: () => (clock += 250) }
+    };
+    vm.runInNewContext(script, context);
+    const audio = context.window.KalonAudio;
+    assert.equal(audio.getSettings().footstepStyle, 'wood');
+    assert.equal(audio.play('maze_step'), true);
+    assert.equal(audio.setFootstepStyle('soft'), true);
+    assert.equal(audio.play('maze_step'), true);
+    assert.equal(audio.setFootstepStyle('stone'), true);
+    assert.equal(audio.play('maze_step'), true);
+    assert.equal(audio.setFootstepStyle('invalid'), false);
+    assert.equal(audio.getSettings().footstepStyle, 'stone');
+    assert.equal(stored.footstepStyle, 'stone');
+    assert.deepEqual(played, [
+        'assets/audio/step_wood_1.ogg',
+        'assets/audio/step_soft_1.ogg',
+        'assets/audio/step_stone_1.ogg'
+    ]);
+});
+
+test('six short hit variants support rapid triple strikes and independent gains', () => {
+    const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
+    const played = [];
+    const volumeByFile = {};
+    let clock = 2000;
+    class FakeAudio {
+        constructor(src) { this.src = src; this.handlers={}; }
+        load() {}
+        pause() {}
+        addEventListener(name, handler) { this.handlers[name]=handler; }
+        play() {
+            played.push(this.src);
+            volumeByFile[this.src] = this.volume;
+            if(this.handlers.ended) this.handlers.ended();
+            return Promise.resolve();
+        }
+    }
+    const global = { Audio: FakeAudio, localStorage:{ getItem: () => null, setItem() {} } };
+    vm.runInNewContext(script, {
+        window: global,
+        document: { readyState: 'loading', addEventListener() {}, getElementById: () => null },
+        Date: { now: () => (clock += 50) }
+    });
+    const audio = global.KalonAudio;
+    for (let i=0; i<3; i++) assert.equal(audio.play('hit_enemy'), true);
+    for (let i=0; i<3; i++) assert.equal(audio.play('hit_player'), true);
+    assert.deepEqual(played, [
+        'assets/audio/hit_enemy_1.ogg','assets/audio/hit_enemy_2.ogg','assets/audio/hit_enemy_3.ogg',
+        'assets/audio/hit_player_1.ogg','assets/audio/hit_player_2.ogg','assets/audio/hit_player_3.ogg'
+    ]);
+    assert.equal(volumeByFile['assets/audio/hit_enemy_1.ogg'], 0.35 * 0.46);
+    assert.equal(volumeByFile['assets/audio/hit_player_1.ogg'], 0.35 * 0.42);
+    audio.setEnabled(false);
+});
+
+test('actual HP loss triggers an impact and shield absorption alone does not', () => {
+    const game = fs.readFileSync(path.join(root, 'game.js'), 'utf8');
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(game, /duel\.enemyHp = Math\.max\(0, duel\.enemyHp - dealt\);[\s\S]{0,230}if \(dealt > 0\).*playGameSound\('hit_enemy'\)/);
+    assert.match(game, /if \(dealt > 0\) \{[\s\S]{0,180}playGameSound\('hit_player'\)/);
+    assert.match(game, /hpBeforeCounter[\s\S]{0,320}playGameSound\('hit_player'\)/);
+    assert.match(game, /hpBeforePoison[\s\S]{0,210}playGameSound\('hit_player'\)/);
+    assert.ok(html.includes('id="footstepStyle"'));
+    assert.ok(html.includes('value="hit_enemy"') && html.includes('value="hit_player"'));
 });

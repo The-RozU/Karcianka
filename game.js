@@ -1756,6 +1756,8 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
 
         const absorbed = Math.min(duel.enemyShield, incoming); const dealt = incoming - absorbed;
         duel.enemyShield = 0; duel.enemyHp = Math.max(0, duel.enemyHp - dealt);
+        // Tylko faktyczny spadek HP: sama utrata tarczy nie wywołuje dźwięku trafienia.
+        if (dealt > 0) if (typeof playGameSound === 'function') playGameSound('hit_enemy');
         duel.stats.dealt += dealt;
         if (incoming > duel.stats.bestDmg) { duel.stats.bestDmg = incoming; duel.stats.bestName = handName; }
         if (incoming > runStats.bestHandDmg) { runStats.bestHandDmg = incoming; runStats.bestHandName = handName; }
@@ -1770,7 +1772,12 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
             if (currentEnemyTrait.id === 'boss_corven' && !duel.corvenBlockTriggered && duel.enemyHp <= duel.enemyMaxHp * 0.5) { duel.corvenBlockTriggered = true; duel.corvenBlockArmed = true; showFloatingText('🛡️ TARCZA CORVENA!', '#5dade2', '30%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_riwi' && duel.handLimit === 8) { duel.handLimit = 7; showFloatingText('🩸 OBCIĘCIE PALCA!', '#e74c3c', '65%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_farron' && (handName === 'Wysoka Karta' || handName === 'Para')) {
-                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px'); triggerPhoenixIfNeeded();
+                const hpBeforeCounter = duel.playerHp;
+                duel.playerHp = Math.max(0, duel.playerHp - 15);
+                mapRun.playerHp = duel.playerHp; duel.stats.taken += 15;
+                if (duel.playerHp < hpBeforeCounter) if (typeof playGameSound === 'function') playGameSound('hit_player');
+                showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px');
+                triggerPhoenixIfNeeded();
             }
         }
     } else { duel.enemyShield = 0; }
@@ -1851,7 +1858,11 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
     showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '17%', '72%', '26px');
-    if (dealt > 0) { playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
+    if (dealt > 0) {
+        if (typeof playGameSound === 'function') playGameSound('hit_player');
+        playHaptic('hit');
+        animateScreenShake(document.querySelector('.tavern-table'));
+    }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {
         const healAmt = Math.floor(dealt * 0.5); if (healAmt > 0) { duel.enemyHp = Math.min(duel.enemyMaxHp, duel.enemyHp + healAmt); showFloatingText(`🩸 Pijawka +${healAmt} HP`, '#2ecc71', '30%', '26%', '19px'); }
@@ -1879,7 +1890,10 @@ async function duelEnemyTurn(token) {
     }
 
     if (duel.poisonStacks > 0 && duel.playerHp > 0) {
-        const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
+        const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG;
+        const hpBeforePoison = duel.playerHp;
+        duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
+        if (duel.playerHp < hpBeforePoison) if (typeof playGameSound === 'function') playGameSound('hit_player');
         if (mapRun.active) mapRun.playerHp = duel.playerHp; duel.stats.taken += poisonDmg;
         showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); triggerPhoenixIfNeeded(); updateUI();
         if (duel.playerHp === 0) { duelEnd(false); return; } await wait(450 * k); if (!alive()) return;

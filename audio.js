@@ -1,4 +1,4 @@
-/* Kalon v0.4.24: niskie opóźnienia i cichsze karty/kroki. */
+/* Kalon v0.4.25: autentyczne kroki i szybkie dźwięki trafień (CC0). */
 (function (global) {
     'use strict';
 
@@ -14,14 +14,25 @@
         ui_error: ['ui_error'],
         equip_item: ['equip_item'],
         card_paper: ['card_paper_1', 'card_paper_2'],
-        maze_step: ['maze_step_1', 'maze_step_2']
+        maze_step: ['step_stone_1.ogg', 'step_stone_2.ogg'],
+        hit_enemy: ['hit_enemy_1.ogg', 'hit_enemy_2.ogg', 'hit_enemy_3.ogg'],
+        hit_player: ['hit_player_1.ogg', 'hit_player_2.ogg', 'hit_player_3.ogg']
+    });
+    const FOOTSTEP_STYLES = Object.freeze({
+        stone: ['step_stone_1.ogg', 'step_stone_2.ogg'],
+        wood: ['step_wood_1.ogg', 'step_wood_2.ogg'],
+        soft: ['step_soft_1.ogg', 'step_soft_2.ogg']
     });
     const SOUND_NAMES = Object.freeze(Object.keys(SOUND_FILES));
     // Mnożniki względem istniejącej głównej głośności (np. 35% → papier 10,5%).
-    const SOUND_GAINS = Object.freeze({ card_paper: 0.30, maze_step: 0.22 });
+    const SOUND_GAINS = Object.freeze({
+        card_paper: 0.30, maze_step: 0.22,
+        hit_enemy: 0.46, hit_player: 0.42
+    });
     const STORAGE_KEY = 'kalon.audio.v1';
-    const LIMIT = 4;
-    const COOLDOWNS = Object.freeze({ ui_click: 45, card_paper: 40, maze_step: 135 });
+    const LIMIT = 6;
+    // 3 szybkie ciosy mogą wystąpić co 40–70 ms i korzystają z osobnych nagrań.
+    const COOLDOWNS = Object.freeze({ ui_click: 45, card_paper: 40, maze_step: 135, hit_enemy: 30, hit_player: 30 });
     const active = new Set();
     const lastPlayed = new Map();
     const variantIndex = new Map();
@@ -31,15 +42,19 @@
     let audioContext = null;
     let enabled = true;
     let volume = 0.35;
+    let footstepStyle = 'stone';
 
     try {
         const saved = JSON.parse(global.localStorage.getItem(STORAGE_KEY) || 'null');
         if (saved && typeof saved.enabled === 'boolean') enabled = saved.enabled;
         if (saved && Number.isFinite(saved.volume)) volume = Math.min(1, Math.max(0, saved.volume));
+        if (saved && Object.prototype.hasOwnProperty.call(FOOTSTEP_STYLES, saved.footstepStyle)) {
+            footstepStyle = saved.footstepStyle;
+        }
     } catch (_) { /* Gra działa również bez localStorage. */ }
 
     function persist() {
-        try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabled, volume })); }
+        try { global.localStorage.setItem(STORAGE_KEY, JSON.stringify({ enabled, volume, footstepStyle })); }
         catch (_) {}
     }
 
@@ -47,14 +62,22 @@
         return volume * (SOUND_GAINS[name] || 1);
     }
 
+    function filesFor(name) {
+        if (name === 'maze_step') return FOOTSTEP_STYLES[footstepStyle];
+        return Object.prototype.hasOwnProperty.call(SOUND_FILES, name) ? SOUND_FILES[name] : null;
+    }
+    function fileUrl(file) {
+        return 'assets/audio/' + file + (file.endsWith('.ogg') ? '' : '.wav');
+    }
+
     // Przygotuj HTMLAudio raz, zamiast tworzyć nowy odtwarzacz przy każdym kliknięciu.
     // Na urządzeniach z Web Audio użyj już zdekodowanych buforów, bez opóźnień pobierania.
     function preloadSounds() {
-        const files = [...new Set(Object.values(SOUND_FILES).flat())];
+        const files = [...new Set([...Object.values(SOUND_FILES).flat(), ...Object.values(FOOTSTEP_STYLES).flat()])];
         if (typeof global.Audio === 'function') {
             for (const file of files) {
                 try {
-                    const clip = new global.Audio('assets/audio/' + file + '.wav');
+                    const clip = new global.Audio(fileUrl(file));
                     clip.preload = 'auto';
                     if (typeof clip.load === 'function') clip.load();
                     audioElements.set(file, clip);
@@ -71,7 +94,7 @@
         // Dekodowanie odbywa się w tle PRZED pierwszym wyborem karty lub ruchem.
         // Nie odtwarzamy nic po zakończeniu ładowania: spóźnione efekty są gorsze od ciszy.
         for (const file of files) {
-            const url = 'assets/audio/' + file + '.wav';
+            const url = fileUrl(file);
             try {
                 Promise.resolve(global.fetch(url))
                     .then(response => {
@@ -143,7 +166,7 @@
     }
 
     function play(name) {
-        const files = Object.prototype.hasOwnProperty.call(SOUND_FILES, name) ? SOUND_FILES[name] : null;
+        const files = filesFor(name);
         if (!enabled || volume <= 0 || !files || active.size >= LIMIT) return false;
         const now = Date.now();
         if (now - (lastPlayed.get(name) || 0) < (COOLDOWNS[name] || 45)) return false;
@@ -163,10 +186,12 @@
         const checkbox = document.getElementById('audioEnabled');
         const slider = document.getElementById('audioVolume');
         const label = document.getElementById('audioVolumeValue');
+        const style = document.getElementById('footstepStyle');
         const header = document.getElementById('soundSettingsBtn');
         if (checkbox) checkbox.checked = enabled;
         if (slider) slider.value = String(Math.round(volume * 100));
         if (label) label.textContent = Math.round(volume * 100) + '%';
+        if (style) style.value = footstepStyle;
         if (header) {
             header.textContent = enabled && volume > 0 ? '🔊 Dźwięki' : '🔇 Dźwięki';
             header.setAttribute('aria-label', 'Ustawienia dźwięku');
@@ -184,6 +209,15 @@
         volume = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : volume;
         for (const entry of active) entry.setVolume();
         persist(); syncSettings();
+    }
+    function setFootstepStyle(value) {
+        if (!Object.prototype.hasOwnProperty.call(FOOTSTEP_STYLES, value)) return false;
+        footstepStyle = value;
+        variantIndex.set('maze_step', 0);
+        lastPlayed.delete('maze_step');
+        persist();
+        syncSettings();
+        return true;
     }
     function openSettings() {
         const modal = document.getElementById('audioSettingsModal');
@@ -217,8 +251,8 @@
 
     preloadSounds();
     global.KalonAudio = Object.freeze({
-        play, setEnabled, setVolume, openSettings, closeSettings, previewSelected,
-        getSettings: () => ({ enabled, volume }),
-        names: SOUND_NAMES, disabledNames: DISABLED_SOUNDS
+        play, setEnabled, setVolume, setFootstepStyle, openSettings, closeSettings, previewSelected,
+        getSettings: () => ({ enabled, volume, footstepStyle }),
+        names: SOUND_NAMES, disabledNames: DISABLED_SOUNDS, footstepStyles: Object.keys(FOOTSTEP_STYLES)
     });
 })(window);

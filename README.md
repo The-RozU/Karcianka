@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.24**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.25**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,15 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.25
+
+- Trzy nagrane warianty kroków: **kamień** (domyślny), **drewno** i **miękkie podłoże**. W każdym zestawie są dwa odgłosy, przełączane podczas ruchu.
+- Nowy wybór rodzaju podłoża i przycisk odsłuchu w ustawieniach audio. Wybór zapisywany razem z głośnością.
+- Dźwięki trafień przy rzeczywistym spadku HP gracza lub przeciwnika, bez dźwięku przy samym pochłonięciu obrażeń przez tarczę.
+- Po trzy nagrane warianty uderzeń na każdą stronę (ok. 0,12–0,14 s); gotowe do przyszłych szybkich animacji wielokrotnych ciosów.
+- SFX obejmują również kontratak Farrona i obrażenia od trucizny.
+- Nowe nagrania pochodzą z Kenney Impact Sounds (CC0); źródło i licencja: [assets/audio/CREDITS.md](assets/audio/CREDITS.md). Poprzednie syntetyczne pliki zostawiono do porównania.
 
 ## Poprawki 0.4.24
 
