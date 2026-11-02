@@ -1,4 +1,4 @@
-/* Kalon v0.4.25: autentyczne kroki i szybkie dźwięki trafień (CC0). */
+/* Kalon v0.4.26: autentyczne kroki i szybkie dźwięki trafień (CC0). */
 (function (global) {
     'use strict';
 

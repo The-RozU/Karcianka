@@ -20,15 +20,18 @@ test('all 16 WAV assets (including disabled originals) are valid mono PCM files'
 });
 test('audio module and settings are included before game logic', () => {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.ok(html.includes('audio.js?v=0.4.25'));
-    assert.ok(html.indexOf('audio.js?v=0.4.25') < html.indexOf('game.js?v=0.4.25'));
+    assert.ok(html.includes('audio.js?v=0.4.26'));
+    assert.ok(html.indexOf('audio.js?v=0.4.26') < html.indexOf('game.js?v=0.4.26'));
     assert.ok(html.includes('audioSettingsModal') && html.includes('audioPreview'));
     const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
     // Nieaktywne, historyczne pliki WAV nadal istnieją, ale nie muszą być w mapie odtwarzania.
     for (const name of ['ui_click','ui_back','ui_open','ui_error','equip_item','card_paper_1','card_paper_2']) {
         assert.ok(script.includes("'" + name + "'"), name);
     }
-    for (const name of ['hit_enemy','hit_player','step_stone_1.ogg','step_wood_1.ogg','step_soft_1.ogg']) {
+    for (const name of ['hit_enemy','hit_player']) {
+        assert.ok(script.includes(name + ': ['), name);
+    }
+    for (const name of ['step_stone_1.ogg','step_wood_1.ogg','step_soft_1.ogg']) {
         assert.ok(script.includes("'" + name + "'"), name);
     }
 });
