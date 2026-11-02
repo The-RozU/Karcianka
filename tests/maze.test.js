@@ -343,9 +343,14 @@ test('boss odblokowuje kolejne piętro i zeruje poznane przejścia', () => {
         act: 1, nodes: [{ id: 7 }], currentNodeId: 7,
         visitedNodes: new Set([7]), discoveredNodes: new Set([1, 4])
     };
+    let preloadedFloors = 0;
     const context = vm.createContext({
         mapRun: run, stopMazeWalk() {}, toggleModal() {},
-        generateActMap: () => generate(), openMapModal() {}, updateUI() {}
+        generateActMap: () => generate(), openMapModal() {}, updateUI() {},
+        PortraitCache: { preloadFloor(floor) {
+            assert.strictEqual(floor, run);
+            preloadedFloors++;
+        } }
     });
     vm.runInContext(
         snippetBetween('function startNextDuelAct(', '// Jedyny widok mapy:'),
@@ -359,6 +364,7 @@ test('boss odblokowuje kolejne piętro i zeruje poznane przejścia', () => {
     assert.equal(run.discoveredNodes.size, 0);
     assert.equal(run.mazeColumns, 7);
     assert.equal(run.mazeRows, 10);
+    assert.equal(preloadedFloors, 1);
 });
 
 test('wydarzenie na pierwszym piętrze nie dodaje walk ponad limit', () => {
@@ -427,14 +433,20 @@ test('widoczna tabela punktacji odpowiada mnożnikom obrażeń w HAND_RULES', ()
     }
 });
 
-test('Kalon v0.4.2: nazwa, wersja i czytelny panel informacji o walce', () => {
+test('Kalon: wersja, komplet świeżych skryptów przeciwników i czytelny panel walki', () => {
     const layout = source('style.css');
-    assert.match(html, /<title>Kalon[^<]*v0\.4\.2<\/title>/);
+    const version = html.match(/<title>Kalon[^<]*v(0\.\d+\.\d+)<\/title>/)?.[1];
+    assert.ok(version, 'Brak wersji gry w tytule');
     assert.match(html, /<h2 class="lobby-title">Kalon<\/h2>/);
-    assert.match(html, /aria-label="Wersja 0\.4\.2">v0\.4\.2<\/span>/);
-    assert.match(html, /href="style\.css\?v=0\.4\.2"/);
-    assert.match(html, /src="game\.js\?v=0\.4\.2"/);
-    assert.doesNotMatch(html, /0\.3\.5/);
+    assert.ok(html.includes('aria-label="Wersja ' + version + '">v' + version + '</span>'));
+    for (const resource of [
+        'style.css', 'maze-generator.js', 'game.js',
+        'data/enemies/regular.js', 'data/enemies/elite.js', 'data/enemies/bosses.js'
+    ]) {
+        const attribute = resource.endsWith('.css') ? 'href' : 'src';
+        assert.ok(html.includes(attribute + '="' + resource + '?v=' + version + '"'),
+            'Brak odświeżania cache dla ' + resource);
+    }
     assert.match(gameSource, /headerName\.innerText = '⚓ Kalon'/);
     assert.match(layout, /height:\s*min\(41%,\s*305px\)/);
     assert.match(layout, /\.enemy-board \.duel-panel\s*\{[^}]*overflow-y:\s*auto/s);

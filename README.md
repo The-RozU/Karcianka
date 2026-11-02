@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.5**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.19**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,30 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.12
+
+- Powiązano komplet 11/11 awatarów zwykłych przeciwników, w tym Nożownika z Zaułka (`thug`).
+- Nowe pliki nazwane `.webp` zawierają w rzeczywistości dane PNG (zidentyfikowane przez sygnatury binarne i niezmienione SHA plików); aby uniknąć błędnego formatu, dodano równoległe ścieżki `.png` wskazujące dokładnie tę samą zawartość. Oryginalnych przesłanych plików nie usuwano.
+- Postać Barnaba nadal używa swojego oryginalnego prawdziwego pliku `tavern_drunk.webp`.
+- Rozszerzono test kompletności i poprawnego formatu przypisanych portretów na wszystkie 11 zwykłych postaci.
+
+## Poprawki 0.4.11
+
+- Przywrócono aliasy plików PNG na potrzeby HUD-u, zachowując nowe uploady użytkownika z rozszerzeniem .webp. Mapowania postaci wskazują na rzeczywiste pliki PNG, bez ruszania oryginalnych uploadów.
+
+## Poprawki 0.4.10
+
+- Przypisano kolejne portrety zwykłych przeciwników: `grave_digger`.
+- Poprawiono rozszerzenia grafik PNG (nie były prawdziwymi WebP) i usunięto duplikaty plików o tej samej zawartości.
+- Łącznie 10 z 11 zwykłych przeciwników ma portret. Oczekują: thug.
+
+## Poprawki 0.4.9
+
+- Połączono 8 nowych portretów zwykłych przeciwników z identyfikatorami w `data/enemies/regular.js`; razem z Barnabą 9 z 11 zwykłych postaci ma przypisany portret.
+- Nowe grafiki okazały się danymi PNG zapisanymi z rozszerzeniem `.webp`, dlatego w repozytorium zostały przemianowane na `.png` bez zmiany zawartości obrazu.
+- Dwa brakujące portrety: `thug` (Nożownik z Zaułka) i `grave_digger` (Cmentarny Grabarz). HUD nadal wyświetla dla nich inicjały.
+- Dodano test ścieżek i sygnatur plików przypisanych portretów.
 
 ## Poprawki 0.4.5
 

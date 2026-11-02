@@ -1036,33 +1036,9 @@ const headerName = document.getElementById('header-enemy-name');
     const healthTrack = document.getElementById('enemy-health-track');
     const healthFill = document.getElementById('enemy-health-fill');
     const displayedEnemy = currentEnemyTrait && duel.active ? currentEnemyTrait : null;
-    const portraitPath = displayedEnemy?.portrait || '';
 
-    // Portret jest przypisany do postaci, nie do typu walki. Brak grafiki
-    // lub błąd ładowania zostawia bezpieczny placeholder zamiast pustego HUD-u.
-    portraitFallback.textContent = displayedEnemy ? displayedEnemy.name.charAt(0).toUpperCase() : '⚔';
-    portraitImg.alt = displayedEnemy ? 'Portret: ' + displayedEnemy.name : '';
-    if (portraitImg.dataset.portrait !== portraitPath) {
-        portraitImg.dataset.portrait = portraitPath;
-        portraitImg.hidden = true;
-        portraitFallback.hidden = false;
-        portraitImg.removeAttribute('src');
-        if (portraitPath) {
-            portraitImg.onload = () => {
-                if (portraitImg.dataset.portrait === portraitPath) {
-                    portraitImg.hidden = false;
-                    portraitFallback.hidden = true;
-                }
-            };
-            portraitImg.onerror = () => {
-                if (portraitImg.dataset.portrait === portraitPath) {
-                    portraitImg.hidden = true;
-                    portraitFallback.hidden = false;
-                }
-            };
-            portraitImg.src = portraitPath;
-        }
-    }
+    // Korzystaj z wcześniej pobranego i zdekodowanego portretu.
+    PortraitCache.show(displayedEnemy, portraitImg, portraitFallback);
 
     const enemyHP = displayedEnemy ? Math.max(0, duel.enemyHp) : 0;
     const enemyMaxHP = displayedEnemy ? duel.enemyMaxHp : 0;
@@ -1157,6 +1133,7 @@ function startDuelRun() {
         mazeColumns: generated.mazeColumns, mazeRows: generated.mazeRows,
         shortestPathFields: generated.shortestPathFields
     };
+    PortraitCache.preloadFloor(mapRun);
     duel = newDuelState(); duel.active = true; duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     currentEnemyTrait = null; activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     inventory = []; relics = {}; devShopOffers = null; coins = 0;
@@ -1185,6 +1162,7 @@ function startNextDuelAct() {
     mapRun.currentNodeId = 0;
     mapRun.visitedNodes = new Set([0]);
     mapRun.discoveredNodes = new Set();
+    PortraitCache.preloadFloor(mapRun);
     openMapModal(false);
     updateUI();
 }
@@ -1324,6 +1302,7 @@ function openMapModal(fromTopButton = false) {
         mapRun.currentNodeId = 0;
         mapRun.visitedNodes = new Set([0]);
         mapRun.discoveredNodes = new Set();
+        PortraitCache.preloadFloor(mapRun);
     }
 
     // Blokujemy ruch na mapie TYLKO wtedy, gdy trwa nierozstrzygnięta walka przy stole
@@ -1611,6 +1590,8 @@ function startDuelFromMapNode(node) {
     duel.playerHp = mapRun.playerHp; duel.playerMaxHp = mapRun.playerMaxHp;
     duel.enemyMaxHp = node.hp; duel.enemyHp = node.hp;
     currentEnemyTrait = node.enemy;
+    // Także walki wywoływane z panelu deweloperskiego.
+    if (currentEnemyTrait?.portrait) void PortraitCache.preload(currentEnemyTrait.portrait);
     duel.enemyShield = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
 
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('fatigueModal', false);
@@ -1926,3 +1907,13 @@ function updateDuelPanel() {
 }
 
 initGame();
+
+// W lobby przygotuj pozostałe portrety w tle. Gra nie czeka na ich pobranie.
+const warmUpPortraits = () => PortraitCache.preloadRoster([
+    ...REGULAR_ENEMIES, ...ELITE_ENEMIES, ...CALION_BOSSES
+]);
+if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(warmUpPortraits, { timeout: 1200 });
+} else {
+    setTimeout(warmUpPortraits, 100);
+}
