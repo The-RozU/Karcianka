@@ -462,7 +462,25 @@ body.duel-mode .card.spent::before {
 .inventory-label { color:#cbbda5; white-space:nowrap; font-weight:700; }
 .player-hud .inv-slots { gap:clamp(3px,.45vw,5px); }
 .player-hud .inv-slot { width:clamp(25px,4.4vh,32px); height:clamp(25px,4.4vh,32px); }
-.player-hud .relic-badges { flex:1; min-width:25px; }
+/* Artefakty zajmuja osobny rzad zamiast sciskac sie w pionowa kolumne.
+   Jeden przewijany pasek utrzymuje stala wysokosc HUD-u przy dowolnej liczbie artefaktow. */
+.player-hud .relic-badges {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  padding: 2px 2px 5px;
+  scrollbar-width: thin;
+}
+.player-hud .relic-badges:empty { display: none; }
+.player-hud .relic-badges:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+.player-hud .relic-badge { flex: 0 0 auto; white-space: nowrap; }
+.player-hud .coins-display { margin-left: auto; white-space: nowrap; }
 /* The combat log lives inside a flex item. Scroll the whole panel when the
    viewport is short instead of clipping only the final lines of the preview. */
 .enemy-board .duel-panel {
