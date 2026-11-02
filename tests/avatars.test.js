@@ -37,3 +37,25 @@ test('Pliki portretów istnieją i mają prawidłowe sygnatury PNG / WebP', () =
     }
   }
 });
+
+
+// Elity i bossowie korzystają z tego samego HUD-u, ale mają własne portrety.
+for (const [filename, variable, count, kind] of [
+  ['elite.js', 'ELITE_ENEMIES', 5, 'elit'],
+  ['bosses.js', 'CALION_BOSSES', 8, 'bossów']
+]) {
+  test('Wszystkie ' + kind + ' mają przypisane istniejące portrety', () => {
+    const code = fs.readFileSync(path.join(root, 'data/enemies', filename), 'utf8');
+    const characters = vm.runInNewContext(code + '\n' + variable + ';');
+    assert.equal(characters.length, count);
+    assert.equal(new Set(characters.map(character => character.id)).size, count);
+    for (const character of characters) {
+      assert.equal(character.portrait, 'assets/enemies/' + character.id + '.png');
+      const filepath = path.join(root, character.portrait);
+      assert.ok(fs.existsSync(filepath), 'Brak portretu dla ' + character.name);
+      const image = fs.readFileSync(filepath);
+      assert.ok(image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+        'Nieprawidłowy format PNG: ' + character.portrait);
+    }
+  });
+}
