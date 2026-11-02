@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.19**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.20**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,13 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.20
+
+- Dodano 12 efektów dźwiękowych medieval fantasy do `assets/audio/` i moduł `audio.js`.
+- Dźwięki obsługują menu, otwieranie okien, wyprawę, zdobycze, sklep, używanie przedmiotów, zwycięstwa i awanse.
+- W górnym pasku dodano panel 🔊 Dźwięki: włączanie, regulację głośności, odsłuch wszystkich 12 efektów. Ustawienia zachowują się w localStorage.
+- Pliki WAV to autorska rekonstrukcja motywów Calion Sound Pack v2; pozostałe efekty są przygotowane również do przyszłych systemów.
 
 ## Poprawki 0.4.12
 
