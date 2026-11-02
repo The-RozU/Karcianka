@@ -462,7 +462,25 @@ body.duel-mode .card.spent::before {
 .inventory-label { color:#cbbda5; white-space:nowrap; font-weight:700; }
 .player-hud .inv-slots { gap:clamp(3px,.45vw,5px); }
 .player-hud .inv-slot { width:clamp(25px,4.4vh,32px); height:clamp(25px,4.4vh,32px); }
-.player-hud .relic-badges { flex:1; min-width:25px; }
+/* Artefakty zajmuja osobny rzad zamiast sciskac sie w pionowa kolumne.
+   Jeden przewijany pasek utrzymuje stala wysokosc HUD-u przy dowolnej liczbie artefaktow. */
+.player-hud .relic-badges {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  padding: 2px 2px 5px;
+  scrollbar-width: thin;
+}
+.player-hud .relic-badges:empty { display: none; }
+.player-hud .relic-badges:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+.player-hud .relic-badge { flex: 0 0 auto; white-space: nowrap; }
+.player-hud .coins-display { margin-left: auto; white-space: nowrap; }
 /* The combat log lives inside a flex item. Scroll the whole panel when the
    viewport is short instead of clipping only the final lines of the preview. */
 .enemy-board .duel-panel {
@@ -521,7 +539,13 @@ body.duel-mode .card.spent::before {
   .right-col { gap:7px; }
   .right-col .eval-screen { min-height:54px; }
   .player-hud > .fight-bonus { text-align:left; }
-  .player-hud { min-height:0; }
+  /* Na malych ekranach szerokosc panelu nie moze zalezec od liczby artefaktow. */
+  .player-hud {
+    min-height: 0;
+    align-self: stretch;
+    width: 100%;
+    max-width: 100%;
+  }
   .right-col { min-height:170px; }
   .play-area { gap:7px; }
   .hand-zone { min-height:84px; flex-wrap:wrap; }
@@ -910,3 +934,14 @@ body.duel-mode .card.spent::before {
   border-color: #e6b746;
   box-shadow: inset 0 0 10px #000, 0 0 0 1px #8d6320, 0 0 16px rgba(236,183,54,.5);
 }
+
+
+/* Ustawienia audio: kompaktowe również na ekranach telefonów. */
+.audio-settings-row { display:flex; align-items:center; gap:10px; margin:14px 0; font-size:13px; color:#e9ddc5; cursor:pointer; }
+.audio-settings-row input { width:18px; height:18px; accent-color:#c6a467; }
+.audio-settings-label { display:block; margin:12px 0 7px; color:#d6c39a; font-size:12px; }
+.audio-volume { width:100%; accent-color:#c6a467; cursor:pointer; }
+.audio-preview-row { display:flex; gap:8px; }
+.audio-preview-row select { min-width:0; flex:1; color:#e9ddc5; background:#1d1b19; border:1px solid #8d7449; border-radius:6px; padding:8px; }
+.audio-preview-row button { flex:0 0 auto; width:auto; padding:8px 12px; }
+@media(max-width:430px) { .audio-preview-row { flex-direction:column; } }

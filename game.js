@@ -7,6 +7,13 @@ function toggleFullScreen() {
 }
 
 
+// Opcjonalny moduł audio; testy mechanik uruchamiają game.js bez interfejsu przeglądarki.
+function playGameSound(name) {
+    if (typeof KalonAudio !== 'undefined' && typeof KalonAudio.play === 'function') {
+        KalonAudio.play(name);
+    }
+}
+
 const suits = [{ s: '♠', c: 'black' }, { s: '♥', c: 'red' }, { s: '♦', c: 'red' }, { s: '♣', c: 'black' }];
 const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
 const valMap = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':10, 'Q':10, 'K':10, 'A':10 };
@@ -39,6 +46,11 @@ const DUEL = {
     POST_FIGHT_HEAL: 150,
     LEVEL_UP_HP: 100,
     ENEMY_HAND: 8,
+    ELITE_ACE_INTERVAL: 3,
+    ELITE_ACE_BONUS_CARDS: 1,
+    ELITE_DAMAGE_REDUCTION: 0.05,
+    ELITE_DISCARD_PENALTY: 1,
+    ELITE_GUARD_SHIELD: 5,
     CAP_PCT: 0.20,
     FATIGUE_ROUND: 10,
     FATIGUE_MULT: 1.25,
@@ -138,10 +150,7 @@ function updateLockedCard(reroll = false) {
     lockedCardId = null;
     if (!currentEnemyTrait || hand.length === 0) return;
 
-    if (currentEnemyTrait.id === 'block_high' && duel.round % 3 === 0) {
-        const sorted = [...hand].sort((a, b) => rankOrder.get(a.rank) - rankOrder.get(b.rank));
-        lockedCardId = sorted[0].id;
-    } else if (currentEnemyTrait.id === 'boss_varek') {
+    if (currentEnemyTrait.id === 'boss_varek') {
         const randomCard = hand[Math.floor(Math.random() * hand.length)];
         lockedCardId = randomCard.id;
     }
@@ -257,15 +266,28 @@ function toggleCard(id) {
         document.getElementById('log').innerText = '🔒 Ta karta jest sparaliżowana / zablokowana w tej rundzie!';
         return;
     }
-    playHaptic('tap');
+    let changed = false;
     if (duel.phase === 'attack') {
-        if (selectedCards.includes(id)) selectedCards = selectedCards.filter(c => c !== id);
-        else if (selectedCards.length < 5) selectedCards.push(id);
+        if (selectedCards.includes(id)) {
+            selectedCards = selectedCards.filter(c => c !== id);
+            changed = true;
+        } else if (selectedCards.length < 5) {
+            selectedCards.push(id);
+            changed = true;
+        }
     } else if (duel.phase === 'shield') {
         if (selectedCards.includes(id)) return;
-        if (shieldCards.includes(id)) shieldCards = shieldCards.filter(c => c !== id);
-        else if (shieldCards.length < DUEL.SHIELD_MAX_CARDS) shieldCards.push(id);
+        if (shieldCards.includes(id)) {
+            shieldCards = shieldCards.filter(c => c !== id);
+            changed = true;
+        } else if (shieldCards.length < DUEL.SHIELD_MAX_CARDS) {
+            shieldCards.push(id);
+            changed = true;
+        }
     }
+    if (!changed) return;
+    playHaptic('tap');
+    if (typeof playGameSound === 'function') playGameSound('card_paper');
     evaluateHand(); updateUI();
 }
 
@@ -365,8 +387,11 @@ function computeAttackDamage(rule, sum, opts = {}) {
     let damage = dice === 1 ? 0 : ((rule.baseChips + sum) * finalMultiplier + potionBonus) * relicMult;
 
     if (opts.applyEnemyTrait && currentEnemyTrait) {
-        if (currentEnemyTrait.id === 'weaken_10') { damage = Math.floor(damage * 0.90); }
-        else if (currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven') { damage = Math.floor(damage * 0.85); }
+        if (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15') {
+            damage = Math.floor(damage * (1 - DUEL.ELITE_DAMAGE_REDUCTION));
+        } else if (currentEnemyTrait.id === 'boss_corven') {
+            damage = Math.floor(damage * 0.85);
+        }
     }
     return { damage, finalMultiplier, potionBonus, relicMult };
 }
@@ -396,7 +421,8 @@ function evaluateHand() {
             const relicText = calc.relicMult > 1 ? ` <span class="color-buff">× ${calc.relicMult.toFixed(2)} (artefakt)</span>` : '';
             const diceText = pendingDiceRoll > 1 ? ` <span class="color-buff">(+${(pendingDiceRoll * 0.5).toFixed(1)} za 🎲 ${pendingDiceRoll})</span>` : '';
             const hasReduction = currentEnemyTrait && (currentEnemyTrait.id === 'weaken_10' || currentEnemyTrait.id === 'shield_15' || currentEnemyTrait.id === 'boss_corven');
-            const traitModText = hasReduction ? ` <span style="color:#f39c12">(${currentEnemyTrait.id === 'weaken_10' ? '-10%' : '-15%'} ${currentEnemyTrait.traitName})</span>` : '';
+            const traitReduction = currentEnemyTrait && currentEnemyTrait.id === 'boss_corven' ? 15 : Math.round(DUEL.ELITE_DAMAGE_REDUCTION * 100);
+            const traitModText = hasReduction ? ` <span style="color:#f39c12">(-${traitReduction}% ${currentEnemyTrait.traitName})</span>` : '';
             document.getElementById('evalDmg').innerHTML = `(<span class="color-chips">${rule.baseChips}</span> + ${sum}) <span class="color-mult">x ${calc.finalMultiplier}</span>${diceText}${potionText}${relicText}${traitModText} = ${currentDamage} DMG`;
             return;
         }
@@ -819,7 +845,8 @@ function currentShopOffers() {
 }
 
 function rerollShop() {
-    if (coins < 10) return;
+    if (coins < 10) { if (typeof playGameSound === 'function') playGameSound('ui_error'); return; }
+    
     coins -= 10;
     const node = currentShopNode();
     if (node) node.shopOffers = generateShopOffers();
@@ -889,7 +916,8 @@ function renderShop() {
 function useItemFromShop(idx) {
     const item = inventory[idx];
     if (!item || !item.heal || !mapRun.active) return;
-    if (mapRun.playerHp >= mapRun.playerMaxHp) { alert('Masz już pełne punkty życia!'); return; }
+    if (mapRun.playerHp >= mapRun.playerMaxHp) { if (typeof playGameSound === 'function') playGameSound('ui_error'); alert('Masz już pełne punkty życia!'); return; }
+    
     inventory.splice(idx, 1);
     const healed = healPlayerBy(item.heal);
     renderShop(); updateUI();
@@ -899,16 +927,19 @@ function useItemFromShop(idx) {
 function buyItem(idx) {
     const offer = currentShopOffers()[idx];
     const item = offer && SHOP_ITEMS.find(i => i.id === offer.id);
-    if (!item || offer.sold || coins < item.price || (item.isRelic && relics[item.id])) return;
+    if (!item || offer.sold || coins < item.price || (item.isRelic && relics[item.id])) { if (typeof playGameSound === 'function') playGameSound('ui_error'); return; }
     if (item.isRelic) {
+        if (typeof playGameSound === 'function') playGameSound('equip_item');
         coins -= item.price; relics[item.id] = true;
         markShopOfferSold(idx); renderShop(); updateUI(); return;
     }
     const diceStack = item.id === 'dice' ? inventory.find(invItem => invItem.id === 'dice') : null;
     if (diceStack) {
+        
         coins -= item.price; diceStack.charges = (diceStack.charges ?? 3) + 3;
         markShopOfferSold(idx); renderShop(); updateUI();
     } else if (inventory.length < MAX_INV) {
+        if (typeof playGameSound === 'function') playGameSound('equip_item');
         coins -= item.price; inventory.push(makeInventoryItem(item));
         markShopOfferSold(idx); renderShop(); updateUI();
     } else {
@@ -934,6 +965,7 @@ function confirmReplace(invIdx) {
     const offer = currentShopOffers()[pendingBuyItemIdx];
     const newItem = offer && SHOP_ITEMS.find(i => i.id === offer.id);
     if (newItem && !offer.sold && !newItem.isRelic && coins >= newItem.price) {
+        if (typeof playGameSound === 'function') playGameSound('equip_item');
         coins -= newItem.price; inventory[invIdx] = makeInventoryItem(newItem);
         markShopOfferSold(pendingBuyItemIdx); pendingBuyItemIdx = -1;
         toggleModal('replaceModal', false); renderShop(); updateUI();
@@ -974,6 +1006,7 @@ function executeItem(idx) {
     if (gameOver || handResolutionPending) return;
     let item = inventory[idx];
     if (!item) return;
+    
     if (item.id !== 'dice') inventory.splice(idx, 1);
 
     if (item.id === 'discard') { discardsLeft++; showFloatingText('+1 Odrzut', '#3498db', '65%', '35%', '20px'); }
@@ -1386,6 +1419,7 @@ async function walkMazeRoute(route) {
             renderMazeMap(false);
             return;
         }
+        if (typeof playGameSound === 'function') playGameSound('maze_step');
         avatar.style.left = ((node.col + 0.5) / (mapRun.mazeColumns || 7) * 100) + '%';
         avatar.style.top = ((node.row + 0.5) / (mapRun.mazeRows || 10) * 100) + '%';
         const top = Math.max(0, tile.offsetTop + tile.offsetHeight / 2 - viewport.clientHeight * 0.55);
@@ -1438,6 +1472,7 @@ function selectMapNode(nodeId) {
     }
 
     if (!current.targets.includes(nodeId)) return;
+    if (typeof playGameSound === 'function') playGameSound('maze_step');
     mapRun.currentNodeId = nodeId;
     mapRun.visitedNodes.add(nodeId);
     resolveMapNodeArrival(node, false);
@@ -1491,6 +1526,7 @@ function openMysteryMapEvent(node) {
     }
 
     if (roll < 0.49) {
+        
         const foundCoins = 15 + Math.floor(Math.random() * 21);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1520,6 +1556,7 @@ function openMysteryMapEvent(node) {
     // W labiryncie 7x10 wydarzenia nie moga dokladac walk
     // ponad limit 10 zwyklych przeciwnikow i 4 elit.
     if (mapRun.mazeColumns === 7 && mapRun.mazeRows === 10) {
+        
         const foundCoins = 10 + Math.floor(Math.random() * 16);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1563,10 +1600,12 @@ function openChestNode() {
     const giveItem = inventory.length < MAX_INV && chestItems.length > 0 && Math.random() < 0.5;
     let rewardHtml;
     if (giveItem) {
+        if (typeof playGameSound === 'function') playGameSound('equip_item');
         const item = chestItems[Math.floor(Math.random() * chestItems.length)];
         inventory.push(makeInventoryItem(item));
         rewardHtml = `<div><span>Znaleziony przedmiot:</span><strong style="color:#2ecc71">${item.name}</strong></div>`;
     } else {
+        
         const foundCoins = 18 + Math.floor(Math.random() * 15);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1592,12 +1631,12 @@ function startDuelFromMapNode(node) {
     currentEnemyTrait = node.enemy;
     // Także walki wywoływane z panelu deweloperskiego.
     if (currentEnemyTrait?.portrait) void PortraitCache.preload(currentEnemyTrait.portrait);
-    duel.enemyShield = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
+    duel.enemyShield = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? DUEL.ELITE_GUARD_SHIELD : 0;
 
     toggleModal('mainMenu', false); toggleModal('duelResultModal', false); toggleModal('fatigueModal', false);
     toggleModal('shopModal', false); toggleModal('lobbySectionModal', false);
     gameOver = false;
-    discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - 2) : MAX_DISCARDS;
+    discardsLeft = (currentEnemyTrait && currentEnemyTrait.id === 'insistent') ? Math.max(1, MAX_DISCARDS - DUEL.ELITE_DISCARD_PENALTY) : MAX_DISCARDS;
     activeBuff = { dmg: 0, turns: 0 }; pendingDiceRoll = 0; currentFightBonus = 0; rewardedHandsThisFight.clear();
     selectedCards = []; shieldCards = []; setHandResolutionPending(false);
     document.getElementById('enemyHand').innerHTML = '';
@@ -1646,7 +1685,7 @@ function duelEnd(win) {
         }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
-    } else { recordRunResult('defeat'); }
+    } else { if (typeof playGameSound === 'function') playGameSound('ui_error'); recordRunResult('defeat'); }
 
     document.getElementById('duelResultTitle').innerText = win ? (isBossNode ? `👑 Boss Piętra ${mapRun.act} Pokonany!` : 'Zwycięstwo na Szlaku!') : 'Poległeś na Szlaku...';
     document.getElementById('duelResultTitle').style.color = win ? '#2ecc71' : '#e74c3c';
@@ -1672,6 +1711,7 @@ function duelEnd(win) {
 function duelPlay() {
     if (gameOver || handResolutionPending || !duel.active) return;
     if (duel.phase === 'attack') {
+        
         playHaptic('tap'); duel.phase = 'shield'; shieldCards = [];
         document.getElementById('log').innerText = selectedCards.length > 0 ? 'Etap 2/2: Wybierz do 3 kart na Tarczę (Para i Trójka dają mnożnik!).' : 'Pominąłeś atak. Etap 2/2: Wybierz do 3 kart na Tarczę.';
         evaluateHand(); updateUI(); return;
@@ -1722,6 +1762,8 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
 
         const absorbed = Math.min(duel.enemyShield, incoming); const dealt = incoming - absorbed;
         duel.enemyShield = 0; duel.enemyHp = Math.max(0, duel.enemyHp - dealt);
+        // Tylko faktyczny spadek HP: sama utrata tarczy nie wywołuje dźwięku trafienia.
+        if (dealt > 0) if (typeof playGameSound === 'function') playGameSound('hit_enemy');
         duel.stats.dealt += dealt;
         if (incoming > duel.stats.bestDmg) { duel.stats.bestDmg = incoming; duel.stats.bestName = handName; }
         if (incoming > runStats.bestHandDmg) { runStats.bestHandDmg = incoming; runStats.bestHandName = handName; }
@@ -1736,7 +1778,12 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
             if (currentEnemyTrait.id === 'boss_corven' && !duel.corvenBlockTriggered && duel.enemyHp <= duel.enemyMaxHp * 0.5) { duel.corvenBlockTriggered = true; duel.corvenBlockArmed = true; showFloatingText('🛡️ TARCZA CORVENA!', '#5dade2', '30%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_riwi' && duel.handLimit === 8) { duel.handLimit = 7; showFloatingText('🩸 OBCIĘCIE PALCA!', '#e74c3c', '65%', '30%', '19px'); }
             if (currentEnemyTrait.id === 'boss_farron' && (handName === 'Wysoka Karta' || handName === 'Para')) {
-                duel.playerHp = Math.max(0, duel.playerHp - 15); mapRun.playerHp = duel.playerHp; duel.stats.taken += 15; showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px'); triggerPhoenixIfNeeded();
+                const hpBeforeCounter = duel.playerHp;
+                duel.playerHp = Math.max(0, duel.playerHp - 15);
+                mapRun.playerHp = duel.playerHp; duel.stats.taken += 15;
+                if (duel.playerHp < hpBeforeCounter) if (typeof playGameSound === 'function') playGameSound('hit_player');
+                showFloatingText('🔫 Kontra -15 HP!', '#e74c3c', '15%', '22%', '20px');
+                triggerPhoenixIfNeeded();
             }
         }
     } else { duel.enemyShield = 0; }
@@ -1801,8 +1848,11 @@ function fatigueMult() { return isFatigued() ? DUEL.FATIGUE_MULT : 1; }
 
 async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     const alive = () => duel.active && duel.token === token && !gameOver; const k = motionScale();
-    duel.enemyCards = shuffle(createDeck()).slice(0, DUEL.ENEMY_HAND); const plan = planEnemyTurn(duel.enemyCards);
-    setEnemyNote(isSecondStrike ? '⚔️ Szał Bojowy Lokara — drugi atak!' : 'Wróg losuje karty…');
+    const aceInSleeve = !isSecondStrike && currentEnemyTrait?.id === 'ace_sleeve' && duel.round % DUEL.ELITE_ACE_INTERVAL === 0;
+    const enemyHandSize = DUEL.ENEMY_HAND + (aceInSleeve ? DUEL.ELITE_ACE_BONUS_CARDS : 0);
+    duel.enemyCards = shuffle(createDeck()).slice(0, enemyHandSize); const plan = planEnemyTurn(duel.enemyCards);
+    setEnemyNote(aceInSleeve ? '🃏 As w Rękawie! Szuler dobrał dodatkową kartę (9 kart).' : (isSecondStrike ? '⚔️ Szał Bojowy Lokara — drugi atak!' : 'Wróg losuje karty…'));
+    if (aceInSleeve) showFloatingText('🃏 AS W RĘKAWIE! +1 KARTA', '#f1c40f', '30%', '28%', '18px');
     renderEnemyHand(duel.enemyCards); await wait(800 * k); if (!alive()) return false;
     for (const card of plan.attack) { revealEnemyCard(card, 'attack'); await wait(210 * k); if (!alive()) return false; }
     await wait(320 * k); if (!alive()) return false;
@@ -1817,7 +1867,11 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
     showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '17%', '72%', '26px');
-    if (dealt > 0) { playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
+    if (dealt > 0) {
+        if (typeof playGameSound === 'function') playGameSound('hit_player');
+        playHaptic('hit');
+        animateScreenShake(document.querySelector('.tavern-table'));
+    }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {
         const healAmt = Math.floor(dealt * 0.5); if (healAmt > 0) { duel.enemyHp = Math.min(duel.enemyMaxHp, duel.enemyHp + healAmt); showFloatingText(`🩸 Pijawka +${healAmt} HP`, '#2ecc71', '30%', '26%', '19px'); }
@@ -1826,7 +1880,7 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     await wait(550 * k); if (!alive()) return false;
 
     for (const card of plan.shield) { revealEnemyCard(card, 'shield'); await wait(180 * k); if (!alive()) return false; }
-    const traitGuardBonus = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? 15 : 0;
+    const traitGuardBonus = (currentEnemyTrait && currentEnemyTrait.id === 'iron_guard') ? DUEL.ELITE_GUARD_SHIELD : 0;
     duel.enemyShield = plan.shieldValue + traitGuardBonus;
     if (duel.enemyShield > 0) { setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG) · ${plan.shieldName} +${duel.enemyShield} 🛡`); showFloatingText(`+${duel.enemyShield} 🛡`, '#5dade2', '30%', '34%', '20px'); }
     updateUI(); await wait(700 * k); if (!alive()) return false;
@@ -1845,7 +1899,10 @@ async function duelEnemyTurn(token) {
     }
 
     if (duel.poisonStacks > 0 && duel.playerHp > 0) {
-        const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG; duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
+        const poisonDmg = duel.poisonStacks * DUEL.POISON_DMG;
+        const hpBeforePoison = duel.playerHp;
+        duel.playerHp = Math.max(0, duel.playerHp - poisonDmg);
+        if (duel.playerHp < hpBeforePoison) if (typeof playGameSound === 'function') playGameSound('hit_player');
         if (mapRun.active) mapRun.playerHp = duel.playerHp; duel.stats.taken += poisonDmg;
         showFloatingText(`☠️ -${poisonDmg} HP`, '#2ecc71', '15%', '24%', '20px'); triggerPhoenixIfNeeded(); updateUI();
         if (duel.playerHp === 0) { duelEnd(false); return; } await wait(450 * k); if (!alive()) return;

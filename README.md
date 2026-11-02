@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.19**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.29**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,57 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.29
+
+- Dodano trzy prototypowe, autorsko syntetyzowane krótkie efekty cięcia mieczem: Sword Slash (155 ms), Blade Hit (175 ms), Heavy Slash (190 ms).
+- W ustawieniach dźwięku można wybrać i odsłuchać każdy wariant trafienia przeciwnika. Wybór zapisuje się lokalnie i obowiązuje w walce, bez zmiany dźwięku otrzymywanych obrażeń.
+- Zachowano kamienne kroki jako domyślne. Historyczne nagrania uderzeń pozostają w repozytorium.
+- Wersje 0.4.27–0.4.28 wprowadzono wcześniej w bieżącym kodzie; niniejsza zmiana dotyczy wyłącznie dźwięku trafienia przeciwnika.
+
+## Poprawki 0.4.26
+
+- Poprawiono test mapowania nazw nowych efektów audio (klucze `hit_enemy` i `hit_player` są prawidłowymi polami obiektu, nie łańcuchami w apostrofach). Mechanika i nagrania pozostają takie jak w 0.4.25.
+
+## Poprawki 0.4.25
+
+- Trzy nagrane warianty kroków: **kamień** (domyślny), **drewno** i **miękkie podłoże**. W każdym zestawie są dwa odgłosy, przełączane podczas ruchu.
+- Nowy wybór rodzaju podłoża i przycisk odsłuchu w ustawieniach audio. Wybór zapisywany razem z głośnością.
+- Dźwięki trafień przy rzeczywistym spadku HP gracza lub przeciwnika, bez dźwięku przy samym pochłonięciu obrażeń przez tarczę.
+- Po trzy nagrane warianty uderzeń na każdą stronę (ok. 0,12–0,14 s); gotowe do przyszłych szybkich animacji wielokrotnych ciosów.
+- SFX obejmują również kontratak Farrona i obrażenia od trucizny.
+- Nowe nagrania pochodzą z Kenney Impact Sounds (CC0); źródło i licencja: [assets/audio/CREDITS.md](assets/audio/CREDITS.md). Poprzednie syntetyczne pliki zostawiono do porównania.
+
+## Poprawki 0.4.24
+
+- Karty i kroki w labiryncie są ściszone niezależnymi mnożnikami: papier do 30%, kroki do 22% wcześniejszej głośności (nadal zależne od suwaka głównego).
+- Efekty są wstępnie ładowane. Na obsługiwanych urządzeniach Web Audio dekoduje je przed pierwszą akcją i odtwarza bez nowego pobierania pliku przy każdym kliknięciu.
+- Mobilne odblokowanie AudioContext następuje już przy dotknięciu ekranu, przed kliknięciem; na starszych urządzeniach pozostaje wstępnie załadowany HTML Audio.
+- Dźwięki nadal wyzwalają się przy zmianie wyboru karty i na początku każdego animowanego kroku; żaden spóźniony efekt nie jest odtwarzany po zakończeniu ładowania.
+- Zachowano wyciszenie siedmiu niechcianych efektów i dotychczasowe ustawienia użytkownika.
+
+## Poprawki 0.4.23
+
+- Tymczasowo wyciszono 7 efektów: potwierdzenie, monety, EXP, awans, trening, start wyprawy i zwycięstwo. Pliki WAV pozostają w repozytorium.
+- Wycofano dodatkowy dźwięk potwierdzenia i odgłos ekwipunku z akcji „Atak”. Przyciski mają krótki, dyskretny klik.
+- Dodano dwa warianty szelestu papieru przy zaznaczaniu i odznaczaniu kart; brak efektu przy niedozwolonym zaznaczeniu.
+- Dodano dwa warianty kroku w labiryncie: osobny odgłos przy każdym przebytym kafelku, także na wielopolowych trasach powrotnych. Kafelki mapy nie wyzwalają dodatkowego kliku.
+- Uproszczono listę odsłuchu do aktywnych efektów; zostawiono regulację i zapamiętywanie głośności.
+
+## Poprawki 0.4.22
+
+- Gwarantowana bezpieczna obsługa efektów także w izolowanych testach logiki labiryntu, które wywołują pojedyncze funkcje poza środowiskiem gry.
+
+## Poprawki 0.4.21
+
+- Naprawiono zgodność z testami mechanik uruchamianymi bez przeglądarkowego modułu audio. Efekty pozostają włączone w normalnej grze.
+
+## Poprawki 0.4.20
+
+- Dodano 12 efektów dźwiękowych medieval fantasy do `assets/audio/` i moduł `audio.js`.
+- Dźwięki obsługują menu, otwieranie okien, wyprawę, zdobycze, sklep, używanie przedmiotów, zwycięstwa i awanse.
+- W górnym pasku dodano panel 🔊 Dźwięki: włączanie, regulację głośności, odsłuch wszystkich 12 efektów. Ustawienia zachowują się w localStorage.
+- Pliki WAV to autorska rekonstrukcja motywów Calion Sound Pack v2; pozostałe efekty są przygotowane również do przyszłych systemów.
 
 ## Poprawki 0.4.12
 
