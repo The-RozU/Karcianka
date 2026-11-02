@@ -7,6 +7,13 @@ function toggleFullScreen() {
 }
 
 
+// Opcjonalny moduł audio; testy mechanik uruchamiają game.js bez interfejsu przeglądarki.
+function playGameSound(name) {
+    if (typeof KalonAudio !== 'undefined' && typeof KalonAudio.play === 'function') {
+        KalonAudio.play(name);
+    }
+}
+
 const suits = [{ s: '♠', c: 'black' }, { s: '♥', c: 'red' }, { s: '♦', c: 'red' }, { s: '♣', c: 'black' }];
 const ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
 const valMap = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':10, 'Q':10, 'K':10, 'A':10 };
@@ -720,7 +727,7 @@ function discardCards() {
     }
 
     if (selectedCards.length === 0 || selectedCards.length > 5 || discardsLeft <= 0) return;
-    playHaptic('discard'); KalonAudio.play('ui_back');
+    playHaptic('discard'); playGameSound('ui_back');
     const moved = hand.filter(card => selectedCards.includes(card.id));
     runStats.discards += moved.length;
     hand = hand.filter(card => !selectedCards.includes(card.id));
@@ -819,8 +826,8 @@ function currentShopOffers() {
 }
 
 function rerollShop() {
-    if (coins < 10) { KalonAudio.play('ui_error'); return; }
-    KalonAudio.play('ui_confirm');
+    if (coins < 10) { playGameSound('ui_error'); return; }
+    playGameSound('ui_confirm');
     coins -= 10;
     const node = currentShopNode();
     if (node) node.shopOffers = generateShopOffers();
@@ -890,8 +897,8 @@ function renderShop() {
 function useItemFromShop(idx) {
     const item = inventory[idx];
     if (!item || !item.heal || !mapRun.active) return;
-    if (mapRun.playerHp >= mapRun.playerMaxHp) { KalonAudio.play('ui_error'); alert('Masz już pełne punkty życia!'); return; }
-    KalonAudio.play('ui_confirm');
+    if (mapRun.playerHp >= mapRun.playerMaxHp) { playGameSound('ui_error'); alert('Masz już pełne punkty życia!'); return; }
+    playGameSound('ui_confirm');
     inventory.splice(idx, 1);
     const healed = healPlayerBy(item.heal);
     renderShop(); updateUI();
@@ -901,19 +908,19 @@ function useItemFromShop(idx) {
 function buyItem(idx) {
     const offer = currentShopOffers()[idx];
     const item = offer && SHOP_ITEMS.find(i => i.id === offer.id);
-    if (!item || offer.sold || coins < item.price || (item.isRelic && relics[item.id])) { KalonAudio.play('ui_error'); return; }
+    if (!item || offer.sold || coins < item.price || (item.isRelic && relics[item.id])) { playGameSound('ui_error'); return; }
     if (item.isRelic) {
-        KalonAudio.play('equip_item');
+        playGameSound('equip_item');
         coins -= item.price; relics[item.id] = true;
         markShopOfferSold(idx); renderShop(); updateUI(); return;
     }
     const diceStack = item.id === 'dice' ? inventory.find(invItem => invItem.id === 'dice') : null;
     if (diceStack) {
-        KalonAudio.play('ui_confirm');
+        playGameSound('ui_confirm');
         coins -= item.price; diceStack.charges = (diceStack.charges ?? 3) + 3;
         markShopOfferSold(idx); renderShop(); updateUI();
     } else if (inventory.length < MAX_INV) {
-        KalonAudio.play('equip_item');
+        playGameSound('equip_item');
         coins -= item.price; inventory.push(makeInventoryItem(item));
         markShopOfferSold(idx); renderShop(); updateUI();
     } else {
@@ -939,7 +946,7 @@ function confirmReplace(invIdx) {
     const offer = currentShopOffers()[pendingBuyItemIdx];
     const newItem = offer && SHOP_ITEMS.find(i => i.id === offer.id);
     if (newItem && !offer.sold && !newItem.isRelic && coins >= newItem.price) {
-        KalonAudio.play('equip_item');
+        playGameSound('equip_item');
         coins -= newItem.price; inventory[invIdx] = makeInventoryItem(newItem);
         markShopOfferSold(pendingBuyItemIdx); pendingBuyItemIdx = -1;
         toggleModal('replaceModal', false); renderShop(); updateUI();
@@ -980,7 +987,7 @@ function executeItem(idx) {
     if (gameOver || handResolutionPending) return;
     let item = inventory[idx];
     if (!item) return;
-    KalonAudio.play('ui_confirm');
+    playGameSound('ui_confirm');
     if (item.id !== 'dice') inventory.splice(idx, 1);
 
     if (item.id === 'discard') { discardsLeft++; showFloatingText('+1 Odrzut', '#3498db', '65%', '35%', '20px'); }
@@ -1130,7 +1137,7 @@ function gainXp(amount) {
 }
 
 function startDuelRun() {
-    KalonAudio.play('quest_start');
+    playGameSound('quest_start');
     runStartedAt = Date.now(); runFinishedAt = 0; runRecorded = false;
     runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
     const generated = generateActMap(1);
@@ -1499,7 +1506,7 @@ function openMysteryMapEvent(node) {
     }
 
     if (roll < 0.49) {
-        KalonAudio.play('coin_gain');
+        playGameSound('coin_gain');
         const foundCoins = 15 + Math.floor(Math.random() * 21);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1529,7 +1536,7 @@ function openMysteryMapEvent(node) {
     // W labiryncie 7x10 wydarzenia nie moga dokladac walk
     // ponad limit 10 zwyklych przeciwnikow i 4 elit.
     if (mapRun.mazeColumns === 7 && mapRun.mazeRows === 10) {
-        KalonAudio.play('coin_gain');
+        playGameSound('coin_gain');
         const foundCoins = 10 + Math.floor(Math.random() * 16);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1573,12 +1580,12 @@ function openChestNode() {
     const giveItem = inventory.length < MAX_INV && chestItems.length > 0 && Math.random() < 0.5;
     let rewardHtml;
     if (giveItem) {
-        KalonAudio.play('equip_item');
+        playGameSound('equip_item');
         const item = chestItems[Math.floor(Math.random() * chestItems.length)];
         inventory.push(makeInventoryItem(item));
         rewardHtml = `<div><span>Znaleziony przedmiot:</span><strong style="color:#2ecc71">${item.name}</strong></div>`;
     } else {
-        KalonAudio.play('coin_gain');
+        playGameSound('coin_gain');
         const foundCoins = 18 + Math.floor(Math.random() * 15);
         coins += foundCoins;
         runStats.coinsEarned += foundCoins;
@@ -1589,7 +1596,7 @@ function openChestNode() {
     updateUI(); toggleModal('chestModal', true);
 }
 
-function closeChestToMap() { KalonAudio.play('ui_back'); toggleModal('chestModal', false); openMapModal(false); }
+function closeChestToMap() { playGameSound('ui_back'); toggleModal('chestModal', false); openMapModal(false); }
 
 function abandonMapRun() {
     if (confirm('Czy na pewno chcesz porzucić wyprawę i wrócić do lobby?')) { toggleModal('mapModal', false); leaveDuel(); }
@@ -1648,7 +1655,7 @@ function duelEnd(win) {
         healedHp = mapRun.playerHp - hpBeforeHeal; duel.playerHp = mapRun.playerHp;
 
         xpGained = node ? (node.xp || 50) : 50; levelsGained = gainXp(xpGained);
-        KalonAudio.play(levelsGained ? 'level_up' : 'quest_complete');
+        playGameSound(levelsGained ? 'level_up' : 'quest_complete');
 
         if (node) {
             node.originalIcon = node.originalIcon || node.icon;
@@ -1659,7 +1666,7 @@ function duelEnd(win) {
         }
 
         showFloatingText(`+${reward} 🪙 · +${xpGained} EXP`, '#f1c40f', '30%', '22%', '20px');
-    } else { KalonAudio.play('ui_error'); recordRunResult('defeat'); }
+    } else { playGameSound('ui_error'); recordRunResult('defeat'); }
 
     document.getElementById('duelResultTitle').innerText = win ? (isBossNode ? `👑 Boss Piętra ${mapRun.act} Pokonany!` : 'Zwycięstwo na Szlaku!') : 'Poległeś na Szlaku...';
     document.getElementById('duelResultTitle').style.color = win ? '#2ecc71' : '#e74c3c';
@@ -1685,7 +1692,7 @@ function duelEnd(win) {
 function duelPlay() {
     if (gameOver || handResolutionPending || !duel.active) return;
     if (duel.phase === 'attack') {
-        KalonAudio.play('ui_confirm');
+        playGameSound('ui_confirm');
         playHaptic('tap'); duel.phase = 'shield'; shieldCards = [];
         document.getElementById('log').innerText = selectedCards.length > 0 ? 'Etap 2/2: Wybierz do 3 kart na Tarczę (Para i Trójka dają mnożnik!).' : 'Pominąłeś atak. Etap 2/2: Wybierz do 3 kart na Tarczę.';
         evaluateHand(); updateUI(); return;
@@ -1717,7 +1724,7 @@ function resolveDuelPlayerTurn(damage, handName, attackCards, shieldHand) {
     if (gameOver || !duel.active) return; const fm = fatigueMult();
 
     if (attackCards.length) {
-        KalonAudio.play('equip_item');
+        playGameSound('equip_item');
         playHaptic(handName === 'Poker' ? 'poker' : 'hit'); runHandAnimation(handName, attackCards);
         if (!rewardedHandsThisFight.has(handName)) {
             currentFightBonus += HAND_WIN_BONUS[handName] || 0;
@@ -1832,7 +1839,7 @@ async function executeSingleEnemyStrike(token, isSecondStrike = false) {
     setEnemyNote(`Wróg gra: ${plan.rule.name} (${incoming} DMG)`);
     if (absorbed > 0) showFloatingText(`🛡 −${absorbed}`, '#5dade2', '17%', '80%', '18px');
     showFloatingText(`-${dealt}`, dealt > 0 ? '#e74c3c' : '#aaaaaa', '17%', '72%', '26px');
-    if (dealt > 0) { KalonAudio.play('ui_error'); playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
+    if (dealt > 0) { playGameSound('ui_error'); playHaptic('hit'); animateScreenShake(document.querySelector('.tavern-table')); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_daren') { duel.poisonStacks++; showFloatingText(`☠️ Trucizna +1`, '#2ecc71', '18%', '28%', '17px'); }
     if (currentEnemyTrait && currentEnemyTrait.id === 'boss_flinch' && duel.round % 2 === 0 && dealt > 0) {
         const healAmt = Math.floor(dealt * 0.5); if (healAmt > 0) { duel.enemyHp = Math.min(duel.enemyMaxHp, duel.enemyHp + healAmt); showFloatingText(`🩸 Pijawka +${healAmt} HP`, '#2ecc71', '30%', '26%', '19px'); }

@@ -1,4 +1,4 @@
-/* Kalon v0.4.20: efekty medieval fantasy. Bez zewnętrznych zależności. */
+/* Kalon v0.4.21: efekty medieval fantasy. Bez zewnętrznych zależności. */
 (function (global) {
     'use strict';
     const SOUND_NAMES = Object.freeze([
