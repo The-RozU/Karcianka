@@ -20,8 +20,8 @@ test('all 16 WAV assets (including disabled originals) are valid mono PCM files'
 });
 test('audio module and settings are included before game logic', () => {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.ok(html.includes('audio.js?v=0.4.29'));
-    assert.ok(html.indexOf('audio.js?v=0.4.29') < html.indexOf('game.js?v=0.4.29'));
+    assert.ok(html.includes('audio.js?v=0.4.31'));
+    assert.ok(html.indexOf('audio.js?v=0.4.31') < html.indexOf('game.js?v=0.4.31'));
     assert.ok(html.includes('audioSettingsModal') && html.includes('audioPreview'));
     const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
     // Nieaktywne, historyczne pliki WAV nadal istnieją, ale nie muszą być w mapie odtwarzania.
@@ -275,6 +275,7 @@ test('footsteps offer stone, wood and soft sounds and remember selection', () =>
     const audio = context.window.KalonAudio;
     assert.equal(audio.getSettings().footstepStyle, 'wood');
     assert.equal(audio.play('maze_step'), true);
+    audio.enableDeveloperControls();
     assert.equal(audio.setFootstepStyle('soft'), true);
     assert.equal(audio.play('maze_step'), true);
     assert.equal(audio.setFootstepStyle('stone'), true);
@@ -360,6 +361,7 @@ test('three sword hit styles can be previewed, selected and persisted', () => {
     const audio = win.KalonAudio;
     assert.equal(audio.getSettings().enemyHitStyle, 'blade_hit');
     assert.equal(audio.play('hit_enemy'), true);
+    audio.enableDeveloperControls();
     assert.equal(audio.setEnemyHitStyle('sword_slash'), true);
     assert.equal(audio.play('hit_enemy'), true);
     assert.equal(audio.setEnemyHitStyle('heavy_slash'), true);
@@ -383,4 +385,66 @@ test('three short sword clips are valid mono WAV files', () => {
         assert.equal(data.readUInt32LE(24), 32000);
         assert.ok((data.length - 44) / 64000 <= 0.20);
     }
+});
+
+test('ordinary audio settings show only mute and volume until existing dev mode unlocks', () => {
+    const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const dev = fs.readFileSync(path.join(root, 'dev.js'), 'utf8');
+    const style = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
+    const start = html.indexOf('<div id="audioDeveloperOptions" class="audio-dev-controls" hidden>');
+    const volume = html.indexOf('id="audioVolume"');
+    const enable = html.indexOf('id="audioEnabled"');
+    const close = html.indexOf('onclick="KalonAudio.closeSettings()"');
+    assert.ok(start > enable && start > volume, 'normal mute and volume remain outside developer section');
+    assert.ok(start < html.indexOf('id="footstepStyle"'), 'footstep choice stays inside developer section');
+    assert.ok(start < html.indexOf('id="enemyHitStyle"'), 'slash choice stays inside developer section');
+    assert.ok(start < html.indexOf('id="audioPreview"'), 'sample preview stays inside developer section');
+    assert.ok(html.indexOf('    </div>\n    <button class="btn-action lobby-shop"', start) < close, 'developer section ends before close button');
+    assert.ok(style.includes('.audio-dev-controls[hidden] { display: none !important; }'));
+    assert.match(dev, /function enableDev\(\) \{[\s\S]*?KalonAudio\.enableDeveloperControls\(\)/);
+    assert.match(dev, /taps >= 5/);
+    assert.match(dev, /\[\?&\]dev=1/);
+    assert.ok(html.includes('dev.js?v=0.4.31'));
+});
+
+test('developer audio options stay hidden and selectors cannot change until unlock', () => {
+    const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
+    const devOptions = { hidden: false };
+    const volume = { value: '' };
+    const enabled = { checked: false };
+    const elements = {
+        audioDeveloperOptions: devOptions, audioVolume: volume,
+        audioEnabled: enabled, audioVolumeValue: { textContent: '' },
+        soundSettingsBtn: { textContent: '', setAttribute() {} },
+        footstepStyle: { value: '' }, enemyHitStyle: { value: '' },
+        audioPreview: { value: 'card_paper' },
+        audioSettingsModal: { style: {} }
+    };
+    const win = { localStorage: { getItem: () => null, setItem() {} } };
+    vm.runInNewContext(script, {
+        window: win,
+        document: { readyState: 'complete', addEventListener() {}, getElementById(id) { return elements[id] || null; } }
+    });
+    const audio = win.KalonAudio;
+    assert.equal(devOptions.hidden, true);
+    assert.equal(volume.value, '35');
+    assert.equal(enabled.checked, true);
+    assert.equal(audio.setFootstepStyle('wood'), false);
+    assert.equal(audio.setEnemyHitStyle('heavy_slash'), false);
+    assert.equal(audio.previewSelected(), false);
+    assert.equal(audio.getSettings().footstepStyle, 'stone');
+    assert.equal(audio.getSettings().enemyHitStyle, 'blade_hit');
+    audio.openSettings();
+    assert.equal(devOptions.hidden, true);
+    audio.enableDeveloperControls();
+    assert.equal(devOptions.hidden, false);
+    assert.equal(audio.setFootstepStyle('wood'), true);
+    assert.equal(audio.setEnemyHitStyle('heavy_slash'), true);
+    assert.equal(audio.getSettings().footstepStyle, 'wood');
+    assert.equal(audio.getSettings().enemyHitStyle, 'heavy_slash');
+    audio.setVolume(0.52);
+    assert.equal(volume.value, '52');
+    audio.setEnabled(false);
+    assert.equal(enabled.checked, false);
+    assert.equal(devOptions.hidden, false, 'developer controls remain unlocked after muting');
 });

@@ -937,6 +937,7 @@ body.duel-mode .card.spent::before {
 
 
 /* Ustawienia audio: kompaktowe również na ekranach telefonów. */
+.audio-dev-controls[hidden] { display: none !important; }
 .audio-settings-row { display:flex; align-items:center; gap:10px; margin:14px 0; font-size:13px; color:#e9ddc5; cursor:pointer; }
 .audio-settings-row input { width:18px; height:18px; accent-color:#c6a467; }
 .audio-settings-label { display:block; margin:12px 0 7px; color:#d6c39a; font-size:12px; }

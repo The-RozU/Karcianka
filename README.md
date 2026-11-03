@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.29**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.31**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,14 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.31
+
+- Zaawansowane ustawienia audio (odsłuch, wybór kroków i cięć) są ukryte w trybie zwykłym. W panelu „Dźwięki” pozostają włącznik efektów i główny suwak głośności.
+- Wybór i podgląd próbek odblokowuje istniejący tryb deweloperski: pięć stuknięć tytułu w lobby lub parametr `?dev=1`. Bez tworzenia dodatkowego sposobu włączania trybu dev.
+- Funkcje zmiany rodzaju kroków i cięć oraz odsłuchu z listy nie działają, zanim tryb deweloperski zostanie aktywowany.
+- Zachowano wcześniej zapisane ustawienia audio, wybrane dźwięki i mechanikę walki. Dodano odświeżanie adresu `dev.js` po zmianie wersji, by mobilne przeglądarki nie używały starego skryptu.
+- Ujednolicono numer wersji w README i testach z bieżącym `index.html` (poprzedni kod miał już wersję 0.4.30).
 
 ## Poprawki 0.4.29
 

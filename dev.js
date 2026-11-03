@@ -244,6 +244,10 @@
         buildPanel();
         panel.style.display = 'block';
         updateCounters();
+        // Te same pięć kliknięć odblokowuje zaawansowane ustawienia audio.
+        if (window.KalonAudio && typeof window.KalonAudio.enableDeveloperControls === 'function') {
+            window.KalonAudio.enableDeveloperControls();
+        }
     }
 
     // Po wygranej dev-walce wróć na poprzednie pole mapy (żeby nie utknąć na polu testowym)
