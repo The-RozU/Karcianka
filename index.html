@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Kalon · Wyprawa PvE · v0.4.32</title>
-<link rel="stylesheet" href="style.css?v=0.4.32">
+<title>Kalon · Wyprawa PvE · v0.4.33</title>
+<link rel="stylesheet" href="style.css?v=0.4.33">
 <link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="top-right-btns">
-      <span class="game-version" aria-label="Wersja 0.4.32">v0.4.32</span>
+      <span class="game-version" aria-label="Wersja 0.4.33">v0.4.33</span>
       <button class="btn-top" id="soundSettingsBtn" onclick="KalonAudio.openSettings()" aria-label="Ustawienia dźwięku">🔊 Dźwięki</button>
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
@@ -165,27 +165,42 @@
   </div>
 </div>
 
-<!-- Lobby 16:9 -->
+<!-- Lobby 16:9: drewniany stół, ozdobne przyciski i animowana świeca -->
 <div class="modal-overlay lobby-overlay" id="mainMenu" style="display:flex">
+  <div class="menu-candle" aria-hidden="true">
+    <span class="menu-flame-halo"></span><span class="menu-flame"></span>
+    <span class="menu-wax"></span><span class="menu-candleholder"></span>
+  </div>
+  <div class="menu-props" aria-hidden="true">
+    <span class="menu-card-prop back"></span><span class="menu-card-prop"></span>
+    <span class="menu-die"></span><span class="menu-die second"></span>
+    <span class="menu-coins"></span>
+  </div>
   <div class="modal-content lobby-card">
+    <span class="menu-corner tl" aria-hidden="true"></span><span class="menu-corner tr" aria-hidden="true"></span>
+    <span class="menu-corner bl" aria-hidden="true"></span><span class="menu-corner br" aria-hidden="true"></span>
     <div class="lobby-left">
       <div class="lobby-kicker">Karczemna gra karciana</div>
-      <div class="lobby-emblem" aria-hidden="true">⚓</div>
+      <div class="menu-rule" aria-hidden="true"></div>
+      <div class="menu-suits" role="img" aria-label="Pik, kier, trefl, karo">
+        <span>♤</span><span>♡</span><span>♧</span><span>◇</span>
+      </div>
       <h2 class="lobby-title">Kalon</h2>
-      <div class="lobby-subtitle">Wersja 0.4.32</div>
-      <div class="lobby-cards" aria-hidden="true"><div class="lobby-card-face">A</div><div class="lobby-card-face">K</div><div class="lobby-card-face">Q</div></div>
-      <p class="hub-intro">Wyrusz na wyprawę: walcz z przeciwnikami, otwieraj skrzynie, zdobywaj EXP i pokonaj bossa piętra.</p>
+      <div class="menu-rule" aria-hidden="true"></div>
+      <div class="lobby-subtitle">wersja 0.4.33</div>
+      <p class="hub-intro">Wyrusz na szlak, walcz z wrogami, otwieraj skrzynie, zdobywaj EXP i pokonaj bossa piętra.</p>
+      <div class="menu-rule" aria-hidden="true"></div>
     </div>
     <div class="lobby-right">
       <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
-      <button class="btn-action hub-main-action" style="background:linear-gradient(180deg,#2c6b4f,#194230);border-color:#58b889" onclick="startDuelRun()">
-        <span>🗺️ Wyprawa</span><span aria-hidden="true">›</span>
+      <button type="button" class="btn-action hub-main-action" onclick="startDuelRun()">
+        <span class="menu-btn-icon" aria-hidden="true">⚔</span><span>Wyprawa</span>
       </button>
       <div class="hub-grid">
-        <button class="hub-tile" onclick="openLobbySection('quests')">📜 Zadania</button>
-        <button class="hub-tile" onclick="openLobbySection('skills')">✨ Umiejętności</button>
-        <button class="hub-tile" onclick="openLobbySection('achievements')">🏆 Osiągnięcia</button>
-        <button class="hub-tile" onclick="openLobbySection('stats')">📊 Statystyki</button>
+        <button type="button" class="hub-tile" onclick="openLobbySection('quests')"><span class="menu-btn-icon" aria-hidden="true">▤</span><span>Zadania</span></button>
+        <button type="button" class="hub-tile" onclick="openLobbySection('skills')"><span class="menu-btn-icon" aria-hidden="true">✧</span><span>Umiejętności</span></button>
+        <button type="button" class="hub-tile" onclick="openLobbySection('achievements')"><span class="menu-btn-icon" aria-hidden="true">♛</span><span>Osiągnięcia</span></button>
+        <button type="button" class="hub-tile" onclick="openLobbySection('stats')"><span class="menu-btn-icon" aria-hidden="true">▥</span><span>Statystyki</span></button>
       </div>
     </div>
   </div>
@@ -323,15 +338,15 @@
   </div>
 </div>
 
-   <script src="audio.js?v=0.4.32"></script>
-   <script src="maze-generator.js?v=0.4.32"></script>
+   <script src="audio.js?v=0.4.33"></script>
+   <script src="maze-generator.js?v=0.4.33"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
-    <script src="data/enemies/regular.js?v=0.4.32"></script>
-    <script src="data/enemies/elite.js?v=0.4.32"></script>
-    <script src="data/enemies/bosses.js?v=0.4.32"></script>
-    <script src="portrait-cache.js?v=0.4.32"></script>
-    <script src="game.js?v=0.4.32"></script>
-   <script src="dev.js?v=0.4.32"></script>
+    <script src="data/enemies/regular.js?v=0.4.33"></script>
+    <script src="data/enemies/elite.js?v=0.4.33"></script>
+    <script src="data/enemies/bosses.js?v=0.4.33"></script>
+    <script src="portrait-cache.js?v=0.4.33"></script>
+    <script src="game.js?v=0.4.33"></script>
+   <script src="dev.js?v=0.4.33"></script>
    </body>
 </html>
