@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.31**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.4.33** (`dev-mode`). Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,18 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.4.33
+
+- Przebudowano ekran startowy w stylu dark fantasy: drewniany blat, miedziano-złote ramki, zielony przycisk „Wyprawa” i cztery ozdobne przyciski sekcji.
+- Usunięto motyw kotwicy, a litery kart zastąpiono czterema symbolami ♤ ♡ ♧ ◇; zachowano tytuł, wersję i dostęp do trybu deweloperskiego.
+- Dodano proceduralną teksturę drewna (SVG), dekoracyjne kości, karty i monety oraz świecę z lekką animacją płomienia. Animację można ograniczyć ustawieniem systemowym ograniczającym ruch.
+- Układ dostosowuje się do niskich ekranów w orientacji poziomej oraz wąskich ekranów pionowych. Efekty i zmiany stylu dotyczą wyłącznie lobby; mechanika walki pozostaje bez zmian.
+- Dodano testy kontrolujące działanie przycisków i motyw menu, a testy audio odczytują bieżący numer wersji zamiast oczekiwać starego numeru.
+
+## Poprawki 0.4.32
+
+- Uproszczono menu: przycisk rozpoczynający grę nazywa się „Wyprawa”; usunięto sztywne wartości HP wrogów, stare nazwy świata i licznik monet.
 
 ## Poprawki 0.4.31
 
