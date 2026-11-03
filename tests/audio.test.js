@@ -20,8 +20,10 @@ test('all 16 WAV assets (including disabled originals) are valid mono PCM files'
 });
 test('audio module and settings are included before game logic', () => {
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.ok(html.includes('audio.js?v=0.4.31'));
-    assert.ok(html.indexOf('audio.js?v=0.4.31') < html.indexOf('game.js?v=0.4.31'));
+    const version = html.match(/<title>[^<]*v(0\.4\.\d+)<\/title>/)?.[1];
+    assert.ok(version, 'numer wersji musi być widoczny w tytule');
+    assert.ok(html.includes(`audio.js?v=${version}`));
+    assert.ok(html.indexOf(`audio.js?v=${version}`) < html.indexOf(`game.js?v=${version}`));
     assert.ok(html.includes('audioSettingsModal') && html.includes('audioPreview'));
     const script = fs.readFileSync(path.join(root, 'audio.js'), 'utf8');
     // Nieaktywne, historyczne pliki WAV nadal istnieją, ale nie muszą być w mapie odtwarzania.
@@ -404,7 +406,7 @@ test('ordinary audio settings show only mute and volume until existing dev mode 
     assert.match(dev, /function enableDev\(\) \{[\s\S]*?KalonAudio\.enableDeveloperControls\(\)/);
     assert.match(dev, /taps >= 5/);
     assert.match(dev, /\[\?&\]dev=1/);
-    assert.ok(html.includes('dev.js?v=0.4.31'));
+    assert.match(html, /<script src="dev\.js\?v=0\.4\.\d+"><\/script>/);
 });
 
 test('developer audio options stay hidden and selectors cannot change until unlock', () => {
