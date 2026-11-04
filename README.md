@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.5.5** (`dev-mode`). Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.5.6** (`dev-mode`). Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,12 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Poprawki 0.5.6
+
+- Zmniejszono napis „Karczemna gra karciana” nad logo, zachowując wymiary menu z v0.5.5.
+- Wyśrodkowano napisy w czterech małych przyciskach niezależnie od ikon z lewej strony (symetryczne kolumny).
+- Dopasowano typografię przycisków i odstępy w wąskim widoku mobilnym.
 
 ## Poprawki 0.5.5
 

@@ -101,3 +101,17 @@ test('compact desktop lobby keeps button grid narrower than the card', () => {
     assert.match(css, /#mainMenu \.lobby-card \{width:min\(76%,1100px\);/);
     assert.match(css, /#mainMenu \.hub-tile \{min-height:clamp\(64px,7\.5dvh,96px\);font-size:/);
 });
+
+test('menu v0.5.6 centers button text independently of left icons', () => {
+    const css = read('style.css');
+    const html = read('index.html');
+    const actions = ['Zadania', 'Umiejętności', 'Osiągnięcia', 'Statystyki'];
+    for (const label of actions) {
+        assert.ok(html.includes('<span>' + label + '</span>'), 'brak przycisku ' + label);
+    }
+    assert.match(css, /#mainMenu \.hub-tile \{[\s\S]*?display:grid;/);
+    assert.match(css, /grid-template-columns:clamp\(12px,\.9vw,15px\) minmax\(0,1fr\) clamp\(12px,\.9vw,15px\)/);
+    assert.match(css, /#mainMenu \.hub-tile > span:last-child \{[\s\S]*?text-align:center;/);
+    assert.match(css, /#mainMenu \.hub-tile::after \{[\s\S]*?grid-column:3;/);
+    assert.match(css, /#mainMenu \.lobby-kicker \{font-size:clamp\(11px,\.75vw,14px\)/);
+});
