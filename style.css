@@ -946,15 +946,27 @@ body.duel-mode .card.spent::before {
 @media(max-width:430px) { .audio-preview-row { flex-direction:column; } }
 
 
-/* === KALON MENU 0.5.0: wyśrodkowany, krótszy przycisk Wyprawa === */
+/* === KALON MENU 0.5.1: większy desktop 16:9 i centralna scena ultrawide === */
 #mainMenu.lobby-overlay {
   isolation: isolate;
   overflow: hidden;
+  padding:0;
   background:
-    radial-gradient(ellipse at 7% 52%, rgba(195,91,24,.15), transparent 36%),
-    linear-gradient(90deg,rgba(0,0,0,.5),rgba(0,0,0,.09) 24%,rgba(0,0,0,.11) 78%,rgba(0,0,0,.47)),
+    linear-gradient(90deg,rgba(10,5,3,.72),rgba(19,9,5,.34) 38%,rgba(19,9,5,.34) 62%,rgba(10,5,3,.72)),
     url('assets/ui/menu/menu-background.webp') center / cover no-repeat,
     #160c08;
+}
+/* Scena jest zawsze 16:9 na desktopie; ultrawide dostaje tło po bokach. */
+#mainMenu .menu-stage {
+  position:relative;z-index:1;isolation:isolate;
+  flex:0 0 auto;
+  width:min(100vw,177.7778dvh);
+  aspect-ratio:16 / 9;
+  max-height:100dvh;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  background:url('assets/ui/menu/menu-background.webp') center / cover no-repeat,#160c08;
+  box-shadow:0 0 90px 24px rgba(7,3,2,.65);
 }
 #mainMenu.lobby-overlay::after {
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
@@ -965,15 +977,13 @@ body.duel-mode .card.spent::before {
 
 #mainMenu .lobby-card {
   position:relative;z-index:2;
-  /* Szerokość oparta o proporcje WIDOCZNEJ ramki (grafika ma przezroczyste marginesy). */
-  /* 165dvh powodowało nadmierne zmniejszenie menu po wyświetleniu paska adresu. */
-  width:min(90vw,1100px,235dvh);
+  /* Ramka zajmuje większość sceny 16:9, bez dawnego limitu 1100px. */
+  width:78%;
   aspect-ratio:1672 / 941;
-  max-height:94dvh;min-height:0;
+  max-height:87%;min-height:0;
   display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);
-  gap:clamp(12px,2.2vw,30px);align-items:center;
-  /* Środek kadru jest pusty, ozdobne brzegi zajmują górę i dół assetu. */
-  padding:clamp(32px,8dvh,78px) clamp(46px,6.2vw,94px);
+  gap:clamp(12px,2.2vw,48px);align-items:center;
+  padding:clamp(32px,6.7dvh,105px) clamp(46px,6.2vw,128px);
   overflow:visible;
   border:0;border-radius:0;
   /* Oryginalne proporcje obrazu; przy niższym oknie przycinamy marginesy przezroczystości, zamiast ściskać ramkę. */
@@ -1013,11 +1023,6 @@ body.duel-mode .card.spent::before {
 #mainMenu .lobby-subtitle {
   margin:2px 0 6px;color:#e4c38d;font:700 clamp(10px,1.2vw,15px) Georgia,serif;
   letter-spacing:.055em;
-}
-#mainMenu .hub-intro {
-  max-width:360px;margin:4px auto 0;
-  color:#e8d5b3;font-size:clamp(11px,1.3vw,16px);line-height:1.4;
-  text-shadow:0 2px 3px #050200;text-align:center;
 }
 #mainMenu .lobby-right {display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,1.5vw,20px);text-align:left}
 #mainMenu .hub-main-action,#mainMenu .hub-tile {
@@ -1079,6 +1084,10 @@ body.duel-mode .card.spent::before {
 }
 #mainMenu .menu-props img {display:block;width:100%;height:100%;object-fit:contain}
 
+/* Telefon nie jest letterboxowany: pozostaje widok wypełniający ekran. */
+@media (max-width:1100px) {
+  #mainMenu .menu-stage {width:100%;height:100%;aspect-ratio:auto;max-height:none;box-shadow:none}
+}
 @media (max-width:900px) {
   #mainMenu .lobby-card {
     width:min(92vw,1070px,235dvh);min-height:0;
@@ -1086,7 +1095,6 @@ body.duel-mode .card.spent::before {
     padding:clamp(30px,8dvh,54px) clamp(38px,5.7vw,56px);
   }
   #mainMenu .lobby-kicker {font-size:9px;letter-spacing:.1em}
-  #mainMenu .hub-intro {font-size:11px}
   #mainMenu .hub-main-action {width:78%;min-height:64px;font-size:clamp(19px,2.7vw,24px)}
   #mainMenu .hub-tile {min-height:48px;font-size:clamp(11px,1.8vw,15px)}
   #mainMenu .menu-candle {width:clamp(88px,14vw,130px);left:-13px;bottom:-16px}
@@ -1099,13 +1107,13 @@ body.duel-mode .card.spent::before {
   #mainMenu .menu-suits-art {height:clamp(29px,8vh,46px)}
   #mainMenu .lobby-logo {max-height:clamp(45px,16vh,72px)}
   #mainMenu .lobby-subtitle {font-size:10px;margin:0 0 3px}
-  #mainMenu .hub-intro {display:none} /* długi opis nie wypycha logo poza wewnętrzną złotą ramkę */
   #mainMenu .lobby-right {gap:5px}
   #mainMenu .hub-main-action {width:76%;min-height:60px;padding:5px;font-size:19px}
   #mainMenu .hub-tile {min-height:40px;padding:5px;font-size:11px}
   #mainMenu .hub-grid {gap:5px}
 }
 @media (max-width:620px) and (orientation:portrait) {
+  #mainMenu .menu-stage {width:100%;height:100%;aspect-ratio:auto}
   #mainMenu .lobby-card {
     grid-template-columns:minmax(0,1fr);
     width:min(96vw,460px);max-height:92dvh;min-height:0;gap:10px;
@@ -1119,7 +1127,6 @@ body.duel-mode .card.spent::before {
   #mainMenu .lobby-kicker {font-size:9px}
   #mainMenu .menu-suits-art {height:clamp(37px,8vh,62px)}
   #mainMenu .lobby-logo {width:min(84%,340px);max-height:clamp(70px,16vh,114px)}
-  #mainMenu .hub-intro {font-size:11px;line-height:1.33;max-width:290px}
   #mainMenu .lobby-subtitle {font-size:11px}
   #mainMenu .lobby-right {gap:9px}
   #mainMenu .hub-main-action {width:90%;min-height:65px;font-size:22px}
@@ -1128,6 +1135,28 @@ body.duel-mode .card.spent::before {
   #mainMenu .menu-candle {width:clamp(77px,23vw,110px);left:-21px;bottom:-6px}
   #mainMenu .menu-props {width:clamp(91px,29vw,136px);right:-24px;bottom:-10px}
 }
+
+/* Większa kompozycja na standardowych monitorach 16:9. */
+@media (min-width:1101px) and (min-height:650px) {
+  #mainMenu .lobby-card {width:79%;gap:clamp(24px,2.3vw,58px)}
+  #mainMenu .lobby-left {padding-right:clamp(14px,1.5vw,36px)}
+  #mainMenu .lobby-kicker {font-size:clamp(13px,1vw,19px);letter-spacing:.12em}
+  #mainMenu .menu-suits-art {width:min(84%,460px);height:clamp(80px,11dvh,145px)}
+  #mainMenu .lobby-logo {width:min(96%,620px);max-height:clamp(130px,20dvh,250px)}
+  #mainMenu .lobby-subtitle {font-size:clamp(15px,1.2vw,23px);margin:6px 0 9px}
+  #mainMenu .menu-rule {margin:clamp(8px,1.3dvh,16px) auto}
+  #mainMenu .lobby-right {gap:clamp(16px,2dvh,32px)}
+  #mainMenu .hub-main-action {
+    width:76%;max-width:none;
+    min-height:clamp(90px,11dvh,155px);
+    font-size:clamp(28px,2vw,43px);
+  }
+  #mainMenu .hub-grid {gap:clamp(12px,1.3vw,25px)}
+  #mainMenu .hub-tile {min-height:clamp(72px,8dvh,116px);font-size:clamp(17px,1.25vw,29px)}
+  #mainMenu .menu-candle {width:clamp(170px,12vw,320px);left:1%;bottom:-1%}
+  #mainMenu .menu-props {width:clamp(250px,20vw,580px);right:-2%;bottom:-2%}
+}
+
 @media (prefers-reduced-motion:reduce) {
   #mainMenu.lobby-overlay::after,#mainMenu .menu-flame-halo {animation:none}
   /* Animowany WebP pozostaje widoczny, aby ograniczenie ruchu nie usuwało świecznika. */
