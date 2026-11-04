@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Kalon · Wyprawa PvE · v0.4.34</title>
-<link rel="stylesheet" href="style.css?v=0.4.34">
+<title>Kalon · Wyprawa PvE · v0.4.35</title>
+<link rel="stylesheet" href="style.css?v=0.4.35">
 <link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="top-right-btns">
-      <span class="game-version" aria-label="Wersja 0.4.34">v0.4.34</span>
+      <span class="game-version" aria-label="Wersja 0.4.35">v0.4.35</span>
       <button class="btn-top" id="soundSettingsBtn" onclick="KalonAudio.openSettings()" aria-label="Ustawienia dźwięku">🔊 Dźwięki</button>
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
@@ -165,31 +165,26 @@
   </div>
 </div>
 
-<!-- Lobby 16:9: drewniany stół, ozdobne przyciski i animowana świeca -->
+<!-- Menu główne: oryginalne grafiki pixel art (v0.4.35) -->
 <div class="modal-overlay lobby-overlay" id="mainMenu" style="display:flex">
   <div class="menu-candle" aria-hidden="true">
-    <span class="menu-flame-halo"></span><span class="menu-flame"></span>
-    <span class="menu-wax"></span><span class="menu-candleholder"></span>
+    <span class="menu-flame-halo"></span>
+    <img class="menu-candle-art" src="assets/ui/menu/candle-animation.webp" alt="" decoding="async">
   </div>
   <div class="menu-props" aria-hidden="true">
-    <span class="menu-card-prop back"></span><span class="menu-card-prop"></span>
-    <span class="menu-die"></span><span class="menu-die second"></span>
-    <span class="menu-coins"></span>
+    <img src="assets/ui/menu/menu-decoration-right.webp" alt="" decoding="async">
   </div>
   <div class="modal-content lobby-card">
-    <span class="menu-corner tl" aria-hidden="true"></span><span class="menu-corner tr" aria-hidden="true"></span>
-    <span class="menu-corner bl" aria-hidden="true"></span><span class="menu-corner br" aria-hidden="true"></span>
     <div class="lobby-left">
       <div class="lobby-kicker">Karczemna gra karciana</div>
       <div class="menu-rule" aria-hidden="true"></div>
       <div class="menu-suits" role="img" aria-label="Pik, kier, trefl, karo">
-        <span>♤</span><span>♡</span><span>♧</span><span>◇</span>
+        <img class="menu-suits-art" src="assets/ui/menu/card-symbols.webp" alt="" decoding="async">
       </div>
-      <h2 class="lobby-title">Kalon</h2>
+      <h2 class="lobby-title"><img class="lobby-logo" src="assets/ui/menu/kalon-logo.webp" alt="Kalon" decoding="async"></h2>
       <div class="menu-rule" aria-hidden="true"></div>
-      <div class="lobby-subtitle">wersja 0.4.34</div>
+      <div class="lobby-subtitle">wersja 0.4.35</div>
       <p class="hub-intro">Wyrusz na szlak, walcz z wrogami, otwieraj skrzynie, zdobywaj EXP i pokonaj bossa piętra.</p>
-      <div class="menu-rule" aria-hidden="true"></div>
     </div>
     <div class="lobby-right">
       <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
@@ -338,15 +333,15 @@
   </div>
 </div>
 
-   <script src="audio.js?v=0.4.34"></script>
-   <script src="maze-generator.js?v=0.4.34"></script>
+   <script src="audio.js?v=0.4.35"></script>
+   <script src="maze-generator.js?v=0.4.35"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
-    <script src="data/enemies/regular.js?v=0.4.34"></script>
-    <script src="data/enemies/elite.js?v=0.4.34"></script>
-    <script src="data/enemies/bosses.js?v=0.4.34"></script>
-    <script src="portrait-cache.js?v=0.4.34"></script>
-    <script src="game.js?v=0.4.34"></script>
-   <script src="dev.js?v=0.4.34"></script>
+    <script src="data/enemies/regular.js?v=0.4.35"></script>
+    <script src="data/enemies/elite.js?v=0.4.35"></script>
+    <script src="data/enemies/bosses.js?v=0.4.35"></script>
+    <script src="portrait-cache.js?v=0.4.35"></script>
+    <script src="game.js?v=0.4.35"></script>
+   <script src="dev.js?v=0.4.35"></script>
    </body>
 </html>
