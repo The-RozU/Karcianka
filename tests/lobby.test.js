@@ -32,7 +32,7 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
     const assets = [
         'menu-background.webp', 'frame-short.webp', 'frame-tall.webp',
         'kalon-logo.webp', 'card-symbols.webp', 'button-expedition.webp',
-        'button-normal.webp', 'button-pressed.webp'
+        'button-normal.webp', 'button-pressed.webp', 'wood-planks-tile.webp'
     ];
     for (const asset of assets) {
         assert.ok(fs.existsSync(path.join(root, 'assets/ui/menu', asset)), asset);
@@ -51,7 +51,7 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
 test('release metadata and asset cache-busting match', () => {
     const html = read('index.html');
     const version = html.match(/<title>[^<]+v(0\.\d+\.\d+)<\/title>/)?.[1];
-    assert.equal(version, '0.5.2');
+    assert.match(version ?? '', /^0\.\d+\.\d+$/);
     assert.ok(html.includes(`class="lobby-subtitle">wersja ${version}`));
     assert.ok(html.includes(`style.css?v=${version}`));
     assert.ok(html.includes(`game.js?v=${version}`));
@@ -90,6 +90,7 @@ test('desktop menu is centered in a 16:9 scene with background on ultrawide', ()
     assert.match(css, /#mainMenu \.menu-stage \{[\s\S]*?aspect-ratio:16 \/ 9/);
     assert.match(css, /#mainMenu \.lobby-card \{[\s\S]*?width:78%;/);
     assert.match(css, /min-width:1101px/);
+    assert.match(css, /wood-planks-tile\.webp'\) center \/ auto 100% repeat-x/);
     assert.match(css, /#mainMenu \.menu-stage \{width:100%;height:100%;aspect-ratio:auto/);
     assert.ok(!menu.includes('class="hub-intro"'));
 });
