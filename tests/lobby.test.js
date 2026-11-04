@@ -88,9 +88,16 @@ test('desktop menu is centered in a 16:9 scene with background on ultrawide', ()
     assert.ok(menu.includes('class="menu-stage"'));
     assert.ok(menu.indexOf('class="menu-stage"') < menu.indexOf('class="modal-content lobby-card"'));
     assert.match(css, /#mainMenu \.menu-stage \{[\s\S]*?aspect-ratio:16 \/ 9/);
-    assert.match(css, /#mainMenu \.lobby-card \{[\s\S]*?width:78%;/);
+    assert.match(css, /#mainMenu \.lobby-card \{[\s\S]*?width:min\(76%,1100px\);/);
     assert.match(css, /min-width:1101px/);
     assert.match(css, /wood-planks-tile\.webp'\) center \/ auto 100% repeat-x/);
     assert.match(css, /#mainMenu \.menu-stage \{width:100%;height:100%;aspect-ratio:auto/);
     assert.ok(!menu.includes('class="hub-intro"'));
+});
+
+test('compact desktop lobby keeps button grid narrower than the card', () => {
+    const css = read('style.css');
+    assert.match(css, /#mainMenu \.hub-grid \{[\s\S]*?width:min\(90%,420px\);/);
+    assert.match(css, /#mainMenu \.lobby-card \{width:min\(76%,1100px\);/);
+    assert.match(css, /#mainMenu \.hub-tile \{min-height:clamp\(64px,7\.5dvh,96px\);font-size:/);
 });
