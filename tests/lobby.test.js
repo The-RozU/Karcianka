@@ -50,8 +50,18 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
 test('release metadata and asset cache-busting match', () => {
     const html = read('index.html');
     const version = html.match(/<title>[^<]+v(0\.4\.\d+)<\/title>/)?.[1];
-    assert.equal(version, '0.4.35');
+    assert.equal(version, '0.4.36');
     assert.ok(html.includes(`class="lobby-subtitle">wersja ${version}`));
     assert.ok(html.includes(`style.css?v=${version}`));
     assert.ok(html.includes(`game.js?v=${version}`));
+});
+
+test('landscape frame keeps original proportions and compact content stays inside', () => {
+    const css = read('style.css');
+    const html = read('index.html');
+    assert.match(css, /aspect-ratio:1672\s*\/\s*941/);
+    assert.match(css, /frame-short\.webp'\) center \/ 100% 100% no-repeat/);
+    assert.doesNotMatch(css, /100% 145%/);
+    assert.match(css, /max-height:480px[\s\S]*?hub-intro \{display:none\}/);
+    assert.ok(!html.includes('<span class="menu-btn-icon" aria-hidden="true">⚔</span>'), 'nie dubluj ikony na grafice Wyprawy');
 });
