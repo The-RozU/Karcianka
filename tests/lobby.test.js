@@ -50,7 +50,7 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
 test('release metadata and asset cache-busting match', () => {
     const html = read('index.html');
     const version = html.match(/<title>[^<]+v(0\.4\.\d+)<\/title>/)?.[1];
-    assert.equal(version, '0.4.37');
+    assert.equal(version, '0.4.38');
     assert.ok(html.includes(`class="lobby-subtitle">wersja ${version}`));
     assert.ok(html.includes(`style.css?v=${version}`));
     assert.ok(html.includes(`game.js?v=${version}`));
@@ -71,4 +71,11 @@ test('browser chrome does not shrink landscape menu as aggressively as 0.4.36', 
     assert.match(css, /width:min\(90vw,1100px,235dvh\)/);
     assert.match(css, /width:min\(92vw,1070px,235dvh\)/);
     assert.doesNotMatch(css, /width:min\([^)]*165dvh/);
+});
+
+test('main expedition button is shorter, taller, and centered over the four tiles', () => {
+    const css = read('style.css');
+    assert.match(css, /#mainMenu \.hub-main-action \{\s*width:76%;\s*max-width:520px;\s*align-self:center;/);
+    assert.match(css, /#mainMenu \.hub-main-action \{width:76%;min-height:60px;padding:5px;font-size:19px\}/);
+    assert.match(css, /#mainMenu \.hub-main-action \{width:90%;min-height:65px;font-size:22px\}/);
 });
