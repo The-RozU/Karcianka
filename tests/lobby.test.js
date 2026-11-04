@@ -88,9 +88,30 @@ test('desktop menu is centered in a 16:9 scene with background on ultrawide', ()
     assert.ok(menu.includes('class="menu-stage"'));
     assert.ok(menu.indexOf('class="menu-stage"') < menu.indexOf('class="modal-content lobby-card"'));
     assert.match(css, /#mainMenu \.menu-stage \{[\s\S]*?aspect-ratio:16 \/ 9/);
-    assert.match(css, /#mainMenu \.lobby-card \{[\s\S]*?width:78%;/);
+    assert.match(css, /#mainMenu \.lobby-card \{[\s\S]*?width:min\(76%,1100px\);/);
     assert.match(css, /min-width:1101px/);
     assert.match(css, /wood-planks-tile\.webp'\) center \/ auto 100% repeat-x/);
     assert.match(css, /#mainMenu \.menu-stage \{width:100%;height:100%;aspect-ratio:auto/);
     assert.ok(!menu.includes('class="hub-intro"'));
+});
+
+test('compact desktop lobby keeps button grid narrower than the card', () => {
+    const css = read('style.css');
+    assert.match(css, /#mainMenu \.hub-grid \{[\s\S]*?width:min\(90%,420px\);/);
+    assert.match(css, /#mainMenu \.lobby-card \{width:min\(76%,1100px\);/);
+    assert.match(css, /#mainMenu \.hub-tile \{min-height:clamp\(64px,7\.5dvh,96px\);font-size:/);
+});
+
+test('menu v0.5.6 centers button text independently of left icons', () => {
+    const css = read('style.css');
+    const html = read('index.html');
+    const actions = ['Zadania', 'Umiejętności', 'Osiągnięcia', 'Statystyki'];
+    for (const label of actions) {
+        assert.ok(html.includes('<span>' + label + '</span>'), 'brak przycisku ' + label);
+    }
+    assert.match(css, /#mainMenu \.hub-tile \{[\s\S]*?display:grid;/);
+    assert.match(css, /grid-template-columns:clamp\(12px,\.9vw,15px\) minmax\(0,1fr\) clamp\(12px,\.9vw,15px\)/);
+    assert.match(css, /#mainMenu \.hub-tile > span:last-child \{[\s\S]*?text-align:center;/);
+    assert.match(css, /#mainMenu \.hub-tile::after \{[\s\S]*?grid-column:3;/);
+    assert.match(css, /#mainMenu \.lobby-kicker \{font-size:clamp\(11px,\.75vw,14px\)/);
 });
