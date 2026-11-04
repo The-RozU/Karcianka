@@ -946,7 +946,7 @@ body.duel-mode .card.spent::before {
 @media(max-width:430px) { .audio-preview-row { flex-direction:column; } }
 
 
-/* === KALON MENU 0.4.35: gotowe assety pixel art, tylko #mainMenu === */
+/* === KALON MENU 0.4.36: poprawa proporcji i bezpiecznego obszaru menu === */
 #mainMenu.lobby-overlay {
   isolation: isolate;
   overflow: hidden;
@@ -965,16 +965,18 @@ body.duel-mode .card.spent::before {
 
 #mainMenu .lobby-card {
   position:relative;z-index:2;
-  width:min(87vw,1180px);max-height:92dvh;min-height:min(66dvh,600px);
+  /* Spójna proporcja oryginalnej grafiki 1672 × 941: żadnego zgniatania ramki. */
+  width:min(90vw,1140px,165dvh);
+  aspect-ratio:1672 / 941;
+  max-height:94dvh;min-height:0;
   display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);
   gap:clamp(12px,2.2vw,30px);align-items:center;
-  padding:clamp(30px,4.2vw,64px) clamp(36px,5vw,82px);
-  overflow-y:auto;
+  /* Środek kadru jest pusty, ozdobne brzegi zajmują górę i dół assetu. */
+  padding:clamp(32px,8dvh,78px) clamp(46px,6.2vw,94px);
+  overflow:visible;
   border:0;border-radius:0;
-  background:
-    url('assets/ui/menu/frame-short.webp') center / 100% 145% no-repeat,
-    linear-gradient(155deg,#30170c,#140b07);
-  box-shadow:0 20px 70px rgba(0,0,0,.6);
+  background: url('assets/ui/menu/frame-short.webp') center / 100% 100% no-repeat;
+  box-shadow:none;
 }
 #mainMenu .lobby-card::before {content:none}
 #mainMenu .lobby-left,#mainMenu .lobby-right {position:relative;z-index:1;min-width:0}
@@ -1074,9 +1076,9 @@ body.duel-mode .card.spent::before {
 
 @media (max-width:900px) {
   #mainMenu .lobby-card {
-    width:94vw;min-height:0;
+    width:min(92vw,1110px,165dvh);min-height:0;
     gap:clamp(8px,1.7vw,18px);
-    padding:clamp(20px,3vw,34px) clamp(22px,4.2vw,43px);
+    padding:clamp(30px,8dvh,54px) clamp(38px,5.7vw,56px);
   }
   #mainMenu .lobby-kicker {font-size:9px;letter-spacing:.1em}
   #mainMenu .hub-intro {font-size:11px}
@@ -1086,13 +1088,13 @@ body.duel-mode .card.spent::before {
   #mainMenu .menu-props {width:clamp(110px,21vw,210px);right:-25px;bottom:-18px}
 }
 @media (max-height:480px) and (orientation:landscape) {
-  #mainMenu .lobby-card {max-height:96dvh;padding:18px 30px;gap:11px}
+  #mainMenu .lobby-card {max-height:94dvh;padding:clamp(27px,8dvh,46px) clamp(38px,5.5vw,60px);gap:11px}
   #mainMenu .lobby-left {padding-right:9px}
   #mainMenu .menu-rule {margin:4px auto}
   #mainMenu .menu-suits-art {height:clamp(29px,8vh,46px)}
   #mainMenu .lobby-logo {max-height:clamp(45px,16vh,72px)}
   #mainMenu .lobby-subtitle {font-size:10px;margin:0 0 3px}
-  #mainMenu .hub-intro {font-size:10px;line-height:1.26;margin:2px auto 0}
+  #mainMenu .hub-intro {display:none} /* długi opis nie wypycha logo poza wewnętrzną złotą ramkę */
   #mainMenu .lobby-right {gap:5px}
   #mainMenu .hub-main-action {min-height:48px;padding:5px;font-size:17px}
   #mainMenu .hub-tile {min-height:40px;padding:5px;font-size:11px}
@@ -1102,6 +1104,7 @@ body.duel-mode .card.spent::before {
   #mainMenu .lobby-card {
     grid-template-columns:minmax(0,1fr);
     width:min(96vw,460px);max-height:92dvh;min-height:0;gap:10px;
+    aspect-ratio:auto;overflow-y:auto;
     padding:clamp(28px,5vh,46px) clamp(28px,6vw,44px);
     background:
       url('assets/ui/menu/frame-tall.webp') center / 100% 100% no-repeat,
@@ -1122,6 +1125,6 @@ body.duel-mode .card.spent::before {
 }
 @media (prefers-reduced-motion:reduce) {
   #mainMenu.lobby-overlay::after,#mainMenu .menu-flame-halo {animation:none}
-  #mainMenu .menu-candle-art {visibility:hidden}
+  /* Animowany WebP pozostaje widoczny, aby ograniczenie ruchu nie usuwało świecznika. */
   #mainMenu .hub-main-action,#mainMenu .hub-tile {transition:none}
 }
