@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.38** (`dev-mode`). Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.5.0**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,13 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Wydanie v0.5.0
+
+- Pierwsze większe wydanie z zaakceptowanym menu głównym Kalona, zaprojektowanym na bazie nowych grafik pixel art WebP.
+- Menu zawiera logo, symbole kart, nową drewnianą ramkę, tło karczmy, animowaną świecę, dekorację kart i kości oraz wyróżniony przycisk Wyprawa.
+- Zawiera poprawki wersji 0.4.31–0.4.38: funkcje trybu deweloperskiego, dźwięki, układ mobilny, skalowanie menu i zachowanie przycisków.
+- Zachowano mechanikę gry i dostęp do wypraw PvE.
 
 ## Poprawki 0.4.38
 
