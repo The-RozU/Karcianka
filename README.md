@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.5.0**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.5.4** (`main`). Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,30 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Wydanie v0.5.4
+
+- Nowa, drobna tekstura drewnianych desek w formacie WebP jest powtarzana poziomo w bocznych pasach ultrawide, bez rozciągania i bez dodatkowych ornamentów.
+- Numer wersji menu wyświetla się na ciemnej plakietce ze złotą ramką i zwiększonym kontrastem.
+- Zachowano środkową scenę 16:9, układ przycisków i mechanikę gry.
+
+## Poprawki 0.5.3
+
+- Dodano drewniane panele w bocznych pasach monitorów ultrawide.
+- Obniżono położenie nagłówka „Karczemna gra karciana” w menu głównym.
+
+## Poprawki 0.5.2
+
+- Usunięto osobne, nakładane grafiki świecy oraz kart, kości i monet z menu głównego. Dekoracje pozostają wyłącznie elementem tła.
+- Usunięto nieużywane po tych elementach style i reguły animacji oraz zaktualizowano testy.
+- Układ 16:9 i ultrawide z 0.5.1, przyciski, mechanika gry i widok mobilny bez zmian.
+
+## Poprawki 0.5.1
+
+- Usunięto zbędny opis pod logo Kalonu, zostawiając symbole kart, logo i wersję.
+- Powiększono ramkę, logo i przyciski na standardowych monitorach 16:9.
+- Na monitorach ultrawide właściwe menu i dekoracje znajdują się w środkowej scenie 16:9, a po bokach wyświetla się ciemniejsze tło.
+- Układ mobilny i pięć akcji menu pozostają dostępne.
 
 ## Wydanie v0.5.0
 
