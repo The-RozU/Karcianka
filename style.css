@@ -946,14 +946,14 @@ body.duel-mode .card.spent::before {
 @media(max-width:430px) { .audio-preview-row { flex-direction:column; } }
 
 
-/* === KALON MENU 0.5.2: bez nakładanych dekoracji, desktop 16:9 === */
+/* === KALON MENU 0.5.3: bez nakładanych dekoracji, desktop 16:9 === */
 #mainMenu.lobby-overlay {
   isolation: isolate;
   overflow: hidden;
   padding:0;
   background:
-    linear-gradient(90deg,rgba(10,5,3,.72),rgba(19,9,5,.34) 38%,rgba(19,9,5,.34) 62%,rgba(10,5,3,.72)),
-    url('assets/ui/menu/menu-background.webp') center / cover no-repeat,
+    linear-gradient(90deg,rgba(9,4,3,.30),rgba(9,4,3,.08) 25%,rgba(9,4,3,.08) 75%,rgba(9,4,3,.30)),
+    url('assets/ui/menu/wood-side-panels.webp') center / cover no-repeat,
     #160c08;
 }
 /* Scena jest zawsze 16:9 na desktopie; ultrawide dostaje tło po bokach. */
@@ -997,6 +997,11 @@ body.duel-mode .card.spent::before {
   padding-right:clamp(9px,1.4vw,22px);
   border-right:1px solid rgba(216,165,86,.27);text-align:center;
 }
+/* Delikatne obniżenie nagłówka oraz całej lewej kompozycji na desktopie. */
+@media (min-width:1101px) {
+  #mainMenu .lobby-left {transform:translateY(clamp(12px,3dvh,24px))}
+}
+
 #mainMenu .lobby-kicker {
   font:800 clamp(9px,1.1vw,13px) Georgia,serif;
   letter-spacing:.16em;text-transform:uppercase;color:#dbb982;
