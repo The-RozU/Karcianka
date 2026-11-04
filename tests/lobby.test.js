@@ -50,7 +50,7 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
 test('release metadata and asset cache-busting match', () => {
     const html = read('index.html');
     const version = html.match(/<title>[^<]+v(0\.4\.\d+)<\/title>/)?.[1];
-    assert.equal(version, '0.4.38');
+    assert.equal(version, '0.5.0');
     assert.ok(html.includes(`class="lobby-subtitle">wersja ${version}`));
     assert.ok(html.includes(`style.css?v=${version}`));
     assert.ok(html.includes(`game.js?v=${version}`));
