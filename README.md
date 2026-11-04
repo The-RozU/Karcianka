@@ -2,7 +2,7 @@
 
 Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w labiryncie 7×10 z walkami, zdarzeniami, skrzyniami i sklepami.
 
-**Wersja: 0.4.29**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
+**Wersja: 0.5.0**. Poprawki są sprawdzane na `dev-mode`, a następnie publikowane w `main`.
 
 - [Kalon, test na telefonie (najnowsze dev-mode)](https://the-rozu.github.io/Karcianka-test/)
 - [Alternatywny adres podglądu](https://the-rozu.github.io/Karcianka-test/dev/)
@@ -10,6 +10,62 @@ Karczemna gra karciana PvE osadzona w świecie Calionu. Wyprawy odbywają się w
 - [Dokumentacja integracji labiryntu](docs/MAZE_MIGRATION.md)
 
 Automatyczne testy: `node --test tests/*.test.js`.
+
+## Wydanie v0.5.0
+
+- Pierwsze większe wydanie z zaakceptowanym menu głównym Kalona, zaprojektowanym na bazie nowych grafik pixel art WebP.
+- Menu zawiera logo, symbole kart, nową drewnianą ramkę, tło karczmy, animowaną świecę, dekorację kart i kości oraz wyróżniony przycisk Wyprawa.
+- Zawiera poprawki wersji 0.4.31–0.4.38: funkcje trybu deweloperskiego, dźwięki, układ mobilny, skalowanie menu i zachowanie przycisków.
+- Zachowano mechanikę gry i dostęp do wypraw PvE.
+
+## Poprawki 0.4.38
+
+- Zwężono główny przycisk „Wyprawa” do około 76–78% szerokości kolumny i wyśrodkowano nad pozostałymi czterema przyciskami.
+- Zwiększono wysokość oraz rozmiar tekstu głównego przycisku w układzie poziomym, ograniczając rozciąganie grafiki mieczy.
+- W pionowym układzie telefonu przycisk pozostaje czytelny (90% szerokości). Reszta interfejsu oraz mechanika gry bez zmian.
+
+## Poprawki 0.4.37
+
+- Usunięto zbyt niski limit szerokości lobby `165dvh`, przez który pasek adresu przeglądarki kurczył menu w poziomie. Nowy limit `235dvh` pozwala lepiej wykorzystać szerokość ekranu również bez trybu pełnoekranowego.
+- Tło ozdobnej ramki zachowuje oryginalne proporcje (`background-size: 100% auto`), a przy małej wysokości okna przycinane są przezroczyste marginesy grafiki zamiast rozciągania ramki.
+- Widok pełnoekranowy oraz układ pionowy zachowują dotychczasowe zasady; mechanika gry bez zmian.
+
+## Poprawki 0.4.36
+
+- Poprawiono proporcje ramki menu w orientacji poziomej: wykorzystuje natywny format 1672×941 bez pionowego ściskania grafiki.
+- Dopasowano szerokość, wewnętrzne odstępy i pozycję treści, a na niskich ekranach poziomych ukryto długi opis, aby żaden napis nie wychodził poza złotą ramkę.
+- Usunięto powielony symbol mieczy na przycisku Wyprawa (jest już narysowany w przycisku WebP); przy ograniczeniu ruchu świecznik nadal pozostaje widoczny.
+
+## Poprawki 0.4.35
+
+- Podłączono gotowe grafiki WebP w menu: tło stołu, ramki (pozioma i pionowa), logo Kalonu, symbole kart, przyciski, dekorację prawej strony oraz animowaną świecę.
+- Zachowano wszystkie pięć akcji przycisków i dodano osobne reguły skalowania na telefonach pionowo i poziomo, wraz z widocznym fokusem i trybem ograniczonego ruchu.
+- Mechanika wyprawy pozostaje bez zmian.
+
+## Poprawki 0.4.34
+
+- Usunięto pięć nieaktualnych grafik świecy (`assets/ui/menu/candle-01.png` do `candle-05.png`) przed przygotowaniem nowej animacji.
+- Obecna dekoracja świecy CSS pozostaje do czasu zastąpienia jej nowymi assetami.
+
+## Poprawki 0.4.33
+
+- Przebudowano ekran startowy w stylu dark fantasy: drewniany blat, miedziano-złote ramki, zielony przycisk „Wyprawa” i cztery ozdobne przyciski sekcji.
+- Usunięto motyw kotwicy, a litery kart zastąpiono czterema symbolami ♤ ♡ ♧ ◇; zachowano tytuł, wersję i dostęp do trybu deweloperskiego.
+- Dodano proceduralną teksturę drewna (SVG), dekoracyjne kości, karty i monety oraz świecę z lekką animacją płomienia. Animację można ograniczyć ustawieniem systemowym ograniczającym ruch.
+- Układ dostosowuje się do niskich ekranów w orientacji poziomej oraz wąskich ekranów pionowych. Efekty i zmiany stylu dotyczą wyłącznie lobby; mechanika walki pozostaje bez zmian.
+- Dodano testy kontrolujące działanie przycisków i motyw menu, a testy audio odczytują bieżący numer wersji zamiast oczekiwać starego numeru.
+
+## Poprawki 0.4.32
+
+- Uproszczono menu: przycisk rozpoczynający grę nazywa się „Wyprawa”; usunięto sztywne wartości HP wrogów, stare nazwy świata i licznik monet.
+
+## Poprawki 0.4.31
+
+- Zaawansowane ustawienia audio (odsłuch, wybór kroków i cięć) są ukryte w trybie zwykłym. W panelu „Dźwięki” pozostają włącznik efektów i główny suwak głośności.
+- Wybór i podgląd próbek odblokowuje istniejący tryb deweloperski: pięć stuknięć tytułu w lobby lub parametr `?dev=1`. Bez tworzenia dodatkowego sposobu włączania trybu dev.
+- Funkcje zmiany rodzaju kroków i cięć oraz odsłuchu z listy nie działają, zanim tryb deweloperski zostanie aktywowany.
+- Zachowano wcześniej zapisane ustawienia audio, wybrane dźwięki i mechanikę walki. Dodano odświeżanie adresu `dev.js` po zmianie wersji, by mobilne przeglądarki nie używały starego skryptu.
+- Ujednolicono numer wersji w README i testach z bieżącym `index.html` (poprzedni kod miał już wersję 0.4.30).
 
 ## Poprawki 0.4.29
 

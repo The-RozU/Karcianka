@@ -1050,7 +1050,6 @@ function updateUI() {
     document.getElementById('ui-fight-bonus').innerText = currentFightBonus;
     document.getElementById('ui-discards').innerText = discardsLeft;
     document.getElementById('ui-coins').innerText = coins;
-    document.getElementById('ui-lobby-coins').innerText = coins;
 
     document.getElementById('ui-level').innerText = `⭐ Poz. ${mapRun.level}`;
     const xpPct = Math.min(100, Math.round((mapRun.xp / mapRun.xpNext) * 100));

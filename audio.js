@@ -1,4 +1,4 @@
-/* Kalon v0.4.29: trzy prototypowe warianty cięcia mieczem do wyboru. */
+/* Kalon v0.4.31: odsłuch i wybór efektów tylko w trybie deweloperskim. */
 (function (global) {
     'use strict';
 
@@ -49,6 +49,7 @@
     let volume = 0.35;
     let footstepStyle = 'stone';
     let enemyHitStyle = 'blade_hit';
+    let developerModeEnabled = false;
 
     try {
         const saved = JSON.parse(global.localStorage.getItem(STORAGE_KEY) || 'null');
@@ -196,12 +197,14 @@
         const label = document.getElementById('audioVolumeValue');
         const style = document.getElementById('footstepStyle');
         const hitStyle = document.getElementById('enemyHitStyle');
+        const devOptions = document.getElementById('audioDeveloperOptions');
         const header = document.getElementById('soundSettingsBtn');
         if (checkbox) checkbox.checked = enabled;
         if (slider) slider.value = String(Math.round(volume * 100));
         if (label) label.textContent = Math.round(volume * 100) + '%';
         if (style) style.value = footstepStyle;
         if (hitStyle) hitStyle.value = enemyHitStyle;
+        if (devOptions) devOptions.hidden = !developerModeEnabled;
         if (header) {
             header.textContent = enabled && volume > 0 ? '🔊 Dźwięki' : '🔇 Dźwięki';
             header.setAttribute('aria-label', 'Ustawienia dźwięku');
@@ -221,7 +224,7 @@
         persist(); syncSettings();
     }
     function setFootstepStyle(value) {
-        if (!Object.prototype.hasOwnProperty.call(FOOTSTEP_STYLES, value)) return false;
+        if (!developerModeEnabled || !Object.prototype.hasOwnProperty.call(FOOTSTEP_STYLES, value)) return false;
         footstepStyle = value;
         variantIndex.set('maze_step', 0);
         lastPlayed.delete('maze_step');
@@ -230,13 +233,18 @@
         return true;
     }
     function setEnemyHitStyle(value) {
-        if (!Object.prototype.hasOwnProperty.call(ENEMY_HIT_STYLES, value)) return false;
+        if (!developerModeEnabled || !Object.prototype.hasOwnProperty.call(ENEMY_HIT_STYLES, value)) return false;
         enemyHitStyle = value;
         variantIndex.set('hit_enemy', 0);
         lastPlayed.delete('hit_enemy');
         persist();
         syncSettings();
         return true;
+    }
+    // Odblokowanie jest zarządzane wyłącznie przez istniejący mechanizm w dev.js.
+    function enableDeveloperControls() {
+        developerModeEnabled = true;
+        syncSettings();
     }
     function openSettings() {
         const modal = document.getElementById('audioSettingsModal');
@@ -250,8 +258,9 @@
         play('ui_back');
     }
     function previewSelected() {
+        if (!developerModeEnabled) return false;
         const select = document.getElementById('audioPreview');
-        if (select) play(select.value);
+        return select ? play(select.value) : false;
     }
 
     if (typeof document !== 'undefined') {
@@ -270,7 +279,8 @@
 
     preloadSounds();
     global.KalonAudio = Object.freeze({
-        play, setEnabled, setVolume, setFootstepStyle, setEnemyHitStyle, openSettings, closeSettings, previewSelected,
+        play, setEnabled, setVolume, setFootstepStyle, setEnemyHitStyle, enableDeveloperControls,
+        openSettings, closeSettings, previewSelected,
         getSettings: () => ({ enabled, volume, footstepStyle, enemyHitStyle }),
         names: SOUND_NAMES, disabledNames: DISABLED_SOUNDS, footstepStyles: Object.keys(FOOTSTEP_STYLES), enemyHitStyles: Object.keys(ENEMY_HIT_STYLES)
     });
