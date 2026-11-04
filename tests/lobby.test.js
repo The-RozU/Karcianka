@@ -85,7 +85,7 @@ test('desktop menu is centered in a 16:9 scene with background on ultrawide', ()
     const css = read('style.css');
     const menu = html.slice(html.indexOf('id="mainMenu"'), html.indexOf('<!-- Modal Mapy'));
     assert.ok(menu.includes('class="menu-stage"'));
-    assert.ok(menu.indexOf('class="menu-stage"') < menu.indexOf('class="lobby-card'));
+    assert.ok(menu.indexOf('class="menu-stage"') < menu.indexOf('class="modal-content lobby-card"'));
     assert.match(css, /#mainMenu \.menu-stage \{[\s\S]*?aspect-ratio:16 \/ 9/);
     assert.match(css, /#mainMenu \.lobby-card \{[\s\S]*?width:78%;/);
     assert.match(css, /min-width:1101px/);
