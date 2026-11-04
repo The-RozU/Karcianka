@@ -6,17 +6,19 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('lobby v0.4.33 has the card suits and no obsolete branding or coin counter', () => {
+test('lobby uses Kalon logo and original card-suit artwork without obsolete branding', () => {
     const html = read('index.html');
-    for (const suit of ['♤', '♡', '♧', '◇']) assert.ok(html.includes(suit), suit);
-    assert.ok(!html.includes('lobby-emblem'), 'kotwica nie powinna wrócić');
-    assert.ok(!html.includes('ui-lobby-coins'), 'licznik monet nie należy do menu');
+    assert.match(html, /class="lobby-logo" src="assets\/ui\/menu\/kalon-logo\.webp" alt="Kalon"/);
+    assert.match(html, /class="menu-suits-art" src="assets\/ui\/menu\/card-symbols\.webp"/);
+    assert.ok(html.includes('aria-label="Pik, kier, trefl, karo"'));
+    assert.ok(!html.includes('lobby-emblem'));
+    assert.ok(!html.includes('ui-lobby-coins'));
     assert.ok(!html.includes('Świat Calionu'));
     assert.ok(!html.includes('Pod Złamaną Kotwicą'));
     assert.match(html, /<span>Wyprawa<\/span>/);
 });
 
-test('lobby controls retain all five click actions', () => {
+test('lobby retains all five click actions', () => {
     const html = read('index.html');
     assert.match(html, /class="btn-action hub-main-action" onclick="startDuelRun\(\)"/);
     for (const section of ['quests', 'skills', 'achievements', 'stats']) {
@@ -24,25 +26,31 @@ test('lobby controls retain all five click actions', () => {
     }
 });
 
-test('wood texture, props and candle are scoped to the main menu', () => {
+test('menu artwork and controls stay scoped to the lobby and assets exist', () => {
     const html = read('index.html');
     const css = read('style.css');
-    const texture = read('assets/ui/menu-wood.svg');
-    for (const name of ['menu-candle','menu-flame','menu-wax','menu-props','menu-card-prop','menu-die','menu-coins']) {
-        assert.ok(html.includes(`class="${name}`) || html.includes(`class="${name} `), name);
+    const assets = [
+        'menu-background.webp', 'frame-short.webp', 'frame-tall.webp',
+        'kalon-logo.webp', 'card-symbols.webp', 'menu-decoration-right.webp',
+        'candle-animation.webp', 'button-expedition.webp',
+        'button-normal.webp', 'button-pressed.webp'
+    ];
+    for (const asset of assets) {
+        assert.ok(fs.existsSync(path.join(root, 'assets/ui/menu', asset)), asset);
+        assert.ok(css.includes(`assets/ui/menu/${asset}`) || html.includes(`assets/ui/menu/${asset}`), asset);
     }
+    assert.ok(html.includes('class="menu-candle-art"'));
+    assert.ok(html.includes('class="menu-props"'));
     assert.match(css, /#mainMenu\.lobby-overlay/);
     assert.match(css, /#mainMenu \.hub-main-action/);
-    assert.match(css, /assets\/ui\/menu-wood\.svg/);
+    assert.match(css, /orientation:portrait/);
     assert.match(css, /prefers-reduced-motion:reduce/);
-    assert.match(texture, /^<svg\b/);
-    assert.ok(texture.trimEnd().endsWith('</svg>'));
 });
 
-test('release metadata and asset version are consistent', () => {
+test('release metadata and asset cache-busting match', () => {
     const html = read('index.html');
     const version = html.match(/<title>[^<]+v(0\.4\.\d+)<\/title>/)?.[1];
-    assert.ok(version);
+    assert.equal(version, '0.4.35');
     assert.ok(html.includes(`class="lobby-subtitle">wersja ${version}`));
     assert.ok(html.includes(`style.css?v=${version}`));
     assert.ok(html.includes(`game.js?v=${version}`));
