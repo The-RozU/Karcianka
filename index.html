@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Kalon · Wyprawa PvE · v0.5.1</title>
-<link rel="stylesheet" href="style.css?v=0.5.1">
+<title>Kalon · Wyprawa PvE · v0.5.2</title>
+<link rel="stylesheet" href="style.css?v=0.5.2">
 <link rel="stylesheet" href="maze-map.css">
 </head>
 <body>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="top-right-btns">
-      <span class="game-version" aria-label="Wersja 0.5.1">v0.5.1</span>
+      <span class="game-version" aria-label="Wersja 0.5.2">v0.5.2</span>
       <button class="btn-top" id="soundSettingsBtn" onclick="KalonAudio.openSettings()" aria-label="Ustawienia dźwięku">🔊 Dźwięki</button>
       <button class="btn-top" onclick="toggleFullScreen()">⛶ Pełny Ekran</button>
     </div>
@@ -165,16 +165,9 @@
   </div>
 </div>
 
-<!-- Menu główne: grafiki pixel art, menu w przeglądarce i pełnym ekranie (v0.5.1) -->
+<!-- Menu główne: grafiki pixel art, menu w przeglądarce i pełnym ekranie (v0.5.2) -->
 <div class="modal-overlay lobby-overlay" id="mainMenu" style="display:flex">
   <div class="menu-stage">
-  <div class="menu-candle" aria-hidden="true">
-      <span class="menu-flame-halo"></span>
-      <img class="menu-candle-art" src="assets/ui/menu/candle-animation.webp" alt="" decoding="async">
-    </div>
-    <div class="menu-props" aria-hidden="true">
-      <img src="assets/ui/menu/menu-decoration-right.webp" alt="" decoding="async">
-    </div>
     <div class="modal-content lobby-card">
       <div class="lobby-left">
         <div class="lobby-kicker">Karczemna gra karciana</div>
@@ -184,8 +177,8 @@
         </div>
         <h2 class="lobby-title"><img class="lobby-logo" src="assets/ui/menu/kalon-logo.webp" alt="Kalon" decoding="async"></h2>
         <div class="menu-rule" aria-hidden="true"></div>
-        <div class="lobby-subtitle">wersja 0.5.1</div>
-        </div>
+        <div class="lobby-subtitle">wersja 0.5.2</div>
+      </div>
       <div class="lobby-right">
         <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
         <button type="button" class="btn-action hub-main-action" onclick="startDuelRun()">
@@ -334,15 +327,15 @@
   </div>
 </div>
 
-   <script src="audio.js?v=0.5.1"></script>
-   <script src="maze-generator.js?v=0.5.1"></script>
+   <script src="audio.js?v=0.5.2"></script>
+   <script src="maze-generator.js?v=0.5.2"></script>
    <script src="player-stats.js"></script>
    <script src="data/items/shop-items.js"></script>
-    <script src="data/enemies/regular.js?v=0.5.1"></script>
-    <script src="data/enemies/elite.js?v=0.5.1"></script>
-    <script src="data/enemies/bosses.js?v=0.5.1"></script>
-    <script src="portrait-cache.js?v=0.5.1"></script>
-    <script src="game.js?v=0.5.1"></script>
-   <script src="dev.js?v=0.5.1"></script>
+    <script src="data/enemies/regular.js?v=0.5.2"></script>
+    <script src="data/enemies/elite.js?v=0.5.2"></script>
+    <script src="data/enemies/bosses.js?v=0.5.2"></script>
+    <script src="portrait-cache.js?v=0.5.2"></script>
+    <script src="game.js?v=0.5.2"></script>
+   <script src="dev.js?v=0.5.2"></script>
    </body>
 </html>
