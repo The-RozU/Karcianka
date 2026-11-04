@@ -31,16 +31,17 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
     const css = read('style.css');
     const assets = [
         'menu-background.webp', 'frame-short.webp', 'frame-tall.webp',
-        'kalon-logo.webp', 'card-symbols.webp', 'menu-decoration-right.webp',
-        'candle-animation.webp', 'button-expedition.webp',
+        'kalon-logo.webp', 'card-symbols.webp', 'button-expedition.webp',
         'button-normal.webp', 'button-pressed.webp'
     ];
     for (const asset of assets) {
         assert.ok(fs.existsSync(path.join(root, 'assets/ui/menu', asset)), asset);
         assert.ok(css.includes(`assets/ui/menu/${asset}`) || html.includes(`assets/ui/menu/${asset}`), asset);
     }
-    assert.ok(html.includes('class="menu-candle-art"'));
-    assert.ok(html.includes('class="menu-props"'));
+    assert.ok(!html.includes('class="menu-candle"'), 'świecznik nie może dublować dekoracji tła');
+    assert.ok(!html.includes('class="menu-props"'), 'karty, kości i monety pozostają tylko w tle');
+    assert.ok(!css.includes('#mainMenu .menu-candle'), 'usuń nieużywane reguły CSS świecy');
+    assert.ok(!css.includes('#mainMenu .menu-props'), 'usuń nieużywane reguły CSS rekwizytów');
     assert.match(css, /#mainMenu\.lobby-overlay/);
     assert.match(css, /#mainMenu \.hub-main-action/);
     assert.match(css, /orientation:portrait/);
@@ -50,7 +51,7 @@ test('menu artwork and controls stay scoped to the lobby and assets exist', () =
 test('release metadata and asset cache-busting match', () => {
     const html = read('index.html');
     const version = html.match(/<title>[^<]+v(0\.\d+\.\d+)<\/title>/)?.[1];
-    assert.equal(version, '0.5.1');
+    assert.equal(version, '0.5.2');
     assert.ok(html.includes(`class="lobby-subtitle">wersja ${version}`));
     assert.ok(html.includes(`style.css?v=${version}`));
     assert.ok(html.includes(`game.js?v=${version}`));
