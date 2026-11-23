@@ -177,6 +177,12 @@ function recordRunResult(outcome) {
         durationSeconds: Math.floor((runFinishedAt - runStartedAt) / 1000),
         finishedAt: new Date(runFinishedAt).toISOString()
     });
+    window.KalonRanked?.finish({
+        enemiesDefeated: runStats.enemiesDefeated,
+        bossesDefeated: runStats.bossesDefeated,
+        mysteryEvents: runStats.mysteryEvents,
+        floor: mapRun.act
+    },outcome);
 }
 
 function openLobbySection(section) {
@@ -1157,6 +1163,7 @@ function gainXp(amount) {
 function startDuelRun() {
     runStartedAt = Date.now(); runFinishedAt = 0; runRecorded = false;
     runStats = { enemiesDefeated: 0, totalDamage: 0, discards: 0, bestHandName: "-", bestHandDmg: 0, coinsEarned: 0, bossesDefeated: 0, mysteryEvents: 0 };
+    window.KalonRanked?.start();
     const generated = generateActMap(1);
     mapRun = {
         active: true, act: 1, playerHp: DUEL.START_HP, playerMaxHp: DUEL.START_HP,

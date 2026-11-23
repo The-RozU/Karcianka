@@ -181,6 +181,7 @@
       </div>
       <div class="lobby-right">
         <div class="hub-notice" id="lobbyNotice" style="display:none"></div>
+        <p id="kalon-ranking-status" class="kalon-ranking-status" aria-live="polite"></p>
         <button type="button" class="btn-action hub-main-action" onclick="startDuelRun()">
           <span>Wyprawa</span>
         </button>
@@ -318,6 +319,7 @@
   <div class="modal-content" style="max-width:520px">
     <div class="modal-title" id="duelResultTitle">Wynik</div>
     <div class="summary-box" id="duelResultText"></div>
+    <p id="kalon-ranking-result" class="kalon-ranking-status" aria-live="polite"></p>
     <div class="duel-result-actions">
       <button class="btn-action duel-result-exit" onclick="leaveDuel()">🚪 Wróć do lobby</button>
       <button class="btn-action duel-result-primary" id="duelMapContinueBtn" style="display:none" onclick="continueToMapAfterDuel()">🗺️ Kontynuuj</button>
@@ -337,5 +339,6 @@
     <script src="portrait-cache.js?v=0.5.6"></script>
     <script src="game.js?v=0.5.6"></script>
    <script src="dev.js?v=0.5.6"></script>
+   <script src="kalon-ranked.js?v=0.5.6-beta1"></script>
    </body>
 </html>
