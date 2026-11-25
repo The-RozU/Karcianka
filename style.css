@@ -1198,3 +1198,5 @@ body.duel-mode .card.spent::before {
   #mainMenu.lobby-overlay::after {animation:none}
   #mainMenu .hub-main-action,#mainMenu .hub-tile {transition:none}
 }
+
+.kalon-ranking-status{font:12px/1.45 Georgia,serif;color:#e1c38c;border:1px solid #886b43;padding:8px;margin:9px 0;background:rgba(19,33,23,.84);border-radius:4px;text-align:center}
